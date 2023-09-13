@@ -1,0 +1,5 @@
+# Change these at your peril:
+export PROJECT_NAME=asf_public_discourse_home_decarbonisation
+export REPO_NAME=asf_public_discourse_home_decarbonisation
+export DESCRIPTION=Project to identify topics and patterns in home decarbonisation public discourse data.
+export PROJECT_OPENNESS=public
