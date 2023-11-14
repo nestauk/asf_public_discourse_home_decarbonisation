@@ -1,0 +1,6 @@
+nltk
+gensim
+matplotlib
+wordcloud
+altair==4.2.2
+nesta_ds_utils@ git+ssh://git@github.com/nestauk/nesta_ds_utils.git
