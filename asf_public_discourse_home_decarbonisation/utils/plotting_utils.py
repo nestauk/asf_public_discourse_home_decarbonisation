@@ -6,6 +6,11 @@ import altair as alt
 from matplotlib import font_manager
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+import matplotlib as mpl
+import seaborn as sns
+from asf_public_discourse_home_decarbonisation import PROJECT_DIR
+
+MSE_FIG_PATH = PROJECT_DIR / "outputs/figures/mse"
 
 ChartType = alt.vegalite.v4.api.Chart
 
@@ -99,7 +104,7 @@ def finding_path_to_font(font_name: str):
     return font_files[0]
 
 
-def create_wordcloud(frequencies, max_words, stopwords):
+def create_wordcloud(frequencies, max_words, stopwords, fig_name):
     """
     Creates word cloud based on frequencies.
     Args:
@@ -124,3 +129,56 @@ def create_wordcloud(frequencies, max_words, stopwords):
 
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
+
+    plt.savefig(
+        f"{MSE_FIG_PATH}/{fig_name}.png",
+        dpi=600,
+    )
+
+
+def set_spines():
+    """
+    Function to add or remove spines from plots.
+    """
+    mpl.rcParams["axes.spines.left"] = True
+    mpl.rcParams["axes.spines.right"] = False
+    mpl.rcParams["axes.spines.top"] = False
+    mpl.rcParams["axes.spines.bottom"] = True
+
+
+def set_plotting_styles():
+    """
+    Function that sets plotting styles.
+    """
+
+    sns.set_context("talk")
+
+    set_spines()
+
+    # Had trouble making it find the font I set so this was the only way to do it
+    # without specifying the local filepath
+    all_font_files = font_manager.findSystemFonts()
+
+    try:
+        mpl.rcParams["font.family"] = "sans-serif"
+        font_files = [f for f in all_font_files if "Averta-Regular" in f]
+        for font_file in font_files:
+            font_manager.fontManager.addfont(font_file)
+        mpl.rcParams["font.sans-serif"] = "Averta"
+    except:
+        print("Averta" + " font could not be located. Using 'DejaVu Sans' instead")
+        font_files = [f for f in all_font_files if "DejaVuSans.ttf" in f][0]
+        for font_file in font_files:
+            font_manager.fontManager.addfont(font_file)
+        mpl.rcParams["font.family"] = "sans-serif"
+        mpl.rcParams["font.sans-serif"] = "DejaVu Sans"
+
+    mpl.rcParams["xtick.labelsize"] = 20
+    mpl.rcParams["ytick.labelsize"] = 20
+    mpl.rcParams["axes.titlesize"] = 20
+    mpl.rcParams["axes.labelsize"] = 16
+    mpl.rcParams["legend.fontsize"] = 16
+    mpl.rcParams["figure.titlesize"] = 20
+
+
+set_plotting_styles()
