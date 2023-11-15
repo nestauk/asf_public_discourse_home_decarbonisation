@@ -12,6 +12,15 @@ import pandas as pd
 import s3fs
 import os
 from asf_public_discourse_home_decarbonisation import PROJECT_DIR
+from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
+    set_plotting_styles,
+    finding_path_to_font,
+    NESTA_COLOURS,
+)
+
+set_plotting_styles()
+
+font_path_ttf = finding_path_to_font("Averta-Regular")
 
 # BUILDHUB_OUTPUTS_DATA_PATH = os.path.join(PROJECT_DIR, "outputs/figures/buildhub/forum_119_air_source_heat_pumps_ashp/")
 # BUILDHUB_OUTPUTS_DATA_PATH = os.path.join(PROJECT_DIR, "outputs/figures/buildhub/forum_120_ground_source_heat_pumps_gshp/")
@@ -61,13 +70,14 @@ post_count_by_year = pd.merge(
 ).fillna(0)
 
 # Plot the bar chart
-plt.figure(figsize=(14, 6))
-sns.barplot(x="year", y="post_count", data=post_count_by_year, color="steelblue")
+plt.figure(figsize=(12, 8))
+sns.barplot(x="year", y="post_count", data=post_count_by_year, color=NESTA_COLOURS[0])
 plt.title(
     f"Distribution of Posts Over Time (By Year) (total sample size n = {sample_size})"
 )
 plt.xlabel("Year")
 plt.ylabel("Number of Posts")
+plt.tight_layout()
 plt.savefig(
     os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "Distribution_of_Posts_By_Year.png")
 )
@@ -78,7 +88,7 @@ plt.show()
 user_post_counts = buildhub_ashp_dataframe["username"].value_counts().reset_index()
 user_post_counts.columns = ["username", "post_count"]
 
-plt.figure(figsize=(20, 8))
+plt.figure(figsize=(12, 8))
 sns.barplot(
     x="username", y="post_count", data=user_post_counts.head(10), palette="coolwarm"
 )
@@ -86,6 +96,7 @@ plt.title("Top 10 Users by Number of Posts")
 plt.xlabel("Username")
 plt.ylabel("Number of Posts")
 plt.xticks(rotation=24)
+plt.tight_layout()
 plt.savefig(os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "Number_of_Posts_Username.png"))
 plt.show()
 
@@ -140,15 +151,21 @@ freq_dist = FreqDist(filtered_tokens)
 
 # Apply frequency filter to remove words with a count less than 10
 total_words = sum(freq_dist.values())
-threshold = round(total_words * 0.002)
+# threshold = round(total_words * 0.002)
 # threshold = max(10, total_words * 0.0002)
+threshold = 100
+max_words_in_wordcloud = 30
 filtered_freq_dist = {
     word: freq for word, freq in freq_dist.items() if freq >= threshold
 }
 
 # Generate the word cloud
 wordcloud = WordCloud(
-    background_color="white", width=800, height=400
+    font_path=font_path_ttf,
+    background_color="white",
+    width=800,
+    height=400,
+    max_words=max_words_in_wordcloud,
 ).generate_from_frequencies(filtered_freq_dist)
 
 # Show the word cloud
@@ -156,6 +173,7 @@ plt.figure(figsize=(10, 5))
 plt.imshow(wordcloud, interpolation="bilinear")
 plt.axis("off")
 plt.title(f"Enhanced Word Cloud (with Frequency Filter > {threshold})")
+plt.tight_layout()
 plt.savefig(os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "Word_Cloud_freq_filter.png"))
 plt.show()
 
@@ -164,14 +182,16 @@ raw_bigram_freq_dist = FreqDist(bigrams(filtered_tokens))
 raw_trigram_freq_dist = FreqDist(trigrams(filtered_tokens))
 
 total_bigrams = sum(raw_bigram_freq_dist.values())
-bigram_threshold = round(total_bigrams * 0.0002)
+# bigram_threshold = round(total_bigrams * 0.0002)
+bigram_threshold = 100
 bigram_freq_dist = {
     bigram: freq
     for bigram, freq in raw_bigram_freq_dist.items()
     if freq >= bigram_threshold
 }
 total_trigrams = sum(raw_trigram_freq_dist.values())
-trigram_threshold = round(max(3, total_trigrams * 0.00005))
+# trigram_threshold = round(max(3, total_trigrams * 0.00005))
+trigram_threshold = 20
 trigram_freq_dist = {
     trigram: freq
     for trigram, freq in raw_trigram_freq_dist.items()
@@ -190,24 +210,54 @@ trigram_labels, trigram_freqs = zip(*top_10_trigrams)
 bigram_labels = ["_".join(label).replace("_", " ") for label in bigram_labels]
 trigram_labels = ["_".join(label).replace("_", " ") for label in trigram_labels]
 
-# Plot bigrams
-plt.figure(figsize=(20, 8))
-plt.bar(bigram_labels, bigram_freqs, color="blue")
-plt.xlabel("Frequency")
-plt.ylabel("Bigrams")
+# # Plot bigrams
+plt.figure(figsize=(12, 8))
+plt.bar(bigram_labels, bigram_freqs, color=NESTA_COLOURS[0])
+plt.ylabel("Frequency")
+plt.xlabel("Bigrams")
 plt.xticks(rotation=24)
 plt.title("Top 10 Most Common Bigrams")
+plt.tight_layout()
 plt.savefig(os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "Top_10_Most_Common_Bigrams.png"))
 plt.show()
 
-# Plot trigrams
-plt.figure(figsize=(20, 8))
-plt.bar(trigram_labels, trigram_freqs, color="green")
+# Plot bigrams - barh
+plt.figure(figsize=(12, 8))
+plt.barh(bigram_labels, bigram_freqs, color=NESTA_COLOURS[0])
 plt.xlabel("Frequency")
-plt.ylabel("Trigrams")
+plt.ylabel("Bigrams")
+plt.title("Top 10 Most Common Bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        BUILDHUB_OUTPUTS_DATA_PATH, "Top_10_Most_Common_Bigrams_horizontal.png"
+    )
+)
+plt.show()
+
+# Plot trigrams
+plt.figure(figsize=(12, 8))
+plt.bar(trigram_labels, trigram_freqs, color=NESTA_COLOURS[1])
+plt.ylabel("Frequency")
+plt.xlabel("Trigrams")
 plt.xticks(rotation=24)
 plt.title("Top 10 Most Common Trigrams")
+plt.tight_layout()
 plt.savefig(os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "Top_10_Most_Common_Trigrams.png"))
+plt.show()
+
+# Plot trigrams - barh
+plt.figure(figsize=(12, 8))
+plt.barh(trigram_labels, trigram_freqs, color=NESTA_COLOURS[1])
+plt.xlabel("Frequency")
+plt.ylabel("Trigrams")
+plt.title("Top 10 Most Common Trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        BUILDHUB_OUTPUTS_DATA_PATH, "Top_10_Most_Common_Trigrams_horizontal.png"
+    )
+)
 plt.show()
 
 ######## 5.Generate bigram and trigram word clouds ########
@@ -233,24 +283,34 @@ for trigram, freq in trigram_freq_dist.items():
     trigram_string_freq_dist[trigram_string] = freq
 
 # Generate the word cloud for bigrams
-wordcloud_bigrams = WordCloud(
-    background_color="white", width=800, height=400
+wordcloud_bigrams = Wwordcloud = WordCloud(
+    font_path=font_path_ttf,
+    background_color="white",
+    width=800,
+    height=400,
+    max_words=max_words_in_wordcloud,
 ).generate_from_frequencies(bigram_string_freq_dist)
 plt.figure(figsize=(10, 5))
 plt.imshow(wordcloud_bigrams, interpolation="bilinear")
 plt.axis("off")
 plt.title(f"Word Cloud of Bigrams (with Frequency > {bigram_threshold})")
+plt.tight_layout()
 plt.savefig(os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "word_cloud_common_bigrams.png"))
 plt.show()
 
 # Generate the word cloud for trigrams
 wordcloud_trigrams = WordCloud(
-    background_color="white", width=800, height=400
+    font_path=font_path_ttf,
+    background_color="white",
+    width=800,
+    height=400,
+    max_words=max_words_in_wordcloud,
 ).generate_from_frequencies(trigram_string_freq_dist)
 plt.figure(figsize=(10, 5))
 plt.imshow(wordcloud_trigrams, interpolation="bilinear")
 plt.axis("off")
 plt.title(f"Word Cloud of Trigrams (with Frequency > {trigram_threshold})")
+plt.tight_layout()
 plt.savefig(os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "word_cloud_common_trigrams.png"))
 plt.show()
 
@@ -260,15 +320,37 @@ buildhub_ashp_dataframe["post_length"] = buildhub_ashp_dataframe["text"].apply(
     lambda x: len(str(x).split())
 )
 
-plt.figure(figsize=(14, 6))
-sns.histplot(buildhub_ashp_dataframe["post_length"], bins=50, kde=False, color="purple")
+plt.figure(figsize=(12, 8))
+sns.histplot(
+    buildhub_ashp_dataframe["post_length"], bins=50, kde=False, color=NESTA_COLOURS[2]
+)
 plt.title("Distribution of Post Lengths")
 plt.xlabel("Post Length (Number of Words)")
 plt.ylabel("Number of Posts")
+plt.tight_layout()
 plt.savefig(
     os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "distribution_of_post_lengths.png")
 )
 plt.show()
+
+
+# same as above but y-axis with log scale
+plt.figure(figsize=(12, 8))
+sns.histplot(
+    buildhub_ashp_dataframe["post_length"], bins=50, kde=False, color=NESTA_COLOURS[2]
+)
+plt.title("Distribution of Post Lengths")
+plt.xlabel("Post Length (Number of Words)")
+plt.ylabel("Number of Posts (log scale")
+plt.yscale("log")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        BUILDHUB_OUTPUTS_DATA_PATH, "distribution_of_post_lengths_logscale.png"
+    )
+)
+plt.show()
+
 
 ############ 7. Frequency of selected keywords in posts using the dictionary ###########
 custom_keyword_counter = Counter()
@@ -420,7 +502,7 @@ custom_keyword_buildhub_ashp_dataframe = custom_keyword_buildhub_ashp_dataframe[
 ]
 
 
-plt.figure(figsize=(20, 8))
+plt.figure(figsize=(12, 8))
 custom_keyword_buildhub_ashp_dataframe["Tag"] = custom_keyword_buildhub_ashp_dataframe[
     "Tag"
 ].str.replace("_", " ")
@@ -433,8 +515,27 @@ sns.barplot(
 plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {df_threshold})")
 plt.xlabel("Tag")
 plt.ylabel("Frequency")
-plt.xticks(rotation=24, fontsize=9)
+plt.xticks(rotation=45)
+plt.tight_layout()
 plt.savefig(
     os.path.join(BUILDHUB_OUTPUTS_DATA_PATH, "freq_of_selected_keywords_in_posts.png")
+)
+plt.show()
+
+# same as above but with barh
+plt.figure(figsize=(12, 8))
+plt.barh(
+    custom_keyword_buildhub_ashp_dataframe["Tag"],
+    custom_keyword_buildhub_ashp_dataframe["Frequency"],
+    color=NESTA_COLOURS[0],
+)
+plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {df_threshold})")
+plt.ylabel("Tag")
+plt.xlabel("Frequency")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        BUILDHUB_OUTPUTS_DATA_PATH, "freq_of_selected_keywords_in_posts_barh.png"
+    )
 )
 plt.show()
