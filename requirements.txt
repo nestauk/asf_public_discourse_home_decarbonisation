@@ -1,6 +1,11 @@
+numpy
+pandas
 nltk
 gensim
 matplotlib
+seaborn
 wordcloud
 altair==4.2.2
-nesta_ds_utils@ git+ssh://git@github.com/nestauk/nesta_ds_utils.git
+boto3
+s3fs
+fsspec
