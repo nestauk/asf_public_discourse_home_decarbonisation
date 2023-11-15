@@ -14,6 +14,13 @@ import string
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tag import pos_tag
 
+from nltk import pos_tag
+from nltk.corpus import wordnet
+
+nltk.download("punkt")
+nltk.download("averaged_perceptron_tagger")
+nltk.download("wordnet")
+
 
 def remove_urls(text: str) -> str:
     """
@@ -42,25 +49,48 @@ def replace_punctuation_with_space(text: str) -> str:
     return replaced_text.strip()  # Remove leading/trailing spaces
 
 
-def lemmatize_sentence(tokens: list) -> list:
-    """
-    Lemmatizes tokens according to appropriate Part of Speech.
-    Args:
-        tokens: a list of tokens
-    Returns:
-        A list of lemmatized tokens.
-    """
+# def lemmatize_sentence(tokens: list) -> list:
+#     """
+#     Lemmatizes tokens according to appropriate Part of Speech.
+#     Args:
+#         tokens: a list of tokens
+#     Returns:
+#         A list of lemmatized tokens.
+#     """
+#     lemmatizer = WordNetLemmatizer()
+#     lemmatized_tokens = []
+#     for word, tag in pos_tag(tokens):
+#         if tag.startswith("NN"):
+#             pos = "n"
+#         elif tag.startswith("VB"):
+#             pos = "v"
+#         else:
+#             pos = "a"
+#         lemmatized_tokens.append(lemmatizer.lemmatize(word, pos))
+#     return lemmatized_tokens
+
+
+def penn_to_wordnet(pos_tag):
+    if pos_tag.startswith("N"):
+        return wordnet.NOUN
+    elif pos_tag.startswith("V"):
+        return wordnet.VERB
+    elif pos_tag.startswith("R"):
+        return wordnet.ADV
+    elif pos_tag.startswith("J"):
+        return wordnet.ADJ
+    else:
+        return wordnet.NOUN  # Default to NOUN if the part of speech is not recognized
+
+
+def lemmatize_sentence_2(tokens):
     lemmatizer = WordNetLemmatizer()
-    lemmatized_tokens = []
-    for word, tag in pos_tag(tokens):
-        if tag.startswith("NN"):
-            pos = "n"
-        elif tag.startswith("VB"):
-            pos = "v"
-        else:
-            pos = "a"
-        lemmatized_tokens.append(lemmatizer.lemmatize(word, pos))
-    return lemmatized_tokens
+    pos_tags = pos_tag(tokens)
+    lemmatized_words_dict = {
+        word: lemmatizer.lemmatize(word, penn_to_wordnet(pos_tag))
+        for word, pos_tag in pos_tags
+    }
+    return lemmatized_words_dict
 
 
 def process_text(text: str) -> str:
@@ -84,13 +114,7 @@ def process_text(text: str) -> str:
 
     text = replace_punctuation_with_space(text)
 
-    # Lemmatize
-    tokens = word_tokenize(text)
-    lemmatized_tokens = lemmatize_sentence(tokens)
-
-    # Join lemmatized tokens back into a single string
-    processed_text = " ".join(lemmatized_tokens)
-    return processed_text
+    return text
 
 
 def create_ngram_frequencies(tokens: list, n: int) -> list:
