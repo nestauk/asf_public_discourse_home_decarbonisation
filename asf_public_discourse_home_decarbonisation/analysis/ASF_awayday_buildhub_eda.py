@@ -182,16 +182,14 @@ raw_bigram_freq_dist = FreqDist(bigrams(filtered_tokens))
 raw_trigram_freq_dist = FreqDist(trigrams(filtered_tokens))
 
 total_bigrams = sum(raw_bigram_freq_dist.values())
-# bigram_threshold = round(total_bigrams * 0.0002)
-bigram_threshold = 100
+bigram_threshold = round(total_bigrams * 0.0002)
 bigram_freq_dist = {
     bigram: freq
     for bigram, freq in raw_bigram_freq_dist.items()
     if freq >= bigram_threshold
 }
 total_trigrams = sum(raw_trigram_freq_dist.values())
-# trigram_threshold = round(max(3, total_trigrams * 0.00005))
-trigram_threshold = 20
+trigram_threshold = round(max(3, total_trigrams * 0.00005))
 trigram_freq_dist = {
     trigram: freq
     for trigram, freq in raw_trigram_freq_dist.items()
