@@ -1,3 +1,7 @@
+# %% [markdown]
+# ## Package imports
+
+# %%
 import numpy as np
 import pandas as pd
 import itertools
@@ -11,6 +15,7 @@ nltk.download("stopwords")
 import matplotlib.pyplot as plt
 import altair as alt
 import os
+from collections import Counter
 import asf_public_discourse_home_decarbonisation.utils.plotting_utils as pu
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import (
     get_first_attempt_mse_data,
@@ -35,7 +40,7 @@ from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 # Choose one category/sub-forum from the list below
 # list_of_categories_collected = ["green-ethical-moneysaving", "lpg-heating-oil-solid-other-fuels", "is-this-quote-fair",  "energy"]
 category = "green-ethical-moneysaving"
-mse_data = get_mse_category_data(category)
+mse_data = get_mse_category_data(category, "2023_11_15")
 
 # %%
 # Alternatively comment the code in the cell above, and uncomment this cell to get a sample of data
@@ -50,13 +55,13 @@ os.makedirs(MSE_FIGURES_PATH, exist_ok=True)
 mse_data.head()
 
 # %%
-len(mse_data)
-
-# %%
-len(mse_data.drop_duplicates())
+len(mse_data), len(mse_data.drop_duplicates())
 
 # %%
 mse_data["category"].unique()
+
+# %%
+
 
 # %% [markdown]
 # ## Basic Processing
@@ -96,7 +101,37 @@ mse_data["processed_title"] = mse_data["title"].apply(lambda x: process_text(x))
 stopwords = english_stopwords_definition()
 
 # %% [markdown]
+# More processing:
+
+# %%
+import re
+
+
+def remove_text_after_patterns(text):
+    # Use re.sub() to replace any pattern of the form "xxx writes: " with an empty string
+    result = re.sub(r"\w+ wrote »", " ", text)
+    return result
+
+
+# Example usage
+input_text = "John writes: Hello, how are you doing today? Jane_123 writes: I'm doing well. What about you?"
+result_text = remove_text_after_patterns(input_text)
+
+# %%
+mse_data["processed_title"] = mse_data["processed_title"].apply(
+    remove_text_after_patterns
+)
+
+# %%
+mse_data["processed_text"] = mse_data["processed_text"].apply(
+    remove_text_after_patterns
+)
+
+# %% [markdown]
 # Creating tokens from title and text of post/replies:
+
+# %%
+vectorizing_tokenization = np.vectorize(lambda sentence: word_tokenize(sentence))
 
 # %%
 mse_data["tokens_title"] = mse_data["processed_title"].apply(word_tokenize)
@@ -137,6 +172,9 @@ all_tokens
 # %%
 lemmas_dictionary = lemmatize_sentence_2(list(all_tokens["tokens"]))
 
+# %%
+
+
 # %% [markdown]
 # Lemmatising tokens:
 
@@ -152,7 +190,7 @@ replace_words_vec = np.vectorize(
 mse_data["processed_title"] = replace_words_vec(mse_data["processed_title"])
 
 # %%
-mse_data["processed_text"] = replace_words_vec(mse_data["processed_text"])
+# mse_data["processed_text"] = replace_words_vec(mse_data["processed_text"])
 
 # %% [markdown]
 # Recreating tokens:
@@ -161,7 +199,7 @@ mse_data["processed_text"] = replace_words_vec(mse_data["processed_text"])
 mse_data["tokens_title"] = mse_data["processed_title"].apply(word_tokenize)
 
 # %%
-mse_data["tokens_text"] = mse_data["processed_text"].apply(word_tokenize)
+# mse_data["tokens_text"] = mse_data["processed_text"].apply(word_tokenize)
 
 # %% [markdown]
 # Removing stopwords from lists of tokens:
@@ -192,217 +230,6 @@ mse_data["trigrams_text"] = mse_data.apply(
 mse_data["trigrams_title"] = mse_data.apply(
     lambda x: create_ngram_frequencies(x["tokens_title"], n=3), axis=1
 )
-
-# %% [markdown]
-# ## Exploratory data analysis
-
-# %% [markdown]
-# ### Range of dates
-
-# %%
-mse_data["datetime"].min(), mse_data["datetime"].max(), mse_data["datetime"].median()
-
-# %% [markdown]
-# Number of posts per year
-
-# %%
-posts_per_year = mse_data.groupby("year")[["id"]].nunique()
-posts_per_year.columns = ["number_posts"]
-posts_per_year.reset_index(inplace=True)
-
-# %%
-chart = (
-    alt.Chart(posts_per_year)
-    .mark_bar()
-    .encode(
-        y=alt.Y("year:O", title="Year"),
-        x=alt.X("number_posts:Q", title="Number of posts"),
-        color=alt.value(pu.NESTA_COLOURS[1]),
-    )
-    .properties(width=400, height=300)
-    .interactive()
-)
-chart = pu.configure_plots(chart, "Number of posts per year", "")
-chart.save(f"{MSE_FIGURES_PATH}/category_{category}_posts_per_year.html")
-chart
-
-
-# %% [markdown]
-# ### Users
-#
-# 1. Double checking there is a 1-1 correspondence between `username` and `user_id`:
-#
-# Aparently, if a user deletes their profile, the username appears as `[Deleted User]` but we can still use the `user_id` to track posts across this user.
-#
-# If we want to uniquely identify users, we should use the `user_id`.
-
-# %%
-check_id_username = mse_data.groupby("username")[["user_id"]].nunique()
-
-# %%
-check_id_username[check_id_username["user_id"] > 1]
-
-# %%
-mse_data[mse_data["username"] == "[Deleted User]"]
-
-# %%
-check_id_username2 = mse_data.groupby("user_id")[["username"]].nunique()
-
-# %%
-check_id_username2[check_id_username2["username"] > 1]
-
-# %% [markdown]
-# 2. Number of interactions per user (considering the whole MSE), where an interaction is a post + a reply; number of posts and number of replies
-
-# %% [markdown]
-# Number of interactions:
-
-# %%
-interactions_per_user_overall = mse_data[["user_id", "n_posts_user"]]
-
-# due to data collection at different times, numbers might differ, so we need to remove duplicates for each user
-interactions_per_user_overall.sort_values("n_posts_user", ascending=False)
-interactions_per_user_overall.drop_duplicates("user_id", keep="first", inplace=True)
-
-# %%
-interactions_per_user_overall = (
-    interactions_per_user_overall.groupby("n_posts_user")
-    .size()
-    .reset_index(name="user_count")
-)
-
-# %%
-plt.figure(figsize=(8, 4))
-plt.hist(
-    interactions_per_user_overall["n_posts_user"], bins=30, color=pu.NESTA_COLOURS[0]
-)
-plt.xlabel("Number of posts and replies")
-plt.ylabel("Number of users")
-plt.title("Number of users with a given number of posts and replies")
-plt.yscale("log")
-plt.savefig(f"{MSE_FIGURES_PATH}/category_{category}_interactions_per_user.png")
-
-
-# %% [markdown]
-# Number of posts:
-
-# %%
-posts_per_user_overall = mse_data[mse_data["is_original_post"] == 1][
-    ["user_id", "n_posts_user"]
-]
-
-# due to data collection at different times, numbers might differ, so we need to remove duplicates for each user
-posts_per_user_overall.sort_values("n_posts_user", ascending=False)
-posts_per_user_overall.drop_duplicates("user_id", keep="first", inplace=True)
-
-# %%
-posts_per_user_overall = (
-    posts_per_user_overall.groupby("n_posts_user").size().reset_index(name="user_count")
-)
-
-# %%
-plt.figure(figsize=(8, 4))
-plt.hist(posts_per_user_overall["n_posts_user"], bins=30, color=pu.NESTA_COLOURS[0])
-plt.xlabel("Number of posts")
-plt.ylabel("Number of users")
-plt.title("Number of users with a given number of posts")
-plt.yscale("log")
-plt.savefig(f"{MSE_FIGURES_PATH}/category_{category}_posts_per_user.png")
-
-
-# %% [markdown]
-# Number of replies:
-
-# %%
-replies_per_user_overall = mse_data[mse_data["is_original_post"] == 0][
-    ["user_id", "n_posts_user"]
-]
-
-# due to data collection at different times, numbers might differ, so we need to remove duplicates for each user
-replies_per_user_overall.sort_values("n_posts_user", ascending=False)
-replies_per_user_overall.drop_duplicates("user_id", keep="first", inplace=True)
-
-# %%
-replies_per_user_overall = (
-    replies_per_user_overall.groupby("n_posts_user")
-    .size()
-    .reset_index(name="user_count")
-)
-
-# %%
-replies_per_user_overall
-
-# %%
-plt.figure(figsize=(8, 4))
-plt.hist(replies_per_user_overall["n_posts_user"], bins=30, color=pu.NESTA_COLOURS[0])
-plt.xlabel("Number of replies")
-plt.ylabel("Number of users")
-plt.title("Number of users with a given number of replies")
-plt.yscale("log")
-plt.savefig(f"{MSE_FIGURES_PATH}/category_{category}_replies_per_user.png")
-
-
-# %% [markdown]
-# 3. Number of posts per user (considering collected data)
-
-# %%
-posts_per_user_data_collected = (
-    mse_data[mse_data["is_original_post"] == 1].groupby("user_id")[["id"]].nunique()
-)
-
-# %%
-posts_per_user_data_collected.reset_index(inplace=True)
-posts_per_user_data_collected.columns = ["user", "n_posts_user"]
-
-# %%
-posts_per_user_data_collected = (
-    posts_per_user_data_collected.groupby("n_posts_user")
-    .size()
-    .reset_index(name="user_count")
-)
-
-# %%
-plt.figure(figsize=(8, 4))
-plt.hist(
-    posts_per_user_data_collected["n_posts_user"], bins=30, color=pu.NESTA_COLOURS[0]
-)
-plt.xlabel("Number of posts")
-plt.ylabel("Number of users")
-plt.title("Number of users with a given number of posts (in data collected)")
-plt.savefig(f"{MSE_FIGURES_PATH}/category_{category}_posts_per_user_data_collected.png")
-
-
-# %% [markdown]
-# 4. Number of replies per user
-
-# %%
-replies_per_user_data_collected = (
-    mse_data[mse_data["is_original_post"] == 0].groupby("user_id")[["id"]].count()
-)
-
-# %%
-replies_per_user_data_collected.reset_index(inplace=True)
-replies_per_user_data_collected.columns = ["user", "n_replies_user"]
-
-# %%
-replies_per_user_data_collected = (
-    replies_per_user_data_collected.groupby("n_replies_user")
-    .size()
-    .reset_index(name="user_count")
-)
-
-# %%
-plt.figure(figsize=(8, 4))
-plt.hist(
-    posts_per_user_data_collected["n_posts_user"], bins=30, color=pu.NESTA_COLOURS[0]
-)
-plt.xlabel("Number of replies")
-plt.ylabel("Number of users")
-plt.title("Number of users with a given number of replies (in data collected)")
-plt.savefig(
-    f"{MSE_FIGURES_PATH}/category_{category}_replies_per_user_data_collected.png"
-)
-
 
 # %% [markdown]
 # ## How many posts contain certain keywords?
@@ -501,38 +328,13 @@ number_posts_containing_keywords(
 
 # %%
 number_ngrams_wordcloud = 30
+min_frequency_tokens = 100
+min_frequency_bigrams = 50
+min_frequency_trigrams = 10
+top_ngrams_barplot = 10
+
 
 # %%
-# def frequency_tokens(data, tokens_col):
-
-#     # Remove records looking exactly the same
-#     tokens = data[[tokens_col]].drop_duplicates()
-
-#     # Each line corresponds to a token (hence, it includes repetitions)
-#     tokens = tokens.explode(tokens_col)
-#     tokens["count"]=1
-
-#     # Computing a count for each token
-#     tokens = tokens.groupby(tokens_col, as_index=False).sum()
-
-#     # Creating a dictionary of frequencies
-#     freq_tokens = tokens.set_index(tokens_col)["count"].to_dict()
-
-#     return freq_tokens
-
-# %%
-# def frequency_ngrams(data, ngrams_col):
-#     ngrams = ngrams[ngrams_col].tolist()
-#     ngrams= list(itertools.chain.from_iterable(ngrams))
-
-#     frequency_ngrams = nltk.FreqDist(ngrams)
-
-#     return frequency_ngrams
-
-# %%
-from collections import Counter
-
-
 def frequency_ngrams(data, ngrams_col):
     ngrams = [ng for sublist in data[ngrams_col].tolist() for ng in sublist]
     frequency_ngrams = Counter(ngrams)
@@ -541,10 +343,10 @@ def frequency_ngrams(data, ngrams_col):
 
 
 # %% [markdown]
-# ## All data
+# ### All data
 
 # %% [markdown]
-# ### Titles: most common keywords
+# #### Titles: most common keywords
 
 # %%
 freq_tokens_titles = frequency_ngrams(
@@ -553,22 +355,24 @@ freq_tokens_titles = frequency_ngrams(
 
 # %%
 freq_tokens_titles = {
-    key: value for key, value in freq_tokens_titles.items() if value > 10
+    key: value
+    for key, value in freq_tokens_titles.items()
+    if value > min_frequency_tokens
 }
 len(freq_tokens_titles)
-
 
 # %%
 pu.create_wordcloud(
     freq_tokens_titles,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordclouds_tokens_titles",
 )
 
 
 # %% [markdown]
-# ### Titles: most common bigrams
+# #### Titles: most common bigrams
 
 # %%
 freq_bigrams_titles = frequency_ngrams(
@@ -577,18 +381,42 @@ freq_bigrams_titles = frequency_ngrams(
 
 # %%
 freq_bigrams_titles = {
-    key: value for key, value in freq_bigrams_titles.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_titles.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_titles)
 
 
 # %%
 pu.create_wordcloud(
-    freq_bigrams_titles, 30, stopwords, f"category_{category}_wordcloud_bigrams_titles"
+    freq_bigrams_titles,
+    number_ngrams_wordcloud,
+    stopwords,
+    category,
+    f"category_{category}_wordcloud_bigrams_titles",
 )
 
+# %%
+freq_bigrams_titles = nltk.FreqDist(freq_bigrams_titles)
+most_common = dict(freq_bigrams_titles.most_common(top_ngrams_barplot))
+plt.figure(figsize=(8, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_titles.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Titles: most common trigrams
+# #### Titles: most common trigrams
 
 # %%
 freq_trigrams_titles = frequency_ngrams(
@@ -597,26 +425,51 @@ freq_trigrams_titles = frequency_ngrams(
 
 # %%
 freq_trigrams_titles = {
-    key: value for key, value in freq_trigrams_titles.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_titles.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_titles)
 
 # %%
 pu.create_wordcloud(
     freq_trigrams_titles,
-    15,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_trigrams_titles",
 )
 
+# %%
+freq_trigrams_titles = nltk.FreqDist(freq_trigrams_titles)
+most_common = dict(freq_trigrams_titles.most_common(top_ngrams_barplot))
+plt.figure(figsize=(8, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_titles.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Posts & replies text: most common keywords
+# #### Posts & replies text: most common keywords
 
 # %%
 freq_tokens_text = frequency_ngrams(mse_data, "tokens_text")
 
 # %%
-freq_tokens_text = {key: value for key, value in freq_tokens_text.items() if value > 10}
+freq_tokens_text = {
+    key: value
+    for key, value in freq_tokens_text.items()
+    if value > min_frequency_tokens
+}
 len(freq_tokens_text)
 
 # %%
@@ -624,35 +477,62 @@ pu.create_wordcloud(
     freq_tokens_text,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordclouds_tokens_text",
 )
 
 # %% [markdown]
-# ### Posts & replies text: most common bigrams
+# #### Posts & replies text: most common bigrams
 
 # %%
 freq_bigrams_text = frequency_ngrams(mse_data, "bigrams_text")
 
 # %%
 freq_bigrams_text = {
-    key: value for key, value in freq_bigrams_text.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_text.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_text)
 
 # %%
 pu.create_wordcloud(
-    freq_bigrams_text, 30, stopwords, f"category_{category}_wordcloud_bigrams_text"
+    freq_bigrams_text,
+    number_ngrams_wordcloud,
+    stopwords,
+    category,
+    f"category_{category}_wordcloud_bigrams_text",
 )
 
+# %%
+freq_bigrams_text = nltk.FreqDist(freq_bigrams_text)
+most_common = dict(freq_bigrams_text.most_common(top_ngrams_barplot))
+plt.figure(figsize=(8, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_text.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Posts & replies text: most common trigrams
+# #### Posts & replies text: most common trigrams
 
 # %%
 freq_trigrams_text = frequency_ngrams(mse_data, "trigrams_text")
 
 # %%
 freq_trigrams_text = {
-    key: value for key, value in freq_trigrams_text.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_text.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_text)
 
@@ -661,11 +541,30 @@ pu.create_wordcloud(
     freq_trigrams_text,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_trigrams_text",
 )
 
+# %%
+freq_trigrams_text = nltk.FreqDist(freq_trigrams_text)
+most_common = dict(freq_trigrams_text.most_common(top_ngrams_barplot))
+plt.figure(figsize=(8, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_text.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Just post text (no replies): most common keywords
+# #### Just post text (no replies): most common keywords
 # op = original post
 
 # %%
@@ -674,16 +573,22 @@ tokens_text_op = frequency_ngrams(
 )
 
 # %%
-tokens_text_op = {key: value for key, value in tokens_text_op.items() if value > 10}
+tokens_text_op = {
+    key: value for key, value in tokens_text_op.items() if value > min_frequency_tokens
+}
 len(tokens_text_op)
 
 # %%
 pu.create_wordcloud(
-    tokens_text_op, 30, stopwords, f"category_{category}_wordclouds_tokens_text_op"
+    tokens_text_op,
+    number_ngrams_wordcloud,
+    stopwords,
+    category,
+    f"category_{category}_wordclouds_tokens_text_op",
 )
 
 # %% [markdown]
-# ### Just post text (no replies): most common bigrams
+# #### Just post text (no replies): most common bigrams
 # op = original post
 
 # %%
@@ -693,7 +598,9 @@ freq_bigrams_text_op = frequency_ngrams(
 
 # %%
 freq_bigrams_text_op = {
-    key: value for key, value in freq_bigrams_text_op.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_text_op.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_text_op)
 
@@ -702,11 +609,30 @@ pu.create_wordcloud(
     freq_bigrams_text_op,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_bigrams_text_op",
 )
 
+# %%
+freq_bigrams_text_op = nltk.FreqDist(freq_bigrams_text_op)
+most_common = dict(freq_bigrams_text_op.most_common(top_ngrams_barplot))
+plt.figure(figsize=(8, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_text_op.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Just post text (no replies): most common trigrams
+# #### Just post text (no replies): most common trigrams
 # op = original post
 
 # %%
@@ -716,23 +642,44 @@ freq_trigrams_text_op = frequency_ngrams(
 
 # %%
 freq_trigrams_text_op = {
-    key: value for key, value in freq_trigrams_text_op.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_text_op.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_text_op)
 
 # %%
 pu.create_wordcloud(
     freq_trigrams_text_op,
-    30,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_trigrams_text_op",
 )
 
-# %% [markdown]
-# ## Heat Pump data
+# %%
+freq_trigrams_text_op = nltk.FreqDist(freq_trigrams_text_op)
+most_common = dict(freq_trigrams_text_op.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_text_op.png",
+    )
+)
+plt.show()
 
 # %% [markdown]
-# ### Titles (when HPs mentioned): most common keywords
+# ### Filter: Heat Pump data
+
+# %% [markdown]
+# #### Titles (when HPs mentioned): most common keywords
 
 # %%
 hp_data = mse_data[
@@ -747,20 +694,17 @@ freq_tokens_titles_hp = frequency_ngrams(
 
 # %%
 freq_tokens_titles_hp = {
-    key: value for key, value in freq_tokens_titles_hp.items() if value > 10
+    key: value
+    for key, value in freq_tokens_titles_hp.items()
+    if value > min_frequency_tokens
 }
 len(freq_tokens_titles_hp)
 
 # %%
-pu.create_wordcloud(
-    freq_tokens_titles_hp,
-    number_ngrams_wordcloud,
-    stopwords,
-    f"category_{category}_wordclouds_tokens_titles_hp",
-)
+# pu.create_wordcloud(freq_tokens_titles_hp, number_ngrams_wordcloud, stopwords, category, f"category_{category}_wordclouds_tokens_titles_hp")
 
 # %% [markdown]
-# ### Titles (when HPs mentioned): most common bigrams
+# #### Titles (when HPs mentioned): most common bigrams
 
 # %%
 freq_bigrams_titles_hp = frequency_ngrams(
@@ -769,20 +713,41 @@ freq_bigrams_titles_hp = frequency_ngrams(
 
 # %%
 freq_bigrams_titles_hp = {
-    key: value for key, value in freq_bigrams_titles_hp.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_titles_hp.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_titles_hp)
 
 # %%
 pu.create_wordcloud(
     freq_bigrams_titles_hp,
-    30,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_bigrams_titles_hp",
 )
 
+# %%
+freq_bigrams_titles_hp = nltk.FreqDist(freq_bigrams_titles_hp)
+most_common = dict(freq_bigrams_titles_hp.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_titles_hp.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Titles (when HPs mentioned): most common trigrams
+# #### Titles (when HPs mentioned): most common trigrams
 
 # %%
 freq_trigrams_titles_hp = frequency_ngrams(
@@ -791,7 +756,9 @@ freq_trigrams_titles_hp = frequency_ngrams(
 
 # %%
 freq_trigrams_titles_hp = {
-    key: value for key, value in freq_trigrams_titles_hp.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_titles_hp.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_titles_hp)
 
@@ -800,35 +767,62 @@ pu.create_wordcloud(
     freq_trigrams_titles_hp,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_trigrams_titles_hp",
 )
 
+# %%
+freq_trigrams_titles_hp = nltk.FreqDist(freq_trigrams_titles_hp)
+most_common = dict(freq_trigrams_titles_hp.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_titles_hp.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Posts & replies text (when HPs mentioned): most common keywords
+# #### Posts & replies text (when HPs mentioned): most common keywords
 
 # %%
 freq_tokens_text_hp = frequency_ngrams(hp_data, "tokens_text")
 
 # %%
 freq_tokens_text_hp = {
-    key: value for key, value in freq_tokens_text_hp.items() if value > 10
+    key: value
+    for key, value in freq_tokens_text_hp.items()
+    if value > min_frequency_tokens
 }
 len(freq_tokens_text_hp)
 
 # %%
 pu.create_wordcloud(
-    freq_tokens_text_hp, 30, stopwords, f"category_{category}_wordclouds_tokens_text_hp"
+    freq_tokens_text_hp,
+    number_ngrams_wordcloud,
+    stopwords,
+    category,
+    f"category_{category}_wordclouds_tokens_text_hp",
 )
 
 # %% [markdown]
-# ### Posts & replies text (when HPs mentioned): most common bigrams
+# #### Posts & replies text (when HPs mentioned): most common bigrams
 
 # %%
 freq_bigrams_text_hp = frequency_ngrams(hp_data, "bigrams_text")
 
 # %%
 freq_bigrams_text_hp = {
-    key: value for key, value in freq_bigrams_text_hp.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_text_hp.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_text_hp)
 
@@ -837,34 +831,74 @@ pu.create_wordcloud(
     freq_bigrams_text_hp,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_bigrams_text_hp",
 )
 
+# %%
+freq_bigrams_text_hp = nltk.FreqDist(freq_bigrams_text_hp)
+most_common = dict(freq_bigrams_text_hp.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_text_hp.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Posts & replies text (when HPs mentioned): most common trigrams
+# #### Posts & replies text (when HPs mentioned): most common trigrams
 
 # %%
 freq_trigrams_text_hp = frequency_ngrams(hp_data, "trigrams_text")
 
 # %%
 freq_trigrams_text_hp = {
-    key: value for key, value in freq_trigrams_text_hp.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_text_hp.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_text_hp)
 
 # %%
 pu.create_wordcloud(
     freq_trigrams_text_hp,
-    30,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_trigrams_text_hp",
 )
 
-# %% [markdown]
-# ## Cost data
+# %%
+freq_trigrams_text_hp = nltk.FreqDist(freq_trigrams_text_hp)
+most_common = dict(freq_trigrams_text_hp.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_text_hp.png",
+    )
+)
+plt.show()
 
 # %% [markdown]
-# ### Titles (when cost mentioned): most common keywords
+# ### Filter: Cost data
+
+# %% [markdown]
+# #### Titles (when cost mentioned): most common keywords
 
 # %%
 cost_data = mse_data[
@@ -879,7 +913,9 @@ freq_tokens_titles_cost = frequency_ngrams(
 
 # %%
 freq_tokens_titles_cost = {
-    key: value for key, value in freq_tokens_titles_cost.items() if value > 10
+    key: value
+    for key, value in freq_tokens_titles_cost.items()
+    if value > min_frequency_tokens
 }
 len(freq_tokens_titles_cost)
 
@@ -888,11 +924,12 @@ pu.create_wordcloud(
     freq_tokens_titles_cost,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordclouds_tokens_titles_cost",
 )
 
 # %% [markdown]
-# ### Titles (when cost mentioned): most common bigrams
+# #### Titles (when cost mentioned): most common bigrams
 
 # %%
 freq_bigrams_titles_cost = frequency_ngrams(
@@ -901,20 +938,41 @@ freq_bigrams_titles_cost = frequency_ngrams(
 
 # %%
 freq_bigrams_titles_cost = {
-    key: value for key, value in freq_bigrams_titles_cost.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_titles_cost.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_titles_cost)
 
 # %%
 pu.create_wordcloud(
     freq_bigrams_titles_cost,
-    30,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_bigrams_titles_cost",
 )
 
+# %%
+freq_bigrams_titles_cost = nltk.FreqDist(freq_bigrams_titles_cost)
+most_common = dict(freq_bigrams_titles_cost.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_titles_cost.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Titles (when cost mentioned): most common trigrams
+# #### Titles (when cost mentioned): most common trigrams
 
 # %%
 freq_trigrams_titles_cost = frequency_ngrams(
@@ -924,7 +982,9 @@ freq_trigrams_titles_cost = frequency_ngrams(
 
 # %%
 freq_trigrams_titles_cost = {
-    key: value for key, value in freq_trigrams_titles_cost.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_titles_cost.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_titles_cost)
 
@@ -933,38 +993,62 @@ pu.create_wordcloud(
     freq_trigrams_titles_cost,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_trigrams_titles_cost",
 )
 
+# %%
+freq_trigrams_titles_cost = nltk.FreqDist(freq_trigrams_titles_cost)
+most_common = dict(freq_trigrams_titles_cost.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_titles_cost.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Posts & replies text (when cost mentioned): most common keywords
+# #### Posts & replies text (when cost mentioned): most common keywords
 
 # %%
 freq_tokens_text_cost = frequency_ngrams(cost_data, "tokens_text")
 
 # %%
 freq_tokens_text_cost = {
-    key: value for key, value in freq_tokens_text_cost.items() if value > 10
+    key: value
+    for key, value in freq_tokens_text_cost.items()
+    if value > min_frequency_tokens
 }
 len(freq_tokens_text_cost)
 
 # %%
 pu.create_wordcloud(
     freq_tokens_text_cost,
-    30,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordclouds_tokens_text_cost",
 )
 
 # %% [markdown]
-# ### Posts & replies text (when cost mentioned): most common bigrams
+# #### Posts & replies text (when cost mentioned): most common bigrams
 
 # %%
 freq_bigrams_text_cost = frequency_ngrams(cost_data, "bigrams_text")
 
 # %%
 freq_bigrams_text_cost = {
-    key: value for key, value in freq_bigrams_text_cost.items() if value > 10
+    key: value
+    for key, value in freq_bigrams_text_cost.items()
+    if value > min_frequency_bigrams
 }
 len(freq_bigrams_text_cost)
 
@@ -973,27 +1057,70 @@ pu.create_wordcloud(
     freq_bigrams_text_cost,
     number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_bigrams_text_cost",
 )
 
+# %%
+freq_bigrams_text_cost = nltk.FreqDist(freq_bigrams_text_cost)
+most_common = dict(freq_bigrams_text_cost.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} bigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_bigrams_text_cost.png",
+    )
+)
+plt.show()
+
 # %% [markdown]
-# ### Posts & replies text (when cost mentioned): most common trigrams
+# #### Posts & replies text (when cost mentioned): most common trigrams
 
 # %%
 freq_trigrams_text_cost = frequency_ngrams(cost_data, "trigrams_text")
 
 # %%
 freq_trigrams_text_cost = {
-    key: value for key, value in freq_trigrams_text_cost.items() if value > 10
+    key: value
+    for key, value in freq_trigrams_text_cost.items()
+    if value > min_frequency_trigrams
 }
 len(freq_trigrams_text_cost)
 
 # %%
 pu.create_wordcloud(
     freq_bigrams_text_cost,
-    30,
+    number_ngrams_wordcloud,
     stopwords,
+    category,
     f"category_{category}_wordcloud_bigrams_text_cost",
 )
+
+# %%
+freq_trigrams_text_cost = nltk.FreqDist(freq_trigrams_text_cost)
+most_common = dict(freq_trigrams_text_cost.most_common(top_ngrams_barplot))
+plt.figure(figsize=(12, 6))
+plt.barh(
+    list(most_common.keys()), list(most_common.values()), color=pu.NESTA_COLOURS[0]
+)
+plt.xlabel("Frequency")
+plt.title(f"Top {top_ngrams_barplot} trigrams")
+plt.tight_layout()
+plt.savefig(
+    os.path.join(
+        MSE_FIGURES_PATH,
+        f"category_{category}_top_{top_ngrams_barplot}_trigrams_text_cost.png",
+    )
+)
+plt.show()
+
+# %%
+
 
 # %%
