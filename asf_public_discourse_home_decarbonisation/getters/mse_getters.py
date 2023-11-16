@@ -20,25 +20,44 @@ def get_first_attempt_mse_data() -> pd.DataFrame:
     )
 
 
-def get_mse_category_data(category: str) -> pd.DataFrame:
+def get_mse_category_data(category: str, collection_date: str) -> pd.DataFrame:
     """
     Returns a dataframe with most up to date category/sub-forum data
     """
+    if category == "energy":
+        return load_s3_data(
+            bucket_name=S3_BUCKET,
+            file_path=f"data/mse/outputs/mse_data_category_energy.parquet",
+        )
+
     return load_s3_data(
         bucket_name=S3_BUCKET,
-        file_path=f"data/mse/outputs/mse_data_category_{category}.parquet",
+        file_path=f"data/mse/outputs/mse_data_category_{category}_{collection_date}.parquet",
     )
 
 
-def get_all_mse_data() -> pd.DataFrame:
+def get_all_mse_data(collection_date: str) -> pd.DataFrame:
     """
     Returns a dataframe with data from all categories
     """
-    file_paths = fetch_file_paths_from_s3_folder("data/mse/outputs/")
-
+    categories = [
+        "green-ethical-moneysaving",
+        "lpg-heating-oil-solid-other-fuels",
+        "energy",
+        "is-this-quote-fair",
+    ]
     all_mse_data = pd.DataFrame()
-    for fp in file_paths:
-        aux = load_s3_data(bucket_name=S3_BUCKET, file_path=fp)
+    for cat in categories:
+        if cat != "energy":
+            aux = load_s3_data(
+                bucket_name=S3_BUCKET,
+                file_path=f"data/mse/outputs/mse_data_category_{cat}_{collection_date}.parquet",
+            )
+        else:
+            aux = load_s3_data(
+                bucket_name=S3_BUCKET,
+                file_path=f"data/mse/outputs/mse_data_category_energy.parquet",
+            )
         all_mse_data = pd.concat([all_mse_data, aux])
 
     return all_mse_data.drop_duplicates().reset_index(drop=True)
