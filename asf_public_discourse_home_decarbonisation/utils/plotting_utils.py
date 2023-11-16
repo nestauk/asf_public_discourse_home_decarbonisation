@@ -104,7 +104,7 @@ def finding_path_to_font(font_name: str):
     return font_files[0]
 
 
-def create_wordcloud(frequencies, max_words, stopwords, fig_name):
+def create_wordcloud(frequencies, max_words, stopwords, category, fig_name):
     """
     Creates word cloud based on frequencies.
     Args:
@@ -131,7 +131,7 @@ def create_wordcloud(frequencies, max_words, stopwords, fig_name):
     plt.axis("off")
 
     plt.savefig(
-        f"{MSE_FIG_PATH}/{fig_name}.png",
+        f"{MSE_FIG_PATH}/{category}/{fig_name}.png",
         dpi=600,
     )
 
