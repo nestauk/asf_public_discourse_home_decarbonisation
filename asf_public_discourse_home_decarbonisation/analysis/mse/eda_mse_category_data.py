@@ -8,6 +8,15 @@ This script performs exploratory data analysis on Money Saving Expert data, by l
 
 Computed statistics are logged and appear in your terminal.
 Plots are saved in the folder `asf_public_discourse_home_decarbonisation/outputs/figures/mse/`.
+
+To run this script:
+`python asf_public_discourse_home_decarbonisation/analysis/mse/eda_mse_category_data.py`
+
+To change category or date/time range, use the following arguments:
+`python asf_public_discourse_home_decarbonisation/analysis/mse/eda_mse_category_data.py --category <category> --collection_date_time <collection_date_time>`
+where
+<category>: category or sub-forum to be analysed, e.g. "energy", "lpg-heating-oil-solid-other-fuels", etc.
+<collection_date_time>: data collection date/time in the format YYYY_MM_DD
 """
 
 # ## Package imports
