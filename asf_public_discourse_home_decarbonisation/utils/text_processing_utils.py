@@ -1,9 +1,9 @@
 """
-Utils for processing text.
+Utils for processing text data.
 """
 
+import re
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from nltk import ngrams
 import nltk
 
@@ -20,6 +20,8 @@ from nltk.corpus import wordnet
 nltk.download("punkt")
 nltk.download("averaged_perceptron_tagger")
 nltk.download("wordnet")
+import pandas as pd
+from collections import Counter
 
 
 def remove_urls(text: str) -> str:
@@ -49,28 +51,31 @@ def replace_punctuation_with_space(text: str) -> str:
     return replaced_text.strip()  # Remove leading/trailing spaces
 
 
-# def lemmatize_sentence(tokens: list) -> list:
-#     """
-#     Lemmatizes tokens according to appropriate Part of Speech.
-#     Args:
-#         tokens: a list of tokens
-#     Returns:
-#         A list of lemmatized tokens.
-#     """
-#     lemmatizer = WordNetLemmatizer()
-#     lemmatized_tokens = []
-#     for word, tag in pos_tag(tokens):
-#         if tag.startswith("NN"):
-#             pos = "n"
-#         elif tag.startswith("VB"):
-#             pos = "v"
-#         else:
-#             pos = "a"
-#         lemmatized_tokens.append(lemmatizer.lemmatize(word, pos))
-#     return lemmatized_tokens
+def remove_text_after_patterns(text: str) -> str:
+    """
+    Removes pattern of the form "xxx writes: ".
+
+    Args:
+        text (str): text to be cleaned
+
+    Returns:
+        str: cleaned text
+    """
+    # We use re.sub() to replace the pattern with an empty string
+    result = re.sub(r"\w+ wrote »", " ", text)
+    return result
 
 
-def penn_to_wordnet(pos_tag):
+def identify_part_of_spech(pos_tag: str) -> str:
+    """
+    Convert the tag given by nltk.pos_tag to the tag used by wordnet.
+
+    Args:
+        pos_tag (str): NLTk part of speach tag
+
+    Returns:
+        str: WordNet part os speach tag
+    """
     if pos_tag.startswith("N"):
         return wordnet.NOUN
     elif pos_tag.startswith("V"):
@@ -83,11 +88,20 @@ def penn_to_wordnet(pos_tag):
         return wordnet.NOUN  # Default to NOUN if the part of speech is not recognized
 
 
-def lemmatize_sentence_2(tokens):
+def lemmatize_sentence(tokens: list):
+    """
+    Lemmatizes tokens using WordNetLemmatizer.
+
+    Args:
+        tokens (list): a list of tokens
+
+    Returns:
+        list: a list of lemmatised tokens
+    """
     lemmatizer = WordNetLemmatizer()
     pos_tags = pos_tag(tokens)
     lemmatized_words_dict = {
-        word: lemmatizer.lemmatize(word, penn_to_wordnet(pos_tag))
+        word: lemmatizer.lemmatize(word, identify_part_of_spech(pos_tag))
         for word, pos_tag in pos_tags
     }
     return lemmatized_words_dict
@@ -111,6 +125,8 @@ def process_text(text: str) -> str:
     text = remove_urls(text)
 
     text = text.lower()
+
+    text = remove_text_after_patterns(text)
 
     text = replace_punctuation_with_space(text)
 
@@ -148,3 +164,42 @@ def english_stopwords_definition() -> list:
     stopwords_list = sw_nltk + sw_gensim
 
     return stopwords_list
+
+
+def frequency_ngrams(data: pd.DataFrame, ngrams_col: str) -> Counter:
+    """
+    Computes the frequency of ngrams.
+
+    Args:
+        data (pd.DataFrame): Dataframe containing the ngram data
+        ngrams_col (str): Name of column containing the ngrams
+
+    Returns:
+        Counter: The counter containing the frequency of ngrams
+    """
+    ngrams = [ng for sublist in data[ngrams_col].tolist() for ng in sublist]
+    frequency_ngrams = Counter(ngrams)
+
+    return frequency_ngrams
+
+
+def identify_n_gram_type(frequency_dict: dict) -> str:
+    """
+    Identifies the type of n-gram based on the size of the n-gram.
+
+    Args:
+        frequency_dict (dict): Dictionary containing the frequency of n-grams
+    Returns:
+        str: The type of n-gram e.g. "tokens", "bigrams", "trigrams", "{n}-gram" when n >=4
+    """
+    size_ngram = len(next(iter(frequency_dict)).split(" "))
+    if size_ngram == 1:
+        n_gram_type = "tokens"
+    elif size_ngram == 2:
+        n_gram_type = "bigrams"
+    elif size_ngram == 3:
+        n_gram_type = "trigrams"
+    else:
+        n_gram_type = f"{size_ngram}-gram"
+
+    return n_gram_type
