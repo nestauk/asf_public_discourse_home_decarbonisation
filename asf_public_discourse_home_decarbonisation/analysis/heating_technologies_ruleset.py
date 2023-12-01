@@ -1,3 +1,12 @@
+# Dictionary for mapping heating technology terms to specific categories.
+# This ruleset is used to categorise and tag text data based on the occurrence of certain keywords.
+# Each entry in the list is a dictionary with two keys:
+# - 'value': a regular expression pattern that matches specific terms or phrases related to heating technologies.
+# - 'tag': a string representing the category or tag to be associated with the matched terms.
+# This ruleset is designed to be used in text processing functions to classify and analyse forum posts
+# or other text data based on the mention of different heating technologies.
+# Example usage includes keyword frequency analysis, categorisation of discussion topics, etc.
+
 heating_technologies_ruleset_twitter = [
     {
         "value": "heat pump|heat pumps",

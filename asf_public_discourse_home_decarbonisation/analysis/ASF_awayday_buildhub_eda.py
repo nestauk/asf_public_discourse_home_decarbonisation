@@ -1,6 +1,25 @@
 """
-list of categories: ["119_air_source_heat_pumps_ashp","120_ground_source_heat_pumps_gshp","125_general_alternative_energy_issues","136_underfloor_heating","137_central_heating_radiators","139_boilers_hot_water_tanks","140_other_heating_systems"]
+This script performs an exploratory data analysis on the data collected from BuildHub.
+- It allows us to:
+    - Collect the URLs from posts on a specific category or sub-forum (e.g. https://forum.buildhub.org.uk/forum/119-air-source-heat-pumps-ashp/)
+    - Gives the number of posts in the sub-forum (e.g. 119-air-source-heat-pumps-ashp has 1,000 posts)
+    - Distribution of posts over time
+    - Distribution of number of posts vs number of users
+    - Word cloud of frequently used words in posts
+    - Generate bigram and trigram frequency distributions
+    - Generate bigram and trigram word clouds
+    - Distribution of post lengths
+    - Frequency of selected keywords in posts using the 'heating_technologies_ruleset_twitter' dictionary
+To run this script:
+    'python asf_public_discourse_home_decarbonisation/analysis/ASF_awayday_buildhub_eda.py'
+To change category or date/time range, use the following arguments:
+    `python asf_public_discourse_home_decarbonisation/analysis/ASF_awayday_buildhub_eda.py --category <category> --collection_date_time <collection_date_time>`
+where:
+    <category>: category or sub-forum to be analysed, (e.g. "120_ground_source_heat_pumps_gshp" from a list of possible categories: ["119_air_source_heat_pumps_ashp","120_ground_source_heat_pumps_gshp","125_general_alternative_energy_issues","136_underfloor_heating","137_central_heating_radiators","139_boilers_hot_water_tanks","140_other_heating_systems"])
+    <collection_date_time>: data collection date/time in the format YYMMDD (e.g. 231120)
+The figures are saved in the following directory: 'outputs/figures/buildhub/forum_<category>/'
 """
+# import packages
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Optional, Dict, List
@@ -10,11 +29,7 @@ import re
 from collections import Counter
 import nltk
 from nltk import FreqDist
-from nltk import bigrams, trigrams
-from nltk.corpus import stopwords
 import argparse
-import pandas as pd
-import s3fs
 import os
 from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
@@ -73,12 +88,13 @@ def create_argparser() -> argparse.ArgumentParser:
     return args
 
 
+# This is where script is executed.
 if __name__ == "__main__":
     args = create_argparser()
     category = args.category
     collection_date_time = args.collection_date_time
     BUILDHUB_FIGURES_PATH = os.path.join(
-        PROJECT_DIR, f"outputs/figures/buildhub/forum_+{category}/"
+        PROJECT_DIR, f"outputs/figures/buildhub/forum_{category}/"
     )
     # Ensure the output directory exists
     os.makedirs(BUILDHUB_FIGURES_PATH, exist_ok=True)
@@ -94,7 +110,7 @@ if __name__ == "__main__":
     plot_post_distribution_over_time(
         buildhub_ashp_dataframe, BUILDHUB_FIGURES_PATH, NESTA_COLOURS[0]
     )
-    ########### 2. Number of posts per user ###########
+    ########### 2. Distribution of number of posts vs number of users ###########
     plot_users_post_distribution(buildhub_ashp_dataframe, BUILDHUB_FIGURES_PATH)
     # ######### 3. Word cloud of frequently used words in posts ############
     new_stopwords = [

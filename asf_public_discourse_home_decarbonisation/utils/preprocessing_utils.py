@@ -30,9 +30,6 @@ def preprocess_text(dataframe, custom_stopwords) -> List:
     tokens = text_data.split()
     filtered_tokens = [word for word in tokens if word not in stop_words]
 
-    # Create a frequency distribution of the filtered tokens
-    # freq_dist = FreqDist(filtered_tokens)
-
     return filtered_tokens
 
 
@@ -99,19 +96,60 @@ def wordcloud_preprocess_ngrams(ngram_freq_dists):
 
 ############ 7. Frequency of selected keywords in posts using the dictionary ###########
 # Function to update keyword frequencies
-def update_keyword_frequencies(dataframe, text_column, ruleset):
+def update_keyword_frequencies(dataframe, text_column, ruleset) -> Counter:
+    """
+    Updates and returns the frequency of keywords based on a specified ruleset.
+
+    This function scans through each text entry in a specified column of the DataFrame,
+    searches for occurrences of each keyword as defined in the ruleset, and counts
+    the total number of occurrences of each keyword.
+
+    Args:
+        dataframe (pandas.DataFrame): The DataFrame containing the text data.
+        text_column (str): The name of the column in the DataFrame that contains the text data.
+        ruleset (list of dicts): A list of dictionaries, where each dictionary has 'value' as the
+                                 keyword (regular expression) and 'tag' as the associated tag
+                                 for the keyword.
+
+    Returns:
+        collections.Counter: A Counter object mapping each tag to its frequency across all texts.
+
+    The function uses regular expressions to identify the presence of keywords and is case-insensitive.
+    Each occurrence of a keyword increments the count for its corresponding tag.
+    """
     custom_keyword_counter = Counter()
     for text in dataframe[text_column]:
         for rule in ruleset:
-            if re.search(rule["value"], str(text), re.IGNORECASE):
-                custom_keyword_counter[rule["tag"]] += 1
+            matches = re.findall(rule["value"], str(text), re.IGNORECASE)
+            custom_keyword_counter[rule["tag"]] += len(matches)
     return custom_keyword_counter
 
 
 # Function to prepare DataFrame for plotting
 def prepare_keyword_dataframe(
     keyword_counter, total_rows, min_frequency_threshold=0.0001
-):
+) -> (pd.DataFrame, int):
+    """
+    Prepares a DataFrame for plotting based on keyword frequencies and applies a frequency threshold.
+
+    This function converts a Counter object containing keyword frequencies into a DataFrame.
+    It then filters the DataFrame based on a minimum frequency threshold, which is either a specified
+    percentage of the total number of rows or a fixed minimum count, whichever is higher.
+
+    Args:
+        keyword_counter (collections.Counter): A Counter object with keywords as keys and their
+                                               frequencies as values.
+        total_rows (int): The total number of rows in the original dataset.
+        min_frequency_threshold (float, optional): The minimum frequency threshold as a percentage
+                                                   of total rows. Defaults to 0.0001 (0.01%).
+
+    Returns:
+        tuple:
+            - A pandas.DataFrame containing tags and their frequencies, filtered by the calculated threshold.
+            - An integer representing the frequency threshold used for filtering.
+
+    The DataFrame has columns 'Tag' and 'Frequency'. Tags with frequencies below the threshold are excluded.
+    """
     keyword_df = pd.DataFrame.from_dict(
         keyword_counter, orient="index", columns=["Frequency"]
     ).reset_index()

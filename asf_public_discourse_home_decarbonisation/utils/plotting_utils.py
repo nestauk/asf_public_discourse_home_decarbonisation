@@ -20,8 +20,6 @@ from nltk.probability import FreqDist
 from wordcloud import WordCloud
 from typing import List
 
-
-# ChartType = alt.vegalite.v4.api.Chart
 ChartType = alt.Chart
 # Fonts and colours
 FONT = "Averta"
@@ -384,6 +382,18 @@ def plot_post_length_distribution(
 ############ 7. Frequency of selected keywords in posts using the dictionary ###########
 # Function for vertical bar chart plotting
 def plot_tag_vertical_bar_chart(dataframe, output_path, filename, df_threshold):
+    """
+    Plots and saves a vertical bar chart showing the frequency of selected tags in posts.
+
+    Args:
+        dataframe (pandas.DataFrame): DataFrame containing tag frequencies with columns "Tag" and "Frequency".
+        output_path (str): Directory path to save the output plot.
+        filename (str): Name of the file to save the plot.
+        df_threshold (int): Threshold frequency value for filtering tags.
+
+    This function creates a vertical bar chart where each bar represents a tag and its frequency.
+    Only tags with frequency greater than df_threshold are displayed.
+    """
     plt.figure(figsize=(12, 8))
     sns.barplot(x="Tag", y="Frequency", data=dataframe, palette="winter")
     plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {df_threshold})")
@@ -398,6 +408,18 @@ def plot_tag_vertical_bar_chart(dataframe, output_path, filename, df_threshold):
 
 # Function for horizontal bar chart plotting
 def plot_tag_horizontal_bar_chart(dataframe, output_path, filename, df_threshold):
+    """
+    Plots and saves a horizontal bar chart showing the frequency of selected tags in posts.
+
+    Args:
+        dataframe (pandas.DataFrame): DataFrame containing tag frequencies with columns "Tag" and "Frequency".
+        output_path (str): Directory path to save the output plot.
+        filename (str): Name of the file to save the plot.
+        df_threshold (int): Threshold frequency value for filtering tags.
+
+    This function creates a horizontal bar chart where each bar represents a tag and its frequency.
+    Only tags with frequency greater than df_threshold are displayed.
+    """
     plt.figure(figsize=(12, 8))
     plt.barh(dataframe["Tag"], dataframe["Frequency"], color="blue")
     plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {df_threshold})")
