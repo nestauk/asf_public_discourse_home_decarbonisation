@@ -235,20 +235,28 @@ def plot_users_post_distribution(dataframe, output_path):
     )
     max_bins = 50  # Adjust as needed
     bin_size_fd = min(bin_size_fd, max_bins)
+    post_range = max(post_count_distribution.index) - min(post_count_distribution.index)
+    number_of_bins = post_range / bin_size_fd
     # Create a histogram
     plt.hist(
         post_count_distribution.index,
         bins=bin_size_fd,
         weights=post_count_distribution.values,
     )
-    # Set the x-tick labels to show the number of posts
-    plt.gca().set_xticks(
-        range(
-            0,
-            max(post_count_distribution.index) + 1,
-            max(post_count_distribution.index) // 10,
-        )
-    )
+    # Set the base size for locator based on the number of bins
+    if number_of_bins > 50:
+        base_size = 200
+    elif number_of_bins > 30:
+        base_size = 100
+    elif number_of_bins > 10:
+        base_size = 50
+    else:
+        base_size = 5
+    loc = ticker.MultipleLocator(
+        base=base_size
+    )  # this locator puts ticks at regular intervals
+    plt.gca().xaxis.set_major_locator(loc)
+
     # Set the title and labels
     plt.title("Number of Posts vs Number of Users", fontsize=16)
     plt.xlabel("Number of Posts", fontsize=14)
