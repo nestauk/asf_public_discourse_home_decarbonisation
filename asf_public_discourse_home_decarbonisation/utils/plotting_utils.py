@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import re
 import nltk
+import math
 from nltk.corpus import stopwords
 from nltk.util import bigrams, trigrams
 from collections import Counter
@@ -208,7 +209,7 @@ def plot_post_distribution_over_time(
 
 def plot_users_post_distribution(dataframe, output_path):
     """
-    Creates and saves a plot showing the distribution of the number of posts per user.
+    Creates and saves a plot showing the distribution of the number of posts vs the number of users.
 
     Args:
         dataframe (pandas.DataFrame): The DataFrame containing user post data with a 'username' column.
@@ -219,25 +220,51 @@ def plot_users_post_distribution(dataframe, output_path):
     """
     # Calculate the post counts per user
     user_post_counts = dataframe["username"].value_counts()
-
+    sample_size = user_post_counts.size
+    print("sample size:")
+    print(sample_size)
     # Count how many users have the same number of posts
     post_count_distribution = user_post_counts.value_counts().sort_index()
-
-    # Create the plot
     plt.figure(figsize=(12, 8))
-    ax = sns.barplot(
-        x=post_count_distribution.index,
-        y=post_count_distribution.values,
-        palette="coolwarm",
+    # Apply the Freedman-Diaconis Rule to determine bin size
+    iqr = np.subtract(*np.percentile(post_count_distribution, [75, 25]))
+    multiplier = 2.5  # Increase this for larger bins
+    bin_width_fd = multiplier * iqr * (sample_size ** (-1 / 3))
+    bin_size_fd = math.ceil(
+        (max(post_count_distribution) - min(post_count_distribution)) / bin_width_fd
     )
-    # Customize x-axis ticks
-    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-    # Set plot title and labels
-    plt.title("Distribution of Number of Posts per User")
-    plt.xlabel("Number of Posts")
-    plt.ylabel("Number of Users")
+    max_bins = 50  # Adjust as needed
+    bin_size_fd = min(bin_size_fd, max_bins)
+    # Create a histogram
+    plt.hist(
+        post_count_distribution.index,
+        bins=bin_size_fd,
+        weights=post_count_distribution.values,
+    )
+    # Set the x-tick labels to show the number of posts
+    plt.gca().set_xticks(
+        range(
+            0,
+            max(post_count_distribution.index) + 1,
+            max(post_count_distribution.index) // 10,
+        )
+    )
+    # Set the title and labels
+    plt.title("Number of Posts vs Number of Users", fontsize=16)
+    plt.xlabel("Number of Posts", fontsize=14)
+    plt.ylabel("Number of Users", fontsize=14)
+    # Rotate the x-tick labels for better readability if there are many bars
+    plt.xticks(rotation=90)
+    # Improve the x-axis by setting the tick marks to only show integers
+    plt.yticks(fontsize=12)
 
-    # Save and show the plot
+    # Use a logarithmic scale for the y-axis if needed
+    plt.yscale("log")
+
+    # Set grid lines to help readability
+    plt.grid(axis="y", linestyle="--", linewidth=1.5, alpha=0.7)
+
+    # Show the plot
     plt.tight_layout()
     plt.savefig(os.path.join(output_path, "Post_Count_Distribution.png"))
     plt.show()
