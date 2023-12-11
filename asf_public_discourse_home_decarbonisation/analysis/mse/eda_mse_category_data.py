@@ -235,7 +235,8 @@ def plot_number_replies_per_user(mse_data: pd.DataFrame, category: str):
     not the whole MSE)
 
     Args:
-        mse_data (pd.DataFrame): MSE category/sub-forum
+        mse_data (pd.DataFrame): Money Saving Expert data
+        category (str): MSE category/sub-forum
     """
     replies_per_user_data_collected = (
         mse_data[mse_data["is_original_post"] == 0].groupby("user_id")[["id"]].count()
