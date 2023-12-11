@@ -26,9 +26,9 @@ def remove_urls(text: str) -> str:
     """
     Removes URLs from text.
     Args:
-        text: a string, tipically one or multiple sentences long
+        text (str): a string, tipically one or multiple sentences long
     Returns:
-        text without URLs
+        str: text without URLs
     """
     pattern = r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     cleaned_text = re.sub(pattern, " ", text)
@@ -39,9 +39,9 @@ def replace_punctuation_with_space(text: str) -> str:
     """
     Replaces punctuation with space.
     Args:
-        text: a string, tipically one or multiple sentences long
+        text (str): a string, tipically one or multiple sentences long
     Returns:
-        text wihtout punctuation
+        str: text wihtout punctuation
     """
     pattern = r"[{}]".format(re.escape(string.punctuation))
     replaced_text = re.sub(pattern, " ", text)
@@ -86,7 +86,7 @@ def identify_part_of_speech(pos_tag: str) -> str:
         return wordnet.NOUN  # Default to NOUN if the part of speech is not recognized
 
 
-def lemmatize_sentence(tokens: list):
+def lemmatize_sentence(tokens: list) -> dict:
     """
     Lemmatizes tokens using WordNetLemmatizer.
 
@@ -94,7 +94,7 @@ def lemmatize_sentence(tokens: list):
         tokens (list): a list of tokens
 
     Returns:
-        list: a list of lemmatised tokens
+        dict: a dictionary mapping each token to the corresponding lemmatized token
     """
     lemmatizer = WordNetLemmatizer()
     pos_tags = pos_tag(tokens)
@@ -131,14 +131,14 @@ def process_text(text: str) -> str:
     return text
 
 
-def create_ngram_frequencies(tokens: list, n: int) -> list:
+def create_ngram_from_ordered_tokens(tokens: list, n: int) -> list:
     """
-    Computes frequencies from n-grams.
+    Creates a list of n-grams from a list of ordered tokens.
     Args:
         tokens: a list of tokens
         n: number of tokens considered for n-gram
     Returns:
-        a list
+        list: list of n-grams
     """
     # Generate n-grams (in this example)
     n_grams = ngrams(tokens, n)
@@ -154,7 +154,7 @@ def english_stopwords_definition() -> list:
     Defines English stopwords by putting together NLTK and gensim stopwords.
 
     Returns:
-        A list of English stopwords.
+        list: a list of English stopwords.
     """
     sw_nltk = stopwords.words("english")
     sw_gensim = [s for s in STOPWORDS if s not in sw_nltk]

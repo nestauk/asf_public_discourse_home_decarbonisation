@@ -32,13 +32,13 @@ def finding_path_to_font(font_name: str):
     return font_files[0]
 
 
-def create_wordcloud(frequencies, max_words, stopwords):
+def create_wordcloud(frequencies: dict, max_words: int, stopwords: list):
     """
     Creates word cloud based on frequencies.
     Args:
-        frequencies: frequencies of words or n-grams
-        max_words: maximum number of words or n-grams to be displayed
-        stopwords: stopwords that should be removed from the wordcloud
+        frequencies(dict): a dictionary with frequencies of words or n-grams
+        max_words(int): maximum number of words or n-grams to be displayed
+        stopwords(list): stopwords that should be removed from the wordcloud
     """
     font_path_ttf = finding_path_to_font(FONT_NAME)
 

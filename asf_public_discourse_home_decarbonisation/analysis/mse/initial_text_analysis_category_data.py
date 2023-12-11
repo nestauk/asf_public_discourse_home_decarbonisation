@@ -28,7 +28,7 @@ import os
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
 from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
     process_text,
-    create_ngram_frequencies,
+    create_ngram_from_ordered_tokens,
     english_stopwords_definition,
     lemmatize_sentence,
     frequency_ngrams,
@@ -153,14 +153,14 @@ def process_text_and_titles(mse_data: pd.DataFrame) -> pd.DataFrame:
     return mse_data
 
 
-def create_a_mapping_between_tokens_and_lemmas(mse_data: pd.DataFrame):
+def create_a_mapping_between_tokens_and_lemmas(mse_data: pd.DataFrame) -> dict:
     """
     Create a mapping between tokens and lemmas for each token in either text or titles
     Args:
-        mse_data (pd.DataFrame): _description_
+        mse_data (pd.DataFrame): Money Saving Expert data
 
     Returns:
-        _type_: _description_
+        dict: a dictionary mapping tokens to lemmatised tokens
     """
     # Create a list of tokens in titles (removing repetitions from replies, which have the same title)
     tokens_title = mse_data[mse_data["is_original_post"] == 1][["tokens_title"]]
@@ -190,7 +190,7 @@ def create_a_mapping_between_tokens_and_lemmas(mse_data: pd.DataFrame):
     return lemmas_dictionary
 
 
-def tokenize_and_lemmatise_data(mse_data: pd.DataFrame):
+def tokenize_and_lemmatise_data(mse_data: pd.DataFrame) -> pd.DataFrame:
     """
     Tokenizes and lemmatises text data.
 
@@ -198,7 +198,7 @@ def tokenize_and_lemmatise_data(mse_data: pd.DataFrame):
         mse_data (pd.DataFrame): Money Saving Expert data
 
     Returns:
-        mse_data: Money Saving Expert data with tokenized and lemmatised added columns
+        pd.DataFrame: Money Saving Expert data with tokenized and lemmatised added columns
     """
 
     # Tokenizing and lemmatising text and titles variables
@@ -233,8 +233,8 @@ def remove_stopwords_from_text_and_titles(
     Removes stopwords from text and titles.
 
     Args:
-        mse_data (pd.DataFrame): MSE data
-
+        mse_data (pd.DataFrame): Money Saving Expert data
+        stopwords (list): list of stopwords to be removed
     Returns:
         pd.DataFrame: MSE data with stopwords removed from text and titles
     """
@@ -254,17 +254,17 @@ def create_ngram_columns(mse_data: pd.DataFrame, max_n_grams: int = 3) -> pd.Dat
 
     Args:
         mse_data (pd.DataFrame): Money Saving Expert data
-        max_n_grams (int, optional): max n in n-grams. Defaults to 3, wich will create columns for bigrams and trigrams.
+        max_n_grams (int, optional): maximum n-gram size to generate. Defaults to 3, wich will create columns for bigrams and trigrams.
 
     Returns:
         pd.DataFrame: Dataframe with added ngram columns for titles and text
     """
     for n in range(2, max_n_grams + 1):
         mse_data[f"{n}_grams_title"] = mse_data.apply(
-            lambda x: create_ngram_frequencies(x["tokens_text"], n=n), axis=1
+            lambda x: create_ngram_from_ordered_tokens(x["tokens_text"], n=n), axis=1
         )
         mse_data[f"{n}_grams_text"] = mse_data.apply(
-            lambda x: create_ngram_frequencies(x["tokens_text"], n=n), axis=1
+            lambda x: create_ngram_from_ordered_tokens(x["tokens_text"], n=n), axis=1
         )
     return mse_data
 
@@ -281,11 +281,11 @@ def prepare_data_for_text_analysis(
 
     Args:
         mse_data (pd.DataFrame): Money Saving Expert data
-        stopwords (list): _description_
-        max_n_grams (int, optional): _description_. Defaults to 3.
+        stopwords (list): a list of English stopwords
+        max_n_grams (int, optional): maximum n-gram size to generate. Defaults to 3, wich will create columns for bigrams and trigrams.
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: Money Saving Expert data with added columns for text analysis
     """
 
     logger.info("Preparing data for text analysis...")
@@ -336,7 +336,7 @@ def number_instances_containing_keywords(
 
 def create_and_save_table_with_keyword_counts(
     mse_data: pd.DataFrame, keyword_dictionary: dict, save_path: str
-) -> pd.DataFrame:
+):
     """
     Creates a table with the counts of the keywords in the keyword dictionary.
 
@@ -344,9 +344,6 @@ def create_and_save_table_with_keyword_counts(
         mse_data (pd.DataFrame): MSE data
         keyword_dictionary (dict): Dictionary containing the keywords
         save_path (str): Path to save the table
-
-    Returns:
-        pd.DataFrame: Table with the counts of the keywords in the keyword dictionary
     """
     logger.info("Creating table with keyword-specific counts...")
     keyword_counts = pd.DataFrame()
