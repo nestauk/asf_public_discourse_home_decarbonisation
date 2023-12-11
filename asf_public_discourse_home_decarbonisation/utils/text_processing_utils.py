@@ -101,7 +101,7 @@ def lemmatize_sentence(tokens: list):
     lemmatizer = WordNetLemmatizer()
     pos_tags = pos_tag(tokens)
     lemmatized_words_dict = {
-        word: lemmatizer.lemmatize(word, identify_part_of_spech(pos_tag))
+        word: lemmatizer.lemmatize(word, identify_part_of_speech(pos_tag))
         for word, pos_tag in pos_tags
     }
     return lemmatized_words_dict
