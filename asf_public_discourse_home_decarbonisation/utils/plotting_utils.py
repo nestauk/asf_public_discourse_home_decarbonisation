@@ -85,7 +85,6 @@ def plot_and_save_top_ngrams(
         fig_path, f"category_{category}_top_{top_n}_{n_gram_type}_{var_used}.png"
     )
     plt.savefig(path_to_plot)
-    plt.show()
 
 
 def plot_and_save_wordcloud(
@@ -127,6 +126,5 @@ def plot_and_save_wordcloud(
             fig_path, f"category_{category}_wordclouds_{n_gram_type}_{var_used}.png"
         )
         plt.savefig(path_to_plot, dpi=600)
-        plt.show()
     else:
         logger.warning(f"No {n_gram_type} above threshold for {category} {var_used}")
