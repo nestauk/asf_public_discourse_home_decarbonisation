@@ -162,6 +162,7 @@ def plot_number_interactions_per_user(mse_data: pd.DataFrame, category: str):
 
     Args:
         mse_data (pd.DataFrame): Money Saving Expert data
+        cateogry (str): MSE category/sub-forum
     """
 
     interactions_per_user_overall = mse_data[["user_id", "n_posts_user"]]
