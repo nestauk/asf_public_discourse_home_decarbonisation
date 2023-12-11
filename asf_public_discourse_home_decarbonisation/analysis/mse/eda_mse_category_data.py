@@ -309,6 +309,6 @@ if __name__ == "__main__":
 
     check_username_id_correspondence(mse_data)
 
-    plot_number_interactions_per_user(mse_data, category)
+plot_number_posts_per_year(mse_data, category)   plot_number_interactions_per_user(mse_data, category)
     plot_number_posts_per_user(mse_data, category)
     plot_number_replies_per_user(mse_data, category)
