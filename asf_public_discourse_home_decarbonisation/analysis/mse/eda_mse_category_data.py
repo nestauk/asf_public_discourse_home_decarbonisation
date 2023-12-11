@@ -214,7 +214,7 @@ def plot_number_posts_per_user(mse_data: pd.DataFrame, category: str):
     )
     plt.xlabel("Number of posts")
     plt.ylabel("Number of users")
-    plt.title("Number of users with a given number of posts\n(in data collected)")
+    plt.title(f"Number of users with a given number of posts\nin {category} category")
     plt.yscale("log")
     plt.tight_layout()
     path_to_plot = (
