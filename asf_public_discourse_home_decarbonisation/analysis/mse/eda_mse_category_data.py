@@ -61,7 +61,7 @@ def create_statistics_from_data(mse_data: pd.DataFrame):
     Create and prints statistics from the MSE data.
 
     Args:
-        mse_data (pd.DataFrame): _description_
+        mse_data (pd.DataFrame): Money Saving Expert data
     """
     if len(mse_data) == len(mse_data.drop_duplicates()):
         logger.info("There are no duplicated posts in the data.")
@@ -123,7 +123,7 @@ def check_username_id_correspondence(mse_data: pd.DataFrame):
     Checks if there is a 1-1 correspondence between `username` and `user_id`.
 
     Args:
-        mse_data (pd.DataFrame): MSE category/sub-forum
+        mse_data (pd.DataFrame): Money Saving Expert data
     """
     check_id_username = mse_data.groupby("username")[["user_id"]].nunique()
 
@@ -161,7 +161,7 @@ def plot_number_interactions_per_user(mse_data: pd.DataFrame, category: str):
     The computation is based on all MSE posts, not necessarily the ones we collected data for.
 
     Args:
-        mse_data (pd.DataFrame): MSE category/sub-forum
+        mse_data (pd.DataFrame): Money Saving Expert data
     """
 
     interactions_per_user_overall = mse_data[["user_id", "n_posts_user"]]
@@ -196,7 +196,7 @@ def plot_number_posts_per_user(mse_data: pd.DataFrame, category: str):
     not the whole MSE)
 
     Args:
-        mse_data (pd.DataFrame): MSE category/sub-forum
+        mse_data (pd.DataFrame): Money Saving Expert data
     """
     posts_per_user_data_collected = (
         mse_data[mse_data["is_original_post"] == 1].groupby("user_id")[["id"]].nunique()
