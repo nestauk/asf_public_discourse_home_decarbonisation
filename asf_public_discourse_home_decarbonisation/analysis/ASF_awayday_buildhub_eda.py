@@ -186,6 +186,7 @@ if __name__ == "__main__":
     keyword_df, df_threshold = prepare_keyword_dataframe(
         keyword_counter, len(buildhub_ashp_dataframe)
     )
+    print(keyword_df)
     plot_tag_vertical_bar_chart(
         keyword_df,
         BUILDHUB_FIGURES_PATH,

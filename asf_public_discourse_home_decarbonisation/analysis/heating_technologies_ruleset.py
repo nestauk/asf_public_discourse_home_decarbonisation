@@ -107,4 +107,8 @@ heating_technologies_ruleset_twitter = [
         "value": "hp cost estimator|hp cost calculator",
         "tag": "nesta_cost_estimator_tool",
     },
+    {
+        "value": "MSBC|Money Saving Boiler Challenge",
+        "tag": "MSBC",
+    },
 ]

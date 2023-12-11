@@ -156,6 +156,6 @@ def prepare_keyword_dataframe(
     keyword_df.columns = ["Tag", "Frequency"]
     keyword_df["Tag"] = keyword_df["Tag"].str.replace("_", " ")
     keyword_df = keyword_df.sort_values(by="Frequency", ascending=False)
-
+    print(keyword_df)
     df_threshold = round(max(5, total_rows * min_frequency_threshold))
     return keyword_df[keyword_df["Frequency"] > df_threshold], df_threshold
