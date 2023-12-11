@@ -66,7 +66,7 @@ def remove_text_after_patterns(text: str) -> str:
     return result
 
 
-def identify_part_of_spech(pos_tag: str) -> str:
+def identify_part_of_speech(pos_tag: str) -> str:
     """
     Convert the tag given by nltk.pos_tag to the tag used by wordnet.
 
