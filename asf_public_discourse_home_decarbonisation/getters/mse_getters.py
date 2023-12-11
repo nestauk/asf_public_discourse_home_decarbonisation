@@ -106,7 +106,7 @@ def get_mse_data(category: str, collection_datetime: str) -> pd.DataFrame:
         else:  # category == "all"
             mse_data = get_all_mse_data(collection_datetime)
         logger.info(f"Data for category '{category}' imported successfully from S3.")
-    except:
+    except ValueError:
         logger.error(f"{category} is not a valid category!")
         sys.exit(-1)
 
