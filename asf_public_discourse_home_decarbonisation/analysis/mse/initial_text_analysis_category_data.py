@@ -25,8 +25,6 @@ import numpy as np
 import pandas as pd
 from nltk.tokenize import word_tokenize
 import os
-import asf_public_discourse_home_decarbonisation.utils.plotting_utils as pu
-import asf_public_discourse_home_decarbonisation.config.plotting_configs as pc
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
 from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
     process_text,
