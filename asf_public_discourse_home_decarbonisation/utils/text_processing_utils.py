@@ -12,8 +12,6 @@ from gensim.parsing.preprocessing import STOPWORDS
 import re
 import string
 from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.tag import pos_tag
-
 from nltk import pos_tag
 from nltk.corpus import wordnet
 
