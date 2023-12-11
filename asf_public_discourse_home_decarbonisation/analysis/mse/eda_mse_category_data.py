@@ -198,6 +198,7 @@ def plot_number_posts_per_user(mse_data: pd.DataFrame, category: str):
 
     Args:
         mse_data (pd.DataFrame): Money Saving Expert data
+        category (str): MSE category/sub-forum
     """
     posts_per_user_data_collected = (
         mse_data[mse_data["is_original_post"] == 1].groupby("user_id")[["id"]].nunique()
