@@ -251,7 +251,7 @@ def plot_number_replies_per_user(mse_data: pd.DataFrame, category: str):
     )
     plt.xlabel("Number of replies")
     plt.ylabel("Number of users")
-    plt.title("Number of users with a given number of replies\n(in data collected)")
+    plt.title(f"Number of users with a given number of replies\nin {category} category")
     plt.yscale("log")
     plt.tight_layout()
     path_to_plot = (
