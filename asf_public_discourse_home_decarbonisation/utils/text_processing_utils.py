@@ -72,7 +72,7 @@ def identify_part_of_speech(pos_tag: str) -> str:
         pos_tag (str): NLTk part of speach tag
 
     Returns:
-        str: WordNet part os speach tag
+        str: WordNet part of speech tag
     """
     if pos_tag.startswith("N"):
         return wordnet.NOUN
