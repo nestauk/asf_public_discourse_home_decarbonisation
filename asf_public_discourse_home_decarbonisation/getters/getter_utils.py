@@ -19,7 +19,8 @@ def load_s3_data(bucket_name, file_path):
     """
     Load data from S3 location.
 
-    bucket_name: The S3 bucket name
+    Args:
+        bucket_name (str) : The S3 bucket name
     file_path: S3 key to load
     """
     s3 = get_s3_resource()
