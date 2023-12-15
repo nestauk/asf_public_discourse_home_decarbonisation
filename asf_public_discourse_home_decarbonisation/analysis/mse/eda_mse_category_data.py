@@ -1,5 +1,5 @@
 """
-This script performs exploratory data analysis on Money Saving Expert data, by looking at:
+This script performs exploratory data analysis on Money Saving Expert (MSE) data, by looking at:
 - A few statistics such as: number of posts collected, number of replies to posts and range of dates;
 - Number of posts per year;
 - Distribution of posts per user;
@@ -15,8 +15,16 @@ To run this script:
 To change category or date/time range, use the following arguments:
 `python asf_public_discourse_home_decarbonisation/analysis/mse/eda_mse_category_data.py --category <category> --collection_date_time <collection_date_time>`
 where
-<category>: category or sub-forum to be analysed, e.g. "energy", "lpg-heating-oil-solid-other-fuels", etc.
-<collection_date_time>: data collection date/time in the format YYYY_MM_DD
+<category>: category or sub-forum to be analysed. See below the full list of categories.
+<collection_date_time>: data collection date/time in the format YYYY_MM_DD.
+
+Full list of categories:
+"green-ethical-moneysaving": Green and Ethical Money Saving sub-forum.
+"lpg-heating-oil-solid-other-fuels": LPG, heating, oil, solid and other fuels sub-forum.
+"energy": Energy sub-forum.
+"is-this-quote-fair": Is this quote fair? sub-forum.
+"all": All the categories above combined.
+"sample": Sample of data from the Green and Ethical Money Saving sub-forum (not representative).
 """
 
 # ## Package imports
@@ -43,7 +51,7 @@ def add_datetime_variables(mse_data: pd.DataFrame) -> pd.DataFrame:
     """
     Transform the datetime variable into a datetime object and add year and year_month variables.
     Args:
-        mse_data (pd.DataFrame): dataframe with MSE data
+        mse_data (pd.DataFrame): Money Saving Expert data
     Returns:
         pd.DataFrame: Pandas DataFrame with datetime variables added
     """
@@ -64,10 +72,10 @@ def create_statistics_from_data(mse_data: pd.DataFrame):
         mse_data (pd.DataFrame): Money Saving Expert data
     """
     if len(mse_data) == len(mse_data.drop_duplicates()):
-        logger.info("There are no duplicated posts in the data.")
+        logger.info("There are no duplicated posts/replies in the data.")
     else:
         logger.warning(
-            f"There are duplicated posts in the data.\nNumber instances: {len(mse_data)}\nNumber unique instances: {len(mse_data.drop_duplicates())}"
+            f"There are duplicated posts/replies in the data.\nNumber posts+replies: {len(mse_data)}\nNumber unique posts+replies instances: {len(mse_data.drop_duplicates())}"
         )
 
     logger.info(f"Categories in data: {mse_data['category'].unique()}")
@@ -210,7 +218,7 @@ def plot_number_posts_per_user(mse_data: pd.DataFrame, category: str):
     plt.figure(figsize=(pc.figsize_x, pc.figsize_y))
     plt.hist(
         posts_per_user_data_collected["n_posts_user"],
-        bins=range(0, 90, 5),
+        bins=range(0, posts_per_user_data_collected["n_posts_user"].max() + 5, 5),
         color=pc.NESTA_COLOURS[0],
         edgecolor="white",
     )

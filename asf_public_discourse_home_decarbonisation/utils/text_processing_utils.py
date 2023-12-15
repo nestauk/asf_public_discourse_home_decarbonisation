@@ -67,6 +67,7 @@ def remove_text_after_patterns(text: str) -> str:
 def identify_part_of_speech(pos_tag: str) -> str:
     """
     Convert the tag given by nltk.pos_tag to the tag used by wordnet.
+    Reference here: https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
 
     Args:
         pos_tag (str): NLTk part of speach tag
@@ -78,7 +79,7 @@ def identify_part_of_speech(pos_tag: str) -> str:
         return wordnet.NOUN
     elif pos_tag.startswith("V"):
         return wordnet.VERB
-    elif pos_tag.startswith("R"):
+    elif pos_tag.startswith("RB"):
         return wordnet.ADV
     elif pos_tag.startswith("J"):
         return wordnet.ADJ

@@ -1,5 +1,5 @@
 """
-This script performs an initial text analysis on Money Saving Expert data, by:
+This script performs an initial text analysis on Money Saving Expert (MSE) data, by:
 - Computing the frenquency os specific words and n-grams of interest;
 - Identiyfying top words and n-grams;
 
@@ -11,8 +11,16 @@ To run this script:
 To change category or date/time range, use the following arguments:
 `python asf_public_discourse_home_decarbonisation/analysis/mse/initial_text_analysis_category_data.py --category <category> --collection_date_time <collection_date_time>`
 where
-<category>: category or sub-forum to be analysed, e.g. "energy", "lpg-heating-oil-solid-other-fuels", etc.
-<collection_date_time>: data collection date/time in the format YYYY_MM_DD
+<category>: category or sub-forum to be analysed. See below the full list of categories.
+<collection_date_time>: data collection date/time in the format YYYY_MM_DD.
+
+Full list of categories:
+"green-ethical-moneysaving": Green and Ethical Money Saving sub-forum.
+"lpg-heating-oil-solid-other-fuels": LPG, heating, oil, solid and other fuels sub-forum.
+"energy": Energy sub-forum.
+"is-this-quote-fair": Is this quote fair? sub-forum.
+"all": All the categories above combined.
+"sample": Sample of data from the Green and Ethical Money Saving sub-forum (not representative).
 """
 
 # ## Package imports
@@ -53,9 +61,18 @@ top_ngrams_barplot = 10
 
 # Specific groups of keywords we want to look at
 keyword_dictionary = {
-    "heat_pump_keywords": ["heat pump", "ashp", "gshp", "wshp", "air 2 air"],
+    "heat_pump_keywords": [
+        "heat pump",
+        "heatpump",
+        "ashp",
+        "gshp",
+        "wshp",
+        "air 2 air",
+        "air to air",
+        "a2a",
+    ],
     "boiler_keywords": ["boiler"],
-    "hydrogen_keywords": ["hydrogen"],
+    "hydrogen_keywords": ["hydrogen", "h2"],
     "bus_keywords": ["boiler upgrade scheme", "bus"],
     "grants_keywords": [
         "boiler upgrade scheme",
@@ -72,9 +89,9 @@ keyword_dictionary = {
     "nesta_keywords": ["nesta"],
     "installer_keywords": ["installer", "engineer"],
     "installation_keywords": ["installation"],
-    "cost_keywords": ["cost", "price", "pay"],
+    "cost_keywords": ["cost", "price", "pay", "pound", "£"],
     "issue_keywords": ["issue"],
-    "noise_keywords": ["noise", "noisy"],
+    "noise_keywords": ["noise", "noisy", "decibel", "db"],
     "flow_temp_keywords": ["flow temperature", "flow temp"],
     "msbc_keywords": ["money saving boiler challenge", "msbc", "boiler challenge"],
 }

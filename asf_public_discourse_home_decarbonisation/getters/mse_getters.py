@@ -3,7 +3,6 @@ Getter functions for MSE data.
 """
 import pandas as pd
 from asf_public_discourse_home_decarbonisation.getters.getter_utils import load_s3_data
-from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 import sys
 import logging
 
@@ -51,6 +50,7 @@ def get_mse_category_data(category: str, collection_date: str) -> pd.DataFrame:
 def get_all_mse_data(collection_date: str) -> pd.DataFrame:
     """
     Gets data from all Money Saving Expert categories.
+
     Args:
         collection_date (str): A date in the format "YYYY_MM_DD"
     Returns:
@@ -64,7 +64,9 @@ def get_all_mse_data(collection_date: str) -> pd.DataFrame:
     ]
     all_mse_data = pd.DataFrame()
     for cat in categories:
-        if cat != "energy":
+        if (
+            cat != "energy"
+        ):  # this is a temporary fix, while we sort the collection for this category
             aux = load_s3_data(
                 bucket_name=S3_BUCKET,
                 file_path=f"data/mse/outputs/mse_data_category_{cat}_{collection_date}.parquet",
