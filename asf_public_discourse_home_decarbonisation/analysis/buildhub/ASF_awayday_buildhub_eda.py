@@ -29,6 +29,7 @@ from collections import Counter
 import nltk
 from nltk import FreqDist
 import argparse
+from nltk.util import ngrams
 import os
 from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 import logging
@@ -61,6 +62,28 @@ from heating_technologies_ruleset import heating_technologies_ruleset_twitter
 set_plotting_styles()
 
 font_path_ttf = finding_path_to_font("Averta-Regular")
+
+
+def calculate_ngram_threshold(tokens: List[str], n: int, freq_multiplier: float) -> int:
+    """
+    Calculates and returns the frequency threshold for n-grams.
+
+    Args:
+        tokens (List[str]): A list of tokens from which n-grams are generated.
+        n (int): The 'n' in n-grams, representing the number of elements in each gram.
+        freq_multiplier (float): The multiplier to calculate the frequency threshold.
+
+    Returns:
+        int: The calculated threshold for n-grams.
+    """
+    # Calculate initial frequency distribution for n-grams
+    raw_ngram_freq_dist = FreqDist(ngrams(tokens, n))
+
+    # Calculate total count and threshold for n-grams
+    total_ngrams = sum(raw_ngram_freq_dist.values())
+    ngram_threshold = round(max(3, total_ngrams * freq_multiplier))
+
+    return raw_ngram_freq_dist, ngram_threshold
 
 
 def create_argparser() -> argparse.ArgumentParser:
@@ -151,15 +174,21 @@ if __name__ == "__main__":
     ]
     filtered_tokens = preprocess_text(buildhub_ashp_dataframe, new_stopwords)
     freq_dist = FreqDist(filtered_tokens)
+    # Plotting the top 10 words in a cloud...
     plot_word_cloud(freq_dist, BUILDHUB_FIGURES_PATH)
 
     ######### 4.Generate bigram and trigram frequency distributions ########
-    raw_bigram_freq_dist, bigram_freq_dist, bigram_threshold = process_ngrams(
-        filtered_tokens, 2
+
+    raw_bigram_freq_dist, bigram_threshold = calculate_ngram_threshold(
+        filtered_tokens, 2, 0.0002
     )
-    raw_trigram_freq_dist, trigram_freq_dist, trigram_threshold = process_ngrams(
-        filtered_tokens, 3
+    raw_trigram_freq_dist, trigram_threshold = calculate_ngram_threshold(
+        filtered_tokens, 3, 0.00005
     )
+    print("TRIGRAM THRESHOLD:")
+    print(trigram_threshold)
+    bigram_freq_dist = process_ngrams(raw_bigram_freq_dist, bigram_threshold)
+    trigram_freq_dist = process_ngrams(raw_trigram_freq_dist, trigram_threshold)
     plot_top_ngrams(
         raw_bigram_freq_dist, 10, "Bigram", NESTA_COLOURS[0], BUILDHUB_FIGURES_PATH
     )
@@ -185,19 +214,19 @@ if __name__ == "__main__":
     keyword_counter = update_keyword_frequencies(
         buildhub_ashp_dataframe, "text", heating_technologies_ruleset_twitter
     )
-    keyword_df, df_threshold = prepare_keyword_dataframe(
-        keyword_counter, len(buildhub_ashp_dataframe)
-    )
+    total_rows_df = len(buildhub_ashp_dataframe)
+    tag_threshold = round(max(5, total_rows_df * 0.0001))
+    keyword_df = prepare_keyword_dataframe(keyword_counter, tag_threshold)
     print(keyword_df)
     plot_tag_vertical_bar_chart(
         keyword_df,
         BUILDHUB_FIGURES_PATH,
         "freq_of_selected_keywords_in_posts.png",
-        df_threshold,
+        tag_threshold,
     )
     plot_tag_horizontal_bar_chart(
         keyword_df,
         BUILDHUB_FIGURES_PATH,
         "freq_of_selected_keywords_in_posts_barh.png",
-        df_threshold,
+        tag_threshold,
     )

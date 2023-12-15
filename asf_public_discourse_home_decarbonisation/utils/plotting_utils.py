@@ -19,7 +19,10 @@ from nltk.util import bigrams, trigrams
 from collections import Counter
 from nltk.probability import FreqDist
 from wordcloud import WordCloud
-from typing import List
+from typing import List, Dict, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 ChartType = alt.Chart
 # Fonts and colours
@@ -165,7 +168,7 @@ font_path_ttf = finding_path_to_font("Averta-Regular")
 ######### 1. Distribution of posts over time #########
 def plot_post_distribution_over_time(
     dataframe: pd.DataFrame, output_path: str, color: str
-) -> None:
+):
     """
     Analyse and plot the distribution of posts over time.
 
@@ -176,9 +179,6 @@ def plot_post_distribution_over_time(
             The path to save the plot.
         color : str
             Color for the plot.
-
-    Returns:
-        None: This function does not return anything. It generates and saves a plot.
     """
 
     sample_size = dataframe.shape[0]
@@ -207,7 +207,7 @@ def plot_post_distribution_over_time(
 ########## 2. Plot of the number of users vs number of posts ###########
 
 
-def plot_users_post_distribution(dataframe, output_path):
+def plot_users_post_distribution(dataframe: pd.DataFrame, output_path: str):
     """
     Creates and saves a plot showing the distribution of the number of posts vs the number of users.
 
@@ -221,8 +221,7 @@ def plot_users_post_distribution(dataframe, output_path):
     # Calculate the post counts per user
     user_post_counts = dataframe["username"].value_counts()
     sample_size = user_post_counts.size
-    print("sample size:")
-    print(sample_size)
+    logger.info(f"Sample size: {sample_size}")
     # Count how many users have the same number of posts
     post_count_distribution = user_post_counts.value_counts().sort_index()
     plt.figure(figsize=(12, 8))
@@ -279,7 +278,13 @@ def plot_users_post_distribution(dataframe, output_path):
 
 
 ######### 3. Word cloud of frequently used words in posts ############
-def plot_word_cloud(freq_dist, output_path, title="", threshold=10, max_words=10):
+def plot_word_cloud(
+    freq_dist: Dict[str, int],
+    output_path: str,
+    title: Optional[str] = "",
+    threshold: Optional[int] = 1000,
+    max_words: Optional[int] = 10,
+):
     """
     Generates and saves a word cloud from a frequency distribution of words.
 
@@ -287,11 +292,9 @@ def plot_word_cloud(freq_dist, output_path, title="", threshold=10, max_words=10
         freq_dist (dict): Frequency distribution of words.
         output_path (str): Directory path to save the word cloud image.
         title (str, optional): Title of the plot (e.g. bigram) and also distinguisher for filename.
-        threshold (int, optional): Minimum frequency for words to be included. Defaults to 100.
-        max_words (int, optional): Maximum number of words to display in the word cloud. Defaults to 30.
+        threshold (int, optional): Minimum frequency for words to be included. Defaults to 1000.
+        max_words (int, optional): Maximum number of words to display in the word cloud. Defaults to 10.
 
-    Returns:
-        None: The function saves and displays the word cloud image but does not return any value.
     """
     # Apply frequency filter
     filtered_freq_dist = {
@@ -304,7 +307,7 @@ def plot_word_cloud(freq_dist, output_path, title="", threshold=10, max_words=10
         background_color="white",
         width=800,
         height=400,
-        max_words=max_words,
+        # max_words=max_words,
     ).generate_from_frequencies(filtered_freq_dist)
 
     # Show and save the word cloud
@@ -318,7 +321,9 @@ def plot_word_cloud(freq_dist, output_path, title="", threshold=10, max_words=10
 
 
 ######## 4.Generate bigram and trigram frequency distributions ########
-def plot_top_ngrams(freq_dist, n, ngram_type, color, output_path):
+def plot_top_ngrams(
+    freq_dist: FreqDist, n: int, ngram_type: str, color: str, output_path: str
+):
     """
     Processes and plots the top N most common n-grams.
 
@@ -370,7 +375,10 @@ def plot_top_ngrams(freq_dist, n, ngram_type, color, output_path):
 
 
 def plot_post_length_distribution(
-    dataframe, output_path=None, bins=50, color=NESTA_COLOURS[2]
+    dataframe: pd.DataFrame,
+    output_path: Optional[str] = None,
+    bins: int = 50,
+    color: str = NESTA_COLOURS[2],
 ):
     """
     Plots and saves histograms of the post lengths in a given DataFrame.
@@ -416,22 +424,24 @@ def plot_post_length_distribution(
 
 ############ 7. Frequency of selected keywords in posts using the dictionary ###########
 # Function for vertical bar chart plotting
-def plot_tag_vertical_bar_chart(dataframe, output_path, filename, df_threshold):
+def plot_tag_vertical_bar_chart(
+    dataframe: pd.DataFrame, output_path: str, filename: str, threshold_freq: int
+):
     """
     Plots and saves a vertical bar chart showing the frequency of selected tags in posts.
+    This function creates a vertical bar chart where each bar represents a tag and its frequency.
+    Only tags with frequency greater than threshold_freq are displayed.
 
     Args:
         dataframe (pandas.DataFrame): DataFrame containing tag frequencies with columns "Tag" and "Frequency".
         output_path (str): Directory path to save the output plot.
         filename (str): Name of the file to save the plot.
-        df_threshold (int): Threshold frequency value for filtering tags.
+        threshold_freq (int): Threshold frequency value for filtering tags.
 
-    This function creates a vertical bar chart where each bar represents a tag and its frequency.
-    Only tags with frequency greater than df_threshold are displayed.
     """
     plt.figure(figsize=(12, 8))
     sns.barplot(x="Tag", y="Frequency", data=dataframe, palette="winter")
-    plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {df_threshold})")
+    plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {threshold_freq})")
     plt.xlabel("Tag")
     plt.ylabel("Frequency")
     plt.xticks(rotation=45, ha="right")
@@ -442,22 +452,24 @@ def plot_tag_vertical_bar_chart(dataframe, output_path, filename, df_threshold):
 
 
 # Function for horizontal bar chart plotting
-def plot_tag_horizontal_bar_chart(dataframe, output_path, filename, df_threshold):
+def plot_tag_horizontal_bar_chart(
+    dataframe: pd.DataFrame, output_path: str, filename: str, threshold_freq: int
+):
     """
     Plots and saves a horizontal bar chart showing the frequency of selected tags in posts.
+    This function creates a horizontal bar chart where each bar represents a tag and its frequency.
+    Only tags with frequency greater than threshold_freq are displayed.
 
     Args:
         dataframe (pandas.DataFrame): DataFrame containing tag frequencies with columns "Tag" and "Frequency".
         output_path (str): Directory path to save the output plot.
         filename (str): Name of the file to save the plot.
-        df_threshold (int): Threshold frequency value for filtering tags.
+        threshold_freq (int): Threshold frequency value for filtering tags.
 
-    This function creates a horizontal bar chart where each bar represents a tag and its frequency.
-    Only tags with frequency greater than df_threshold are displayed.
     """
     plt.figure(figsize=(12, 8))
     plt.barh(dataframe["Tag"], dataframe["Frequency"], color="blue")
-    plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {df_threshold})")
+    plt.title(f"Frequency of Selected Keywords in Posts (Frequency > {threshold_freq})")
     plt.ylabel("Tag")
     plt.xlabel("Frequency")
     plt.tight_layout()

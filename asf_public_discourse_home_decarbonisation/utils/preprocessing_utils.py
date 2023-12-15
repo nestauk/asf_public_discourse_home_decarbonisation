@@ -1,23 +1,27 @@
 import pandas as pd
 from nltk.corpus import stopwords
-from nltk.util import bigrams, trigrams
+
+# from nltk.util import bigrams, trigrams, ngrams
 from collections import Counter
 import re
-from typing import List
+from typing import List, Tuple, Dict
 from nltk.probability import FreqDist
 
 
 ######### 3. Word cloud of frequently used words in posts ############
-def preprocess_text(dataframe, custom_stopwords) -> List:
+def preprocess_text(dataframe: pd.DataFrame, custom_stopwords: List[str]) -> List[str]:
     """
-    Preprocesses text data for word cloud generation.
-
+    Preprocesses text data before text analysis by:
+        - applying .lower() to text
+        - removing stopwords
+        - tokenizing text
+    Outputs the resulting list of tokens.
     Args:
         dataframe (pandas.DataFrame): The DataFrame containing text data in a column named 'text'.
         custom_stopwords (list): A list of additional stopwords to be removed from the text.
 
     Returns:
-        dict: A dictionary of word frequencies filtered based on the defined threshold.
+        List[str]: A list of filtered tokens.
     """
     # Combine and lowercase text data
     text_data = " ".join(dataframe["text"].astype(str)).lower()
@@ -36,40 +40,28 @@ def preprocess_text(dataframe, custom_stopwords) -> List:
 ######## 4.Generate bigram and trigram frequency distributions ########
 
 
-def process_ngrams(filtered_tokens, n):
+def process_ngrams(raw_ngram_freq_dist: FreqDist, ngram_threshold: float) -> FreqDist:
     """
-    Processes n-grams (bigrams or trigrams) from the given tokens and filters them based on a threshold.
-
+    Filters n-grams based on a specified threshold frequency.
     Args:
-        filtered_tokens (list): A list of tokens from which to form n-grams.
-        n (int): The size of the n-grams (2 for bigrams, 3 for trigrams).
-
+        raw_ngram_freq_dist (FreqDist): A frequency distribution of n-grams where each n-gram is a tuple (before filtering).
+        ngram_threshold (float): The threshold frequency for n-grams.
     Returns:
-        tuple: A tuple containing two dictionaries, the raw and filtered n-gram frequency distributions.
+        ngram_freq_dist (FreqDist): A frequency distribution of n-grams where each n-gram is a tuple (after filtering).
     """
-    if n == 2:
-        raw_ngram_freq_dist = FreqDist(bigrams(filtered_tokens))
-        threshold_multiplier = 0.0002
-    elif n == 3:
-        raw_ngram_freq_dist = FreqDist(trigrams(filtered_tokens))
-        threshold_multiplier = 0.00005
-    else:
-        raise ValueError("n must be either 2 (for bigrams) or 3 (for trigrams)")
-
-    total_ngrams = sum(raw_ngram_freq_dist.values())
-    ngram_threshold = round(max(3, total_ngrams * threshold_multiplier))
-
     ngram_freq_dist = {
         ngram: freq
         for ngram, freq in raw_ngram_freq_dist.items()
         if freq >= ngram_threshold
     }
 
-    return raw_ngram_freq_dist, ngram_freq_dist, ngram_threshold
+    return ngram_freq_dist
 
 
 ######## 5.Generate bigram and trigram word clouds ########
-def wordcloud_preprocess_ngrams(ngram_freq_dists):
+def wordcloud_preprocess_ngrams(
+    ngram_freq_dists: List[FreqDist],
+) -> (List[FreqDist], List[FreqDist]):
     """
     Converts n-gram frequency distributions into string frequency distributions.
 
@@ -96,7 +88,9 @@ def wordcloud_preprocess_ngrams(ngram_freq_dists):
 
 ############ 7. Frequency of selected keywords in posts using the dictionary ###########
 # Function to update keyword frequencies
-def update_keyword_frequencies(dataframe, text_column, ruleset) -> Counter:
+def update_keyword_frequencies(
+    dataframe: pd.DataFrame, text_column: str, ruleset: List[Dict[str, str]]
+) -> Counter:
     """
     Updates and returns the frequency of keywords based on a specified ruleset.
 
@@ -127,8 +121,9 @@ def update_keyword_frequencies(dataframe, text_column, ruleset) -> Counter:
 
 # Function to prepare DataFrame for plotting
 def prepare_keyword_dataframe(
-    keyword_counter, total_rows, min_frequency_threshold=0.0001
-) -> (pd.DataFrame, int):
+    keyword_counter: Counter,
+    df_threshold: float,
+) -> Tuple[pd.DataFrame, int]:
     """
     Prepares a DataFrame for plotting based on keyword frequencies and applies a frequency threshold.
 
@@ -139,14 +134,10 @@ def prepare_keyword_dataframe(
     Args:
         keyword_counter (collections.Counter): A Counter object with keywords as keys and their
                                                frequencies as values.
-        total_rows (int): The total number of rows in the original dataset.
-        min_frequency_threshold (float, optional): The minimum frequency threshold as a percentage
-                                                   of total rows. Defaults to 0.0001 (0.01%).
+        df_threshold (float): The minimum frequency threshold.
 
     Returns:
-        tuple:
-            - A pandas.DataFrame containing tags and their frequencies, filtered by the calculated threshold.
-            - An integer representing the frequency threshold used for filtering.
+        - A pandas.DataFrame containing tags and their frequencies, filtered by the calculated threshold.
 
     The DataFrame has columns 'Tag' and 'Frequency'. Tags with frequencies below the threshold are excluded.
     """
@@ -157,5 +148,4 @@ def prepare_keyword_dataframe(
     keyword_df["Tag"] = keyword_df["Tag"].str.replace("_", " ")
     keyword_df = keyword_df.sort_values(by="Frequency", ascending=False)
     print(keyword_df)
-    df_threshold = round(max(5, total_rows * min_frequency_threshold))
-    return keyword_df[keyword_df["Frequency"] > df_threshold], df_threshold
+    return keyword_df[keyword_df["Frequency"] > df_threshold]
