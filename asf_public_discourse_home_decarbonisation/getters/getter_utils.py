@@ -3,7 +3,7 @@ import json
 import pickle
 import pandas as pd
 import boto3
-from typing import List
+from typing import List, Union, Dict
 
 from asf_public_discourse_home_decarbonisation import logger
 
@@ -15,13 +15,15 @@ def get_s3_resource():
     return s3
 
 
-def load_s3_data(bucket_name, file_path):
+def load_s3_data(bucket_name: str, file_path: str) -> Union[pd.DataFrame, Dict]:
     """
     Load data from S3 location.
 
     Args:
         bucket_name (str) : The S3 bucket name
-    file_path: S3 key to load
+        file_path (str): S3 key to load
+    Returns:
+        Union[pd.DataFrame, Dict]: the loaded data
     """
     s3 = get_s3_resource()
 
