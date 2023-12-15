@@ -20,13 +20,7 @@ The figures are saved in the following directory: 'outputs/figures/buildhub/foru
 """
 # import packages
 import pandas as pd
-import matplotlib.pyplot as plt
-from typing import Optional, Dict, List
-import seaborn as sns
-from wordcloud import WordCloud
-import re
-from collections import Counter
-import nltk
+from typing import List
 from nltk import FreqDist
 import argparse
 from nltk.util import ngrams
@@ -35,10 +29,16 @@ from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 import logging
 
 logger = logging.getLogger(__name__)
-from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
+from asf_public_discourse_home_decarbonisation.config.plotting_configs import (
     set_plotting_styles,
     finding_path_to_font,
     NESTA_COLOURS,
+)
+from asf_public_discourse_home_decarbonisation.config.heating_technologies_ruleset import (
+    heating_technologies_ruleset_twitter,
+)
+
+from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
     plot_post_distribution_over_time,
     plot_users_post_distribution,
     plot_word_cloud,
@@ -57,7 +57,7 @@ from asf_public_discourse_home_decarbonisation.utils.preprocessing_utils import 
 from asf_public_discourse_home_decarbonisation.getters.bh_getters import (
     get_bh_category_data,
 )
-from heating_technologies_ruleset import heating_technologies_ruleset_twitter
+
 
 set_plotting_styles()
 
@@ -185,8 +185,7 @@ if __name__ == "__main__":
     raw_trigram_freq_dist, trigram_threshold = calculate_ngram_threshold(
         filtered_tokens, 3, 0.00005
     )
-    print("TRIGRAM THRESHOLD:")
-    print(trigram_threshold)
+
     bigram_freq_dist = process_ngrams(raw_bigram_freq_dist, bigram_threshold)
     trigram_freq_dist = process_ngrams(raw_trigram_freq_dist, trigram_threshold)
     plot_top_ngrams(
@@ -217,7 +216,7 @@ if __name__ == "__main__":
     total_rows_df = len(buildhub_ashp_dataframe)
     tag_threshold = round(max(5, total_rows_df * 0.0001))
     keyword_df = prepare_keyword_dataframe(keyword_counter, tag_threshold)
-    print(keyword_df)
+    logger.info(f"keywords: {keyword_df}")
     plot_tag_vertical_bar_chart(
         keyword_df,
         BUILDHUB_FIGURES_PATH,
