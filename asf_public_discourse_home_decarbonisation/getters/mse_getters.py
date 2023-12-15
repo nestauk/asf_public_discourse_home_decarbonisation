@@ -10,13 +10,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 S3_BUCKET = "asf-public-discourse-home-decarbonisation"
-PATH_TO_LOCAL_MSE_DATA = PROJECT_DIR / "inputs/data/mse"
 
 
 def get_first_attempt_mse_data() -> pd.DataFrame:
     """
-    Returns a dataframe with 10 pages of MSE data from the Green Ethical Money Saving category.
+    Gets the first Money Saving Expert sample from S3.
     This was the first sample of data collected, used to generate the first insights.
+
+    Returns:
+        pd.DataFrame: a dataframe with 10 pages of MSE data from the Green Ethical Money Saving category.
     """
     return load_s3_data(
         bucket_name=S3_BUCKET,
@@ -24,11 +26,15 @@ def get_first_attempt_mse_data() -> pd.DataFrame:
     )
 
 
-def get_mse_category_data(
-    category: str, collection_date: str, read_from_local_path: bool = False
-) -> pd.DataFrame:
+def get_mse_category_data(category: str, collection_date: str) -> pd.DataFrame:
     """
-    Returns a dataframe with most up to date category/sub-forum data
+    Gets data from a specific Money Saving Expert category, collected on a certain date.
+
+    Args:
+        category (str): An MSE category
+        collection_date (str): A date in the format "YYYY_MM_DD"
+    Returns:
+        pd.DataFramedataframe with most up to date category/sub-forum data
     """
     if category == "energy":
         return load_s3_data(
@@ -44,7 +50,11 @@ def get_mse_category_data(
 
 def get_all_mse_data(collection_date: str) -> pd.DataFrame:
     """
-    Returns a dataframe with data from all categories
+    Gets data from all Money Saving Expert categories.
+    Args:
+        collection_date (str): A date in the format "YYYY_MM_DD"
+    Returns:
+        pd.DataFrame: a dataframe with data from all categories
     """
     categories = [
         "green-ethical-moneysaving",
