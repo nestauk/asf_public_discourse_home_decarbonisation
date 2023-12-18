@@ -79,7 +79,8 @@ keyword_dictionary = {
         "bus",
         "renewable heat incentive",
         "domestic rhi",
-        "clean heat grant",
+        "rhi",
+        "dhri" "clean heat grant",
         "home energy scotland grant",
         "home energy scotland loan",
         "home energy scotland scheme",
@@ -317,42 +318,27 @@ def prepare_data_for_text_analysis(
     return mse_data
 
 
-def number_instances_containing_keywords(
-    data: pd.DataFrame, keyword_list: list, filter: str = "all"
-) -> int:
+def number_instances_containing_keywords(data: pd.DataFrame, keyword_list: list) -> int:
     """
     Computes the number of instances in the data that contain at least one of the keywords in the keyword list.
 
     Args:
         data (pd.DataFrame): Dataframe containing the text data
         keyword_list (list): A list of keywords to search for
-        filter (str): filter for "posts", "replies" or "all" where "all" contains "posts" and "replies"
-
     Returns:
         int: Number of instances containing at least one of the keywords in the keyword list
     """
-    data_containing_keywords = data[
+    return data[
         data["title"].str.contains("|".join(keyword_list), case=False)
         | data["text"].str.contains("|".join(keyword_list), case=False)
-    ]
-    if filter == "posts":
-        return data_containing_keywords[
-            data_containing_keywords["is_original_post"] == 1
-        ].shape[0]
-    elif filter == "replies":
-        return data_containing_keywords[
-            data_containing_keywords["is_original_post"] == 0
-        ].shape[0]
-    elif filter == "all":
-        return data_containing_keywords.shape[0]
-    else:
-        raise ValueError(
-            f"{filter} is not a valid filter! Choose between 'posts', 'replies' or 'all'"
-        )
+    ].shape[0]
 
 
 def create_and_save_table_with_keyword_counts(
-    mse_data: pd.DataFrame, keyword_dictionary: dict, save_path: str
+    mse_data: pd.DataFrame,
+    keyword_dictionary: dict,
+    save_path: str,
+    filter: str = "all",
 ):
     """
     Creates a table with the counts of the keywords in the keyword dictionary.
@@ -361,14 +347,33 @@ def create_and_save_table_with_keyword_counts(
         mse_data (pd.DataFrame): MSE data
         keyword_dictionary (dict): Dictionary containing the keywords
         save_path (str): Path to save the table
+        filter (str): filter for "posts", "replies" or "all" where "all" contains "posts" and "replies"
     """
     logger.info("Creating table with keyword-specific counts...")
+
+    if filter == "posts":
+        filtered_data = mse_data[mse_data["is_original_post"] == 1][["title", "text"]]
+    elif filter == "replies":
+        filtered_data = mse_data[mse_data["is_original_post"] == 0][["title", "text"]]
+        filtered_data["title"] = ""  # the title is the title of the post, not the reply
+    elif filter == "all":
+        filtered_data = mse_data[["title", "text", "is_original_post"]].copy()
+        filtered_data["title"] = filtered_data.apply(
+            lambda x: "" if x["is_original_post"] == 0 else x["title"], axis=1
+        )
+    else:
+        raise ValueError(
+            f"{filter} is not a valid filter! Choose between 'posts', 'replies' or 'all'"
+        )
+
     keyword_counts = pd.DataFrame()
     keyword_counts["group"] = keyword_dictionary.keys()
     keyword_counts["counts"] = keyword_counts["group"].apply(
-        lambda x: number_instances_containing_keywords(mse_data, keyword_dictionary[x])
+        lambda x: number_instances_containing_keywords(
+            filtered_data, keyword_dictionary[x]
+        )
     )
-    keyword_counts["percentage"] = keyword_counts["counts"] / len(mse_data) * 100
+    keyword_counts["percentage"] = keyword_counts["counts"] / len(filtered_data) * 100
     keyword_counts.sort_values("counts", ascending=False, inplace=True)
     logger.info("Keyword groups counts:\n{}".format(keyword_counts))
 
