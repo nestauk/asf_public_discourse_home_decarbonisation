@@ -117,7 +117,9 @@ def plot_number_posts_per_year(mse_data: pd.DataFrame, category: str):
         .properties(width=400, height=300)
         .interactive()
     )
-    chart = pc.configure_plots(chart, "Number of posts per year", "")
+    chart = pc.configure_plots(
+        chart, ["Number of posts per year in category", f"`{category}`"], ""
+    )
     path_to_plot = f"{MSE_FIGURES_PATH}/category_{category}_posts_per_year.html"
     chart.save(path_to_plot)
 
@@ -188,13 +190,15 @@ def plot_number_interactions_per_user(mse_data: pd.DataFrame, category: str):
     )
     plt.xlabel("Number of posts and replies")
     plt.ylabel("Number of users")
-    plt.title("Number of users with a given\nnumber of posts and replies")
+    plt.title(
+        f"Number of users in category\n `{category}` with a given\nnumber of posts and replies across the whole MSE"
+    )
     plt.yscale("log")
     plt.tight_layout()
     path_to_plot = f"{MSE_FIGURES_PATH}/category_{category}_interactions_per_user.png"
     plt.savefig(path_to_plot)
     logger.info(
-        f"Plot with number of interactions per user for category '{category}' saved successfully in {path_to_plot}"
+        f"Plot with number of interactions per user for category `{category}` saved successfully in {path_to_plot}"
     )
 
 
@@ -224,7 +228,14 @@ def plot_number_posts_per_user(mse_data: pd.DataFrame, category: str):
     )
     plt.xlabel("Number of posts")
     plt.ylabel("Number of users")
-    plt.title(f"Number of users with a given number of posts\nin {category} category")
+    if category == "all":
+        plt.title(
+            f"Number of users with a given number of posts\nin `{category}` categories"
+        )
+    else:
+        plt.title(
+            f"Number of users with a given number of posts\nin `{category}` category"
+        )
     plt.yscale("log")
     plt.tight_layout()
     path_to_plot = (
@@ -262,7 +273,14 @@ def plot_number_replies_per_user(mse_data: pd.DataFrame, category: str):
     )
     plt.xlabel("Number of replies")
     plt.ylabel("Number of users")
-    plt.title(f"Number of users with a given number of replies\nin {category} category")
+    if category == "all":
+        plt.title(
+            f"Number of users with a given number of replies\nin `{category}` categories"
+        )
+    else:
+        plt.title(
+            f"Number of users with a given number of replies\nin `{category}` category"
+        )
     plt.yscale("log")
     plt.tight_layout()
     path_to_plot = (
