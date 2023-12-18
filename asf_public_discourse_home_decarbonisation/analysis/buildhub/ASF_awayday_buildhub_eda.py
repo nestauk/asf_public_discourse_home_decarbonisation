@@ -174,7 +174,7 @@ if __name__ == "__main__":
     ]
     filtered_tokens = preprocess_text(buildhub_ashp_dataframe, new_stopwords)
     freq_dist = FreqDist(filtered_tokens)
-    # Plotting the top 10 words in a cloud...
+    # Plotting the top words in a word cloud!
     plot_word_cloud(freq_dist, BUILDHUB_FIGURES_PATH)
 
     ######### 4.Generate bigram and trigram frequency distributions ########

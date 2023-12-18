@@ -116,20 +116,15 @@ def plot_users_post_distribution(dataframe: pd.DataFrame, output_path: str):
     plt.gca().xaxis.set_major_locator(loc)
 
     # Set the title and labels
-    plt.title("Number of Posts vs Number of Users", fontsize=16)
-    plt.xlabel("Number of Posts", fontsize=14)
-    plt.ylabel("Number of Users", fontsize=14)
+    plt.title("Number of Posts vs Number of Users")
+    plt.xlabel("Number of Posts")
+    plt.ylabel("Number of Users")
     # Rotate the x-tick labels for better readability if there are many bars
     plt.xticks(rotation=90)
-    # Improve the x-axis by setting the tick marks to only show integers
-    plt.yticks(fontsize=12)
-
     # Use a logarithmic scale for the y-axis if needed
     plt.yscale("log")
-
     # Set grid lines to help readability
     plt.grid(axis="y", linestyle="--", linewidth=1.5, alpha=0.7)
-
     # Show the plot
     plt.tight_layout()
     plt.savefig(os.path.join(output_path, "Post_Count_Distribution.png"))
