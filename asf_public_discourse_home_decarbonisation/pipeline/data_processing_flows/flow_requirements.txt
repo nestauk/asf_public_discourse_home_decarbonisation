@@ -1,15 +1,10 @@
 numpy==1.24.4
 pandas==2.0.3
-nltk==3.8.1
 gensim==4.3.2
 spacy==3.7.2
-matplotlib==3.7.4
-seaborn==0.13.0
-wordcloud==1.9.2
-altair==4.2.2
+nltk==3.8.1
 boto3==1.28.64
 s3fs==2023.10.0
 fsspec==2023.10.0
 fastparquet==2023.10.1
 pyarrow==14.0.1
-metaflow==2.10.2
