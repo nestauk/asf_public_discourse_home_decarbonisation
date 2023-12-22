@@ -18,11 +18,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def finding_path_to_font(font_name: str):
+def finding_path_to_font(font_name: str) -> str:
     """
     Finds path to specific font.
     Args:
-        font_name: name of font
+        font_name (str): name of font
+    Returns:
+        str: local path to font with font name
     """
 
     all_font_files = font_manager.findSystemFonts()
@@ -36,12 +38,12 @@ def create_wordcloud(frequencies: dict, max_words: int, stopwords: list):
     """
     Creates word cloud based on frequencies.
     Args:
-        frequencies(dict): a dictionary with frequencies of words or n-grams
-        max_words(int): maximum number of words or n-grams to be displayed
-        stopwords(list): stopwords that should be removed from the wordcloud
+        frequencies (dict): a dictionary with frequencies of words or n-grams
+        max_words (int): maximum number of words or n-grams to be displayed
+        stopwords (list): stopwords that should be removed from the wordcloud
     """
     font_path_ttf = finding_path_to_font(FONT_NAME)
-
+    plt.figure()
     wordcloud = WordCloud(
         font_path=font_path_ttf,
         width=2000,
@@ -85,6 +87,7 @@ def plot_and_save_top_ngrams(
         fig_path, f"category_{category}_top_{top_n}_{n_gram_type}_{var_used}.png"
     )
     plt.savefig(path_to_plot)
+    plt.clf()
 
 
 def plot_and_save_wordcloud(
@@ -126,5 +129,6 @@ def plot_and_save_wordcloud(
             fig_path, f"category_{category}_wordclouds_{n_gram_type}_{var_used}.png"
         )
         plt.savefig(path_to_plot, dpi=600)
+        plt.clf()
     else:
         logger.warning(f"No {n_gram_type} above threshold for {category} {var_used}")
