@@ -5,9 +5,7 @@ import pandas as pd
 import boto3
 from typing import List, Union, Dict
 
-from asf_public_discourse_home_decarbonisation import logger
-
-S3_BUCKET = "asf-public-discourse-home-decarbonisation"
+from asf_public_discourse_home_decarbonisation import logger, S3_BUCKET
 
 
 def get_s3_resource():
