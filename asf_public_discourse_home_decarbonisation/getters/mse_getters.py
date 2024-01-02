@@ -1,14 +1,13 @@
 """
-Getter functions for MSE data.
+Getter functions for Money Saving Expert (MSE) data.
 """
 import pandas as pd
 from asf_public_discourse_home_decarbonisation.getters.getter_utils import load_s3_data
 import sys
 import logging
+from asf_public_discourse_home_decarbonisation import S3_BUCKET
 
 logger = logging.getLogger(__name__)
-
-S3_BUCKET = "asf-public-discourse-home-decarbonisation"
 
 mse_categories = [
     "green-ethical-moneysaving",
@@ -43,7 +42,7 @@ def get_mse_category_data(
         collection_date (str): A date in the format "YYYY_MM_DD"
         processing_level (str): processing level (takes the values "raw" or "processed")
     Returns:
-        pd.DataFramedataframe with most up to date category/sub-forum data
+        pd.DataFrame: a dataframe with most up to date category/sub-forum data
     """
     try:
         # Check if processing_level is in the list if one of the accepted levels
@@ -107,8 +106,8 @@ def get_mse_data(
 ) -> pd.DataFrame:
     """
     Gets a specific version of the MSE data:
-        - either for a specific category, for a sample or for data from all categories
-        - for a specific collection date.
+        - either a specific category, a sample of the data or data from all categories;
+        - on a specific collection date.
     Existing categories are: "green-ethical-moneysaving", "lpg-heating-oil-solid-other-fuels", "energy", "is-this-quote-fair"
     Additionally, you can also set category to "sample" (to get the initial sample collected) or "all" (to get all the MSE data collected).
 
