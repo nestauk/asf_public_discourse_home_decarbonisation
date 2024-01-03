@@ -5,11 +5,13 @@ This script performs exploratory data analysis on Money Saving Expert (MSE) data
 - Distribution of posts per user;
 - Distribution of replies per user;
 - Distribution of interactions per user.
+The analysis can be performed on data from a specific category, all categories data, or a sample from the Green and Ethical Money Saving category.
+Words category and sub-forum are used interchangeably throughout this script.
 
 Computed statistics are logged and appear in your terminal.
 Plots are saved in the folder `asf_public_discourse_home_decarbonisation/outputs/figures/mse/`.
 
-To run this script:
+To run this script (defaults to analysing the Green and Ethical Money Saving category):
 `python asf_public_discourse_home_decarbonisation/analysis/mse/eda_mse_category_data.py`
 
 To change category or date/time range, use the following arguments:
@@ -304,7 +306,7 @@ def create_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--category",
-        help="Category or sub-forum",
+        help='Category or sub-forum name (or "sample" or "all")',
         default="green-ethical-moneysaving",
         type=str,
     )
@@ -333,7 +335,8 @@ if __name__ == "__main__":
 
     create_statistics_from_data(mse_data)
 
-    check_username_id_correspondence(mse_data)
+    if "username" in mse_data.columns:
+        check_username_id_correspondence(mse_data)
 
     plot_number_posts_per_year(mse_data, category)
 
