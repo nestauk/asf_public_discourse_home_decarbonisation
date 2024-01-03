@@ -1,8 +1,8 @@
 """
 Text processing functions to:
-- remove URLs from text
+- remove URLs from text;
 - remove username patterns;
-- remove specific tokens from text;
+- remove specific tokens/emojis from text;
 - define english stopwords using NLTK and spaCy;
 - lemmatise text;
 - tokenise text;
@@ -19,8 +19,6 @@ import spacy
 nlp = spacy.load("en_core_web_sm")
 
 logger = logging.getLogger(__name__)
-
-S3_BUCKET = "asf-public-discourse-home-decarbonisation"
 
 
 def remove_urls(text: str) -> str:
@@ -41,7 +39,7 @@ def remove_urls(text: str) -> str:
 
 def remove_text_after_patterns(text: str) -> str:
     """
-    Removes pattern of the form "xxx writes: ".
+    Removes patterns of the form "xxx wrote: »" and "xxx said:".
 
     Args:
         text (str): text to be cleaned
@@ -50,7 +48,9 @@ def remove_text_after_patterns(text: str) -> str:
         str: cleaned text
     """
     # We use re.sub() to replace the pattern with an empty string
-    result = re.sub(r"\w+ wrote »", " ", text)
+    result = re.sub(r"\w+ wrote: »", " ", text)
+    result = re.sub(r"\w+ said:", " ", result)
+
     return result
 
 
@@ -70,22 +70,51 @@ def remove_tokens_in_list(
     return [token for token in data if token not in list_of_tokens_to_remove]
 
 
+def remove_emojis(text: str) -> str:
+    """
+    Removes emojis from text.
+
+    Args:
+        text (str): original text
+
+    Returns:
+        str: text with emojis removed
+    """
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        "]+",
+        flags=re.UNICODE,
+    )
+    return emoji_pattern.sub(r"", text)
+
+
 def preprocess_text(text: str) -> str:
     """
     Preprocesses text by:
-        - replacing &amp with "and"
-        - replacing & with "and"
+        - replacing &amp/& with "and"
+        - replacing ">" and "=" with space
         - removing URLs
-        - puts text to lower case
+        - transforming text to lower case
         - removing username patterns
+        - removing emojis
 
     Args:
         text (str): text to be processed
     Returns:
         str: Preprocessed text.
     """
+    # Replacing "and" symbols with keyword "and"
     text = re.sub("&amp;", " and ", text)
     text = re.sub("&", " and ", text)
+
+    # Replacing certain symbols with space as multiple of them appear together
+    # and don't disappear by deleting punctuation
+    text = re.sub(">", " ", text)
+    text = re.sub("=", " ", text)
 
     text = remove_urls(text)
 
@@ -93,12 +122,14 @@ def preprocess_text(text: str) -> str:
 
     text = remove_text_after_patterns(text)
 
+    text = remove_emojis(text)
+
     return text
 
 
 def english_stopwords_definition() -> list:
     """
-    Defines English stopwords by putting together NLTK and Spacy stopwords.
+    Defines English stopwords by putting together NLTK and SpaCy stopwords.
 
     Returns:
         list: a list of English stopwords.
@@ -112,7 +143,7 @@ def english_stopwords_definition() -> list:
 def lemmatise(text: str) -> list:
     """
     Applies lemmatisation sentence by sentence.
-    It then removes punctuations and tokens tagged as space (e.g. "\n")
+    It then removes punctuation and tokens tagged as space (e.g. "\n")
 
     Args:
         text (str): text to be lemmatise, might include multiple sentences
