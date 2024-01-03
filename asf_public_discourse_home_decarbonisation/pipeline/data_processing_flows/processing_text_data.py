@@ -1,6 +1,12 @@
 """
-A Flow for processing title and text data from MSE sub-forums.
-python asf_public_discourse_home_decarbonisation/pipeline/data_processing_flows/processing_text_data.py --datastore=s3 --package-suffixes=.txt run --max-num-splits 2000 --max-workers 100
+A Flow for processing text data from MSE sub-forums.
+python asf_public_discourse_home_decarbonisation/pipeline/data_processing_flows/processing_text_data.py --datastore=s3 --package-suffixes=.txt run --max-num-splits 2000 --max-workers 100 --category <category>
+
+where <category> is one of the sub-forums:
+"green-ethical-moneysaving": Green and Ethical Money Saving sub-forum.
+"lpg-heating-oil-solid-other-fuels": LPG, heating, oil, solid and other fuels sub-forum.
+"energy": Energy sub-forum.
+"is-this-quote-fair": Is this quote fair? sub-forum.
 """
 
 import os
@@ -16,43 +22,38 @@ from metaflow import FlowSpec, step, batch, Parameter
 import pandas as pd
 from flow_utils import remove_tokens_in_list
 
-S3_BUCKET = "asf-public-discourse-home-decarbonisation"
-MSE_S3_RAW_OUTPUTS_FOLDER_PATH = "data/mse/outputs"
+MSE_S3_RAW_OUTPUTS_FOLDER_PATH = "data/mse/outputs/raw"
 MSE_S3_PROCESSED_OUTPUTS_FOLDER_PATH = "data/mse/outputs/processed"
 CHUNKSIZE = 10000
 
 
-def remove_tokens_from_specified_columns(
-    data: pd.DataFrame, columns: list, list_of_tokens_to_remove: set
+def remove_stopwords_from_specified_columns(
+    data: pd.DataFrame, columns: list, stopwords: list
 ) -> pd.DataFrame:
     """
-    Removes items in a list provided from certain columns in data.
+    Removes stopwords from certain columns in data.
 
     Args:
         data (pd.DataFrame): data
         columns (list): column names
-        list_of_tokens_to_remove (list): list of items to be removed
+        stopwords (list): list of stopwords to be removed
     Returns:
-        pd.DataFrame: MSE data with items removed from text and titles
+        pd.DataFrame: MSE data with stopwords removed from text and titles
     """
     for col in columns:
         data[col + "_no_stopwords"] = data.apply(
-            lambda x: remove_tokens_in_list(x[col], list_of_tokens_to_remove), axis=1
+            lambda x: remove_tokens_in_list(x[col], stopwords), axis=1
         )
 
     return data
 
 
 class TextProcessingFlow(FlowSpec):
-    category = Parameter(
-        name="category",
-        help="A category or sub-forum",
-        default="green-ethical-moneysaving",
-    )
+    category = Parameter(name="category", help="A category or sub-forum", required=True)
 
     batch_date = Parameter(
         name="batch",
-        help='Batch date (e.g. date of collection "2023_11_15" or "newest" for the most up to date version of the data)',
+        help='Batch date (e.g. date of collection "2023_11_15")',
         default="2023_11_15",
     )
 
@@ -69,8 +70,27 @@ class TextProcessingFlow(FlowSpec):
         """
         from smart_open import open
         import pandas as pd
+        import sys
+        from asf_public_discourse_home_decarbonisation import S3_BUCKET
 
-        s3_path = f"s3://{S3_BUCKET}/{MSE_S3_RAW_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}_{self.batch_date}.parquet"
+        accepted_categories = [
+            "green-ethical-moneysaving",
+            "lpg-heating-oil-solid-other-fuels",
+            "energy",
+            "is-this-quote-fair",
+        ]
+        try:
+            # Check if the category is in the list if one of the accepted categories
+            accepted_categories.index(self.category)
+            print(f"{self.category} is a valid MSE category, so program will continue.")
+        except ValueError:
+            print(f"{self.category} is not an MSE category, so program will stop.")
+            sys.exit(-1)
+
+        if self.category != "energy":
+            s3_path = f"s3://{S3_BUCKET}/{MSE_S3_RAW_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}_{self.batch_date}.parquet"
+        else:
+            s3_path = f"s3://{S3_BUCKET}/{MSE_S3_RAW_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}.parquet"
         with open(s3_path, "rb") as s3_file:
             self.mse_data = pd.read_parquet(s3_file)
 
@@ -94,23 +114,23 @@ class TextProcessingFlow(FlowSpec):
             lambda x: preprocess_text(x)
         )
 
-        self.next(self.prepare_for_lemmatising)
+        self.next(self.prepare_chunks_of_data)
 
     @batch
     @step
-    def prepare_for_lemmatising(self):
+    def prepare_chunks_of_data(self):
         """
-        Chunking data to allow for parallel lemmatisation.
+        Chunking data to allow for parallel lemmatisation and tokenisation.
         """
         self.chunks = [
             self.mse_data[i : i + CHUNKSIZE]
             for i in range(0, len(self.mse_data) + 1, CHUNKSIZE)
         ]
-        self.next(self.lemmatising_and_tokenise_text_data, foreach="chunks")
+        self.next(self.lemmatise_and_tokenise_text_data, foreach="chunks")
 
     @batch(cpu=2, memory=8000)
     @step
-    def lemmatising_and_tokenise_text_data(self):
+    def lemmatise_and_tokenise_text_data(self):
         """
         Creates columns with lemmatising and tokenised titles and text from posts and replies.
         Because titles are the same for all replies to a post, we only lemmatise/tokenise unique titles.
@@ -147,7 +167,7 @@ class TextProcessingFlow(FlowSpec):
 
         self.next(self.join_data_from_previous_step)
 
-    @batch(cpu=2, memory=8000)
+    @batch(cpu=8, memory=32000)
     @step
     def join_data_from_previous_step(self, inputs):
         """
@@ -169,7 +189,7 @@ class TextProcessingFlow(FlowSpec):
         from flow_utils import english_stopwords_definition
 
         stopwords = english_stopwords_definition()
-        self.mse_data = remove_tokens_from_specified_columns(
+        self.mse_data = remove_stopwords_from_specified_columns(
             self.mse_data,
             [
                 "tokens_text",
@@ -187,6 +207,8 @@ class TextProcessingFlow(FlowSpec):
         """
         Saving data to S3.
         """
+        from asf_public_discourse_home_decarbonisation import S3_BUCKET
+
         if not self.test:  # only saves data if not in test mode
             self.mse_data.to_parquet(
                 f"s3://{S3_BUCKET}/{MSE_S3_PROCESSED_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}_{self.batch_date}.parquet",
