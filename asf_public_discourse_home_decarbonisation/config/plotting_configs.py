@@ -65,7 +65,7 @@ alt.themes.enable("nestafont")
 
 def configure_plots(fig, chart_title: str = "", chart_subtitle: str = ""):
     """
-    Adds titles, subtitles, configures font sizes andadjusts gridlines
+    Adds titles, subtitles, configures font sizes and adjusts gridlines
     """
     return (
         fig.properties(
@@ -90,7 +90,6 @@ def configure_plots(fig, chart_title: str = "", chart_subtitle: str = ""):
         )
         .configure_view(strokeWidth=0)
     )
-
 
 def set_spines():
     """

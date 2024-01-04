@@ -7,7 +7,6 @@ from typing import List, Union, Dict
 
 from asf_public_discourse_home_decarbonisation import logger, S3_BUCKET
 
-
 def get_s3_resource():
     s3 = boto3.resource("s3")
     return s3
@@ -22,6 +21,7 @@ def load_s3_data(bucket_name: str, file_path: str) -> Union[pd.DataFrame, Dict]:
         file_path (str): S3 key to load
     Returns:
         Union[pd.DataFrame, Dict]: the loaded data
+
     """
     s3 = get_s3_resource()
 
