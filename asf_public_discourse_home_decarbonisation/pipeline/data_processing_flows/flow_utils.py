@@ -156,7 +156,7 @@ def lemmatise(text: str) -> list:
     processed_sentence_tokens = []
     for sentence in doc.sents:
         lemmatised_tokens = [
-            token.lemma_
+            token.lemma_.lower()
             for token in sentence
             if not (token.is_punct or token.pos_ == "SPACE")
         ]
@@ -176,5 +176,7 @@ def tokenise(text: str) -> list:
     """
     doc = nlp(text)
     return [
-        token.text for token in doc if not (token.is_punct or token.pos_ == "SPACE")
+        token.text.lower()
+        for token in doc
+        if not (token.is_punct or token.pos_ == "SPACE")
     ]
