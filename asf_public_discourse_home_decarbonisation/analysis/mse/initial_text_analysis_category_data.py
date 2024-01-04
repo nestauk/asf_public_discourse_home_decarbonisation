@@ -106,7 +106,7 @@ keyword_dictionary = {
 top_n_grams_analysis_parameters = {
     "tokens_title": {
         "data": lambda data: data[data["is_original_post"] == 1].drop_duplicates("id"),
-        "ngrams_col": "tokens_title",
+        "ngrams_col": "lemmatised_tokens_title_no_stopwords",
         "var_used": "titles",
         "min_frequency": min_frequency_tokens,
     },
@@ -124,7 +124,7 @@ top_n_grams_analysis_parameters = {
     },
     "tokens_text": {
         "data": lambda data: data,
-        "ngrams_col": "tokens_text",
+        "ngrams_col": "lemmatised_tokens_text_no_stopwords",
         "var_used": "posts and replies",
         "min_frequency": min_frequency_tokens,
     },
@@ -148,7 +148,7 @@ top_n_grams_analysis_parameters = {
     },
     "tokens_text_op": {
         "data": lambda data: data[data["is_original_post"] == 1],
-        "ngrams_col": "tokens_text",
+        "ngrams_col": "lemmatised_tokens_text_no_stopwords",
         "var_used": "posts",
         "min_frequency": min_frequency_tokens,
     },
@@ -245,7 +245,7 @@ def create_table_with_keyword_counts(
         save_path (str): Path to save the table
         filter (str): filter for "posts", "replies" or "all" where "all" contains "posts" and "replies"
     """
-    logger.info(f"Creating table with keyword-specific counts...{filter}")
+    logger.info(f"Creating table with keyword-specific counts...")
 
     if filter == "posts":
         filtered_data = mse_data[mse_data["is_original_post"] == 1][["title", "text"]]
@@ -271,7 +271,9 @@ def create_table_with_keyword_counts(
     )
     keyword_counts["percentage"] = keyword_counts["counts"] / len(filtered_data) * 100
     keyword_counts.sort_values("counts", ascending=False, inplace=True)
-    logger.info("Keyword groups counts:\n{}".format(keyword_counts))
+    if filter == "all":
+        filter = "all data"
+    logger.info(f"Keyword groups counts filtered for `{filter}`:\n{keyword_counts}")
 
 
 def plot_and_save_analysis_top_n_grams(analysis_parameters: dict, stopwords: list):
