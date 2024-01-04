@@ -20,7 +20,7 @@ os.system("python -m spacy download en_core_web_sm")
 
 from metaflow import FlowSpec, step, batch, Parameter, retry
 import pandas as pd
-from flow_utils import remove_tokens_in_list
+from text_processing_utils import remove_tokens_in_list
 
 MSE_S3_RAW_OUTPUTS_FOLDER_PATH = "data/mse/outputs/raw"
 MSE_S3_PROCESSED_OUTPUTS_FOLDER_PATH = "data/mse/outputs/processed"
@@ -105,7 +105,7 @@ class TextProcessingFlow(FlowSpec):
         Pre-processing text and titles (before applying lemmatisation) by
         removing URLs, putting text to lowercase and removing username patterns.
         """
-        from flow_utils import preprocess_text
+        from text_processing_utils import preprocess_text
 
         self.mse_data["processed_text"] = self.mse_data["text"].apply(
             lambda x: preprocess_text(x)
@@ -135,7 +135,7 @@ class TextProcessingFlow(FlowSpec):
         Creates columns with lemmatising and tokenised titles and text from posts and replies.
         Because titles are the same for all replies to a post, we only lemmatise/tokenise unique titles.
         """
-        from flow_utils import lemmatise, tokenise
+        from text_processing_utils import lemmatise, tokenise
 
         data = self.input
 
@@ -187,7 +187,7 @@ class TextProcessingFlow(FlowSpec):
         """
         Removing stopwords and punctuation.
         """
-        from flow_utils import english_stopwords_definition
+        from text_processing_utils import english_stopwords_definition
 
         stopwords = english_stopwords_definition()
         self.mse_data = remove_stopwords_from_specified_columns(
