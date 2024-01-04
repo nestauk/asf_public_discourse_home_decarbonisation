@@ -37,7 +37,7 @@ from asf_public_discourse_home_decarbonisation.utils.ngram_utils import (
     create_ngram_from_ordered_tokens,
     frequency_ngrams,
 )
-from asf_public_discourse_home_decarbonisation.pipeline.data_processing_flows.flow_utils import (
+from asf_public_discourse_home_decarbonisation.pipeline.data_processing_flows.text_processing_utils import (
     english_stopwords_definition,
 )
 from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
