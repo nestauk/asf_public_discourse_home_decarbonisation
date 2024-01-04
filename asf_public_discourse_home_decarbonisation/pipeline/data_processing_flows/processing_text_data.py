@@ -87,10 +87,7 @@ class TextProcessingFlow(FlowSpec):
             print(f"{self.category} is not an MSE category, so program will stop.")
             sys.exit(-1)
 
-        if self.category != "energy":
-            s3_path = f"s3://{S3_BUCKET}/{MSE_S3_RAW_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}_{self.batch_date}.parquet"
-        else:
-            s3_path = f"s3://{S3_BUCKET}/{MSE_S3_RAW_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}.parquet"
+        s3_path = f"s3://{S3_BUCKET}/{MSE_S3_RAW_OUTPUTS_FOLDER_PATH}/mse_data_category_{self.category}_{self.batch_date}.parquet"
         with open(s3_path, "rb") as s3_file:
             self.mse_data = pd.read_parquet(s3_file)
 
