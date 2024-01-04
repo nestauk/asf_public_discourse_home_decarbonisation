@@ -9,7 +9,7 @@ from asf_public_discourse_home_decarbonisation.config.plotting_configs import (
     FONT_NAME,
     NESTA_COLOURS,
 )
-from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
+from asf_public_discourse_home_decarbonisation.utils.ngram_utils import (
     identify_n_gram_type,
 )
 import os
@@ -30,6 +30,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def finding_path_to_font(font_name: str) -> str:
     """
     Finds path to specific font.
@@ -44,6 +45,7 @@ def finding_path_to_font(font_name: str) -> str:
     if len(font_files) == 0:
         font_files = [f for f in all_font_files if "DejaVuSans.ttf" in f]
     return font_files[0]
+
 
 # MSE utils
 def create_wordcloud(frequencies: dict, max_words: int, stopwords: list):
@@ -144,6 +146,7 @@ def plot_and_save_wordcloud(
         plt.clf()
     else:
         logger.warning(f"No {n_gram_type} above threshold for {category} {var_used}")
+
 
 # BuildHub utils
 set_plotting_styles()
