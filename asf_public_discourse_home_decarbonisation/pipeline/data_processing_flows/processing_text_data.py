@@ -18,7 +18,7 @@ os.system(
 )
 os.system("python -m spacy download en_core_web_sm")
 
-from metaflow import FlowSpec, step, batch, Parameter
+from metaflow import FlowSpec, step, batch, Parameter, retry
 import pandas as pd
 from flow_utils import remove_tokens_in_list
 
@@ -167,6 +167,7 @@ class TextProcessingFlow(FlowSpec):
 
         self.next(self.join_data_from_previous_step)
 
+    @retry
     @batch(cpu=8, memory=32000)
     @step
     def join_data_from_previous_step(self, inputs):
