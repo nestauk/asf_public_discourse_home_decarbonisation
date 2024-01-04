@@ -51,12 +51,6 @@ def get_mse_category_data(
         logger.error(f"`{processing_level}` is not a valid processing level!")
         sys.exit(-1)
 
-    if category == "energy":
-        return load_s3_data(
-            bucket_name=S3_BUCKET,
-            file_path=f"data/mse/outputs/{processing_level}/mse_data_category_energy.parquet",
-        )
-
     return load_s3_data(
         bucket_name=S3_BUCKET,
         file_path=f"data/mse/outputs/{processing_level}/mse_data_category_{category}_{collection_date}.parquet",
@@ -84,21 +78,13 @@ def get_all_mse_data(
 
     all_mse_data = pd.DataFrame()
     for cat in mse_categories:
-        if (
-            cat != "energy"
-        ):  # this is a temporary fix, while we sort the collection for this category
-            aux = load_s3_data(
-                bucket_name=S3_BUCKET,
-                file_path=f"data/mse/outputs/{processing_level}/mse_data_category_{cat}_{collection_date}.parquet",
-            )
-        else:
-            aux = load_s3_data(
-                bucket_name=S3_BUCKET,
-                file_path=f"data/mse/outputs/{processing_level}/mse_data_category_energy.parquet",
-            )
+        aux = load_s3_data(
+            bucket_name=S3_BUCKET,
+            file_path=f"data/mse/outputs/{processing_level}/mse_data_category_{cat}_{collection_date}.parquet",
+        )
         all_mse_data = pd.concat([all_mse_data, aux])
 
-    return all_mse_data.drop_duplicates().reset_index(drop=True)
+    return all_mse_data.reset_index(drop=True)
 
 
 def get_mse_data(
