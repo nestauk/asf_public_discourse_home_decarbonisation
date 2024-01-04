@@ -33,7 +33,7 @@ warnings.simplefilter(action="ignore")
 import pandas as pd
 import os
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
-from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
+from asf_public_discourse_home_decarbonisation.utils.ngram_utils import (
     create_ngram_from_ordered_tokens,
     frequency_ngrams,
 )
