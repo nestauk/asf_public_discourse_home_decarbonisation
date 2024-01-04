@@ -76,7 +76,7 @@ def plot_and_save_top_ngrams(
     """
     most_common = dict(n_gram_data.most_common(top_n))
     n_gram_type = identify_n_gram_type(most_common)
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(10, 6))
     plt.barh(
         list(most_common.keys()), list(most_common.values()), color=NESTA_COLOURS[0]
     )
