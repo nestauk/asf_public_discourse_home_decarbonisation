@@ -10,9 +10,9 @@ This script performs an exploratory data analysis on the data collected from Bui
     - Distribution of post lengths
     - Print the frequency of selected keywords in posts using the 'heating_technologies_ruleset_twitter' dictionary
 To run this script:
-    'python asf_public_discourse_home_decarbonisation/analysis/ASF_awayday_buildhub_eda.py'
+    'python asf_public_discourse_home_decarbonisation/analysis/buildhub/ASF_awayday_buildhub_eda.py'
 To change category or date/time range, use the following arguments:
-    `python asf_public_discourse_home_decarbonisation/analysis/ASF_awayday_buildhub_eda.py --category <category> --collection_date_time <collection_date_time>`
+    `python asf_public_discourse_home_decarbonisation/analysis/buildhub/ASF_awayday_buildhub_eda.py --category <category> --collection_date_time <collection_date_time>`
 where:
     <category>: category or sub-forum to be analysed, (e.g. "120_ground_source_heat_pumps_gshp" from a list of possible categories: ["119_air_source_heat_pumps_ashp","120_ground_source_heat_pumps_gshp","125_general_alternative_energy_issues","136_underfloor_heating","137_central_heating_radiators","139_boilers_hot_water_tanks","140_other_heating_systems"])
     <collection_date_time>: data collection date/time in the format YYMMDD (e.g. 231120)
@@ -31,8 +31,10 @@ import logging
 logger = logging.getLogger(__name__)
 from asf_public_discourse_home_decarbonisation.config.plotting_configs import (
     set_plotting_styles,
-    finding_path_to_font,
     NESTA_COLOURS,
+)
+from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
+    finding_path_to_font,
 )
 from asf_public_discourse_home_decarbonisation.config.heating_technologies_ruleset import (
     heating_technologies_ruleset_twitter,

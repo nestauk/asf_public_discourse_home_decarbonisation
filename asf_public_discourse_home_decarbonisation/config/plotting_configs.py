@@ -10,14 +10,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-ChartType = alt.Chart
+ChartType = alt.vegalite.v4.api.Chart
+
 # Fonts and colours
+FONT_NAME = "Averta-Regular"
 FONT = "Averta"
 TITLE_FONT = "Averta"
 FONTSIZE_TITLE = 20
 FONTSIZE_SUBTITLE = 16
 FONTSIZE_NORMAL = 13
-
 
 NESTA_COLOURS = [
     "#0000FF",
@@ -35,6 +36,9 @@ NESTA_COLOURS = [
     "#FFFFFF",
     "#000000",
 ]
+
+figsize_x = 8
+figsize_y = 4
 
 
 def nestafont():
@@ -87,21 +91,6 @@ def configure_plots(fig, chart_title: str = "", chart_subtitle: str = ""):
         .configure_view(strokeWidth=0)
     )
 
-
-def finding_path_to_font(font_name: str):
-    """
-    Finds path to specific font.
-    Args:
-        font_name: name of font
-    """
-
-    all_font_files = font_manager.findSystemFonts()
-    font_files = [f for f in all_font_files if font_name in f]
-    if len(font_files) == 0:
-        font_files = [f for f in all_font_files if "DejaVuSans.ttf" in f]
-    return font_files[0]
-
-
 def set_spines():
     """
     Function to add or remove spines from plots.
@@ -132,20 +121,21 @@ def set_plotting_styles():
             font_manager.fontManager.addfont(font_file)
         mpl.rcParams["font.sans-serif"] = "Averta"
     except:
-        print("Averta" + " font could not be located. Using 'DejaVu Sans' instead")
+        logger.info(
+            "Averta" + " font could not be located. Using 'DejaVu Sans' instead"
+        )
         font_files = [f for f in all_font_files if "DejaVuSans.ttf" in f][0]
         for font_file in font_files:
             font_manager.fontManager.addfont(font_file)
         mpl.rcParams["font.family"] = "sans-serif"
         mpl.rcParams["font.sans-serif"] = "DejaVu Sans"
 
-    mpl.rcParams["xtick.labelsize"] = 18
-    mpl.rcParams["ytick.labelsize"] = 18
-    mpl.rcParams["axes.titlesize"] = 20
-    mpl.rcParams["axes.labelsize"] = 18
-    mpl.rcParams["legend.fontsize"] = 18
-    mpl.rcParams["figure.titlesize"] = 20
+    mpl.rcParams["xtick.labelsize"] = FONTSIZE_TITLE
+    mpl.rcParams["ytick.labelsize"] = FONTSIZE_TITLE
+    mpl.rcParams["axes.titlesize"] = FONTSIZE_TITLE
+    mpl.rcParams["axes.labelsize"] = FONTSIZE_SUBTITLE
+    mpl.rcParams["legend.fontsize"] = FONTSIZE_SUBTITLE
+    mpl.rcParams["figure.titlesize"] = FONTSIZE_TITLE
 
 
-##### Plotting functions for the dataframe #####
-font_path_ttf = finding_path_to_font("Averta-Regular")
+set_plotting_styles()

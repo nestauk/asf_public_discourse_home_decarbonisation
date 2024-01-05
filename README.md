@@ -1,4 +1,4 @@
-# asf_public_discourse_home_decarbonisation
+# Understanding Public Discourse on Home Decarbonisation
 
 ## Setup
 
@@ -7,6 +7,7 @@
 - Run `make install` to configure the development environment:
   - Setup the conda environment
   - Configure `pre-commit`
+- Download and install the [Averta font](https://github.com/deblynprado/neon/blob/master/fonts/averta/Averta-Regular.ttf)
 
 ## Contributor guidelines
 
