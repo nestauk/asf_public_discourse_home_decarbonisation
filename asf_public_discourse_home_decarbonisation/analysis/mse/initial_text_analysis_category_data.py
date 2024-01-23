@@ -96,6 +96,7 @@ keyword_dictionary = {
     "installer_keywords": ["installer", "engineer"],
     "installation_keywords": ["installation"],
     "cost_keywords": ["cost", "price", "pay", "pound", "£"],
+    "quote_keywords": ["quote"],
     "issue_keywords": ["issue"],
     "noise_keywords": ["noise", "noisy", "decibel", "db"],
     "flow_temp_keywords": ["flow temperature", "flow temp"],
@@ -276,39 +277,51 @@ def create_table_with_keyword_counts(
     logger.info(f"Keyword groups counts filtered for `{filter}`:\n{keyword_counts}")
 
 
-def plot_and_save_analysis_top_n_grams(analysis_parameters: dict, stopwords: list):
+def plot_and_save_analysis_top_n_grams(
+    data: pd.DataFrame,
+    analysis_parameters: dict,
+    stopwords: list,
+    category: str,
+    figures_path,
+):
     """
     Plotting and saving the barplots and wordcloud of top ngrams.
 
     Args:
+        data (pd.DataFrame):
         analysis_parameters (dict): A dictionary containing the parameters for the analysis
+        stopwords (list):
+        figures_path (str):
     """
     logger.info("Analysing top keywords and ngrams...")
     for t in analysis_parameters.keys():
         params = analysis_parameters[t]
         filter_to_apply = params["data"]
-        filtered_data = filter_to_apply(mse_data)
+        filtered_data = filter_to_apply(data)
         frequencies = frequency_ngrams(filtered_data, params["ngrams_col"])
 
-        # Bar plot with top ngrams
-        plot_and_save_top_ngrams(
-            frequencies,
-            top_ngrams_barplot,
-            category,
-            params["var_used"],
-            MSE_FIGURES_PATH,
-        )
+        if len(frequencies) > 0:
+            # Bar plot with top ngrams
+            plot_and_save_top_ngrams(
+                frequencies,
+                top_ngrams_barplot,
+                category,
+                params["var_used"],
+                figures_path,
+            )
 
-        # Wordcloud with top ngrams above min_frequency
-        plot_and_save_wordcloud(
-            frequencies,
-            top_ngrams_wordcloud,
-            params["min_frequency"],
-            category,
-            params["var_used"],
-            MSE_FIGURES_PATH,
-            stopwords,
-        )
+            # Wordcloud with top ngrams above min_frequency
+            plot_and_save_wordcloud(
+                frequencies,
+                top_ngrams_wordcloud,
+                params["min_frequency"],
+                category,
+                params["var_used"],
+                figures_path,
+                stopwords,
+            )
+        else:
+            logger.info("not enough data to plot")
 
 
 def create_argparser() -> argparse.ArgumentParser:
@@ -362,7 +375,11 @@ if __name__ == "__main__":
     create_table_with_keyword_counts(mse_data, keyword_dictionary, "posts")
 
     plot_and_save_analysis_top_n_grams(
-        top_n_grams_analysis_parameters, stopwords=english_stopwords_definition()
+        mse_data,
+        top_n_grams_analysis_parameters,
+        stopwords=english_stopwords_definition(),
+        category=category,
+        figures_path=MSE_FIGURES_PATH,
     )
 
     logger.info("Analysis completed!")

@@ -130,7 +130,8 @@ def plot_and_save_wordcloud(
         for key, value in n_gram_data.items()
         if value > min_frequency_allowed
     }
-    n_gram_type = identify_n_gram_type(n_gram_data_above_threshold)
+
+    n_gram_type = identify_n_gram_type(n_gram_data)
 
     if len(n_gram_data_above_threshold) > 0:
         create_wordcloud(n_gram_data_above_threshold, top_n, stopwords)
