@@ -69,17 +69,21 @@ def create_argparser() -> argparse.ArgumentParser:
     return args
 
 
-def extract_questions(sentences, num_of_words=5, min_length=5):
+def extract_questions(
+    sentences: List[str], num_of_words: int = 5, min_length: int = 5
+) -> List[str]:
     """
     Extracts and returns a curated list of questions from a list of sentences, specifically filtering out certain types of questions. This function is designed to identify and include questions that are more substantial and exclude shorter, less informative questions such as "any thoughts?" or "why?".
 
-    The function utilizes a combination of punctuation analysis (identifying sentences ending with '?') and the presence of certain question words at the beginning. However, it also employs a set of criteria to exclude questions that are deemed too brief or lacking in content, even if they technically qualify as questions.
+    The function utilises a combination of punctuation analysis (identifying sentences ending with '?') and the presence of certain question words at the beginning. However, it also employs a set of criteria to exclude questions that are deemed too brief or lacking in content, even if they technically qualify as questions.
 
     Args:
-        sentences (list of str): A list of sentences from which questions are to be extracted. Each item in the list should be a string representing a single sentence.
+        sentences (List[str]): A list of sentences from which questions are to be extracted.
+        num_of_words (int, optional): The maximum number of words allowed for a question to be considered valid. Defaults to 5.
+        min_length (int, optional): The minimum length of a question to be considered valid. Defaults to 5.
 
     Returns:
-        list of str: A list of strings, each representing a question identified from the input list of sentences. The function specifically excludes certain types of questions based on their length and content.
+        List[str]: A list of strings, each a question identified from the input sentences. Questions are filtered to exclude those that are brief or deemed less informative.
 
     Note:
         - The function uses predefined question words to identify potential questions but excludes questions that are brief or deemed less informative, such as "why?" or "any thoughts?".
@@ -130,7 +134,7 @@ def extract_questions(sentences, num_of_words=5, min_length=5):
     return all_questions
 
 
-def extract_idk(sentences):
+def extract_idk(sentences: List[str]) -> Tuple[List[str], List[str]]:
     """
     Extracts and returns two lists based on a list of input sentences: one containing sentences with specific "I don't know" phrases, and another with these phrases removed.
 
@@ -139,10 +143,10 @@ def extract_idk(sentences):
     This can be particularly useful for analysing text where it's important to both identify expressions of uncertainty and examine the context without these expressions.
 
     Args:
-        sentences (list of str): A list of sentences to be evaluated. Each item in the list should be a string representing a single sentence.
+        sentences (List[str]): A list of sentences to be evaluated. Each item in the list should be a string representing a single sentence.
 
     Returns:
-        tuple of two lists:
+        Tuple[List[str], List[str]]:
             - The first list contains sentences that include any of the predefined "I don't know" phrases.
             - The second list contains the same sentences but with the "I don't know" phrases removed, allowing for analysis of the remaining sentence content.
 
