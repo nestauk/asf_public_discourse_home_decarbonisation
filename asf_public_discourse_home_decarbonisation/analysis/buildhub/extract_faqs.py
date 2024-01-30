@@ -21,6 +21,7 @@ import pandas as pd
 import re
 import nltk
 from nltk.tokenize import sent_tokenize
+from typing import List, Tuple
 import argparse
 from asf_public_discourse_home_decarbonisation.getters.bh_getters import (
     get_bh_category_data,
