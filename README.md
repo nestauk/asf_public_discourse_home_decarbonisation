@@ -8,6 +8,7 @@
   - Setup the conda environment
   - Configure `pre-commit`
 - Download and install the [Averta font](https://github.com/deblynprado/neon/blob/master/fonts/averta/Averta-Regular.ttf)
+- Download spacy model: `python -m spacy download en_core_web_sm`
 
 ## Contributor guidelines
 
