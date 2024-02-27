@@ -4,7 +4,7 @@ File with parameters to test BERTopic to identify topics:
 - model_and_additional_params: model specificities and additional data filtering parameters
 """
 
-data_source_parms = [
+data_source_params = [
     {
         "data_source": "mse",
         "slice": [
@@ -74,7 +74,7 @@ from bertopic.representation import KeyBERTInspired
 from sklearn.feature_extraction.text import CountVectorizer
 
 # Additional parameters like the text column and filter are in the following dictionary instead of in the
-# data_source_parms because a different text column/filter would change the model specifities
+# data_source_params because a different text column/filter would change the model specifities
 model_and_additional_params = [
     {"model_name": "Basic Model", "text_column": "title", "filter": "original_posts"},
     {
