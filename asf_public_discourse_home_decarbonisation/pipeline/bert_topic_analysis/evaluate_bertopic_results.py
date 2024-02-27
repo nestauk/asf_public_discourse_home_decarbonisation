@@ -98,10 +98,10 @@ def get_configuration_params_file(path_to_config_file: str) -> tuple:
     """
     config_module = importlib.import_module(path_to_config_file)
 
-    data_source_parms = config_module.data_source_parms
+    data_source_params = config_module.data_source_params
     model_and_additional_params = config_module.model_and_additional_params
 
-    return data_source_parms, model_and_additional_params
+    return data_source_params, model_and_additional_params
 
 
 def create_boxplots_with_results(output_configs: dict):
@@ -109,7 +109,7 @@ def create_boxplots_with_results(output_configs: dict):
     Creates and saves a figure with boxplots showing the distribution of results for:
     - Number of topics
     - Percentage of outliers
-    - Average probability of beloging to a non-outlier topic
+    - Average probability of belonging to a non-outlier topic
 
     Args:
         output_configs (dict): dictionary with results information
@@ -301,15 +301,15 @@ if __name__ == "__main__":
     path_to_data_file = args.path_to_data_file
 
     (
-        data_source_parms,
+        data_source_params,
         model_and_additional_params,
     ) = get_configuration_params_file(path_to_config_file)
 
     # for each data source comparing
-    for data_source in data_source_parms:
+    for data_source in data_source_params:
         source_name = data_source["data_source"]
 
-        # One figure will be created for each slide of data considered
+        # One figure will be created for each slice of data considered
         # i.e. data from a specific category or containing specific keywords
         # comparing different models
         for slice in data_source["slice"]:
