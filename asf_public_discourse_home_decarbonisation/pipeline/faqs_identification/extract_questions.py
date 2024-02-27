@@ -1,7 +1,7 @@
 """
 This script is designed to extract questions and specific patterns (that could've been written as questions) from a given forum text dataset.
 Key Functionalities:
-    - Extract Questions: Extract Questions: Identifies and extracts questions from sentences based on criteria such finishing with a question mark or starting with a question token (e.g. what, why). Additionally, we also have filtering criteria such as length of sentence and number of tokens.
+    - Extract Questions: Identifies and extracts questions from sentences based on criteria such finishing with a question mark or starting with a question token (e.g. what, why). Additionally, we also have filtering criteria such as length of sentence and number of tokens.
     - Extract Specific Patterns: Targets and extracts specific patterns or phrases with phrases such as "I don't know", tailored by the `extract_idk` function.
     - Configurable: Allows runtime configuration through command-line arguments for flexible usage in different scenarios.
 To run this script:
