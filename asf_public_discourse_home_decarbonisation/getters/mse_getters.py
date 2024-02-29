@@ -1,6 +1,7 @@
 """
 Getter functions for Money Saving Expert (MSE) data.
 """
+
 import pandas as pd
 from asf_public_discourse_home_decarbonisation.getters.getter_utils import load_s3_data
 import sys
@@ -88,7 +89,7 @@ def get_all_mse_data(
 
 
 def get_mse_data(
-    category: str, collection_date: str, processing_level: str = "raw"
+    category: str, collection_date: str = "2023_11_15", processing_level: str = "raw"
 ) -> pd.DataFrame:
     """
     Gets a specific version of the MSE data:
