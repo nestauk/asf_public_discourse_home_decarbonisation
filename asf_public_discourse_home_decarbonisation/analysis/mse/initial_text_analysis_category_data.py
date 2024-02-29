@@ -44,8 +44,10 @@ from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
     plot_and_save_top_ngrams,
     plot_and_save_wordcloud,
 )
+from asf_public_discourse_home_decarbonisation.config.keywords_dictionary import (
+    keyword_dictionary,
+)
 from asf_public_discourse_home_decarbonisation import PROJECT_DIR
-
 import argparse
 import logging
 
@@ -62,45 +64,6 @@ min_frequency_tokens = 100
 min_frequency_bigrams = 50
 min_frequency_trigrams = 10
 min_frequency_4_grams = 10
-
-# Specific groups of keywords/expressions we want to look at
-keyword_dictionary = {
-    "heat_pump_keywords": [
-        "heat pump",
-        "heatpump",
-        "ashp",
-        "gshp",
-        "wshp",
-        "air 2 air",
-        "air to air",
-        "a2a",
-    ],
-    "boiler_keywords": ["boiler"],
-    "hydrogen_keywords": ["hydrogen", "h2"],
-    "bus_keywords": ["boiler upgrade scheme", "bus"],
-    "grants_keywords": [
-        "boiler upgrade scheme",
-        "bus",
-        "renewable heat incentive",
-        "domestic rhi",
-        "rhi",
-        "dhri",
-        "clean heat grant",
-        "home energy scotland grant",
-        "home energy scotland loan",
-        "home energy scotland scheme",
-    ],
-    "mcs_keywords": ["mcs", "microgeneration certification scheme"],
-    "cost_est_keywords": ["cost estimator"],
-    "nesta_keywords": ["nesta"],
-    "installer_keywords": ["installer", "engineer"],
-    "installation_keywords": ["installation"],
-    "cost_keywords": ["cost", "price", "pay", "pound", "£"],
-    "issue_keywords": ["issue"],
-    "noise_keywords": ["noise", "noisy", "decibel", "db"],
-    "flow_temp_keywords": ["flow temperature", "flow temp"],
-    "msbc_keywords": ["money saving boiler challenge", "msbc", "boiler challenge"],
-}
 
 # Parameters for analysis top keywords and n-grams
 top_n_grams_analysis_parameters = {
