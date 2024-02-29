@@ -5,7 +5,6 @@ The BERTopic model is run multiple times (the value of n_runs), and the results 
 - Distribution of outlier numers and percentages
 - Distribution of number of topics
 - Average probability of belonging to a non-outlier topic
-- Distribution of outliers (# docs vs. # times a doc is an outlier)
 
 To run this script (with the default parameters):
 `python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/evaluate_bertopic_results.py`
@@ -43,9 +42,11 @@ from asf_public_discourse_home_decarbonisation.config.keywords_dictionary import
 )
 from asf_public_discourse_home_decarbonisation.config.plotting_configs import (
     set_plotting_styles,
-    NESTA_COLOURS,
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Path to save the figures
 TOPIC_ANALYSIS_EVALUATION_PATH = os.path.join(
@@ -121,10 +122,9 @@ def create_boxplots_with_results(output_configs: dict):
     n_docs = output_configs["n_docs"]
     n_runs = output_configs["n_runs"]
     keywords = output_configs["keywords"]
-    number_of_outliers_df = output_configs["outliers_df"]
-    number_of_topics_df = output_configs["topics_df"]
-    avg_probablity_df = output_configs["probabilities_df"]
-    outliers_vs_docs_dict = output_configs["outliers_vs_docs_dict"]
+    number_of_outliers_df = pd.DataFrame(output_configs["outliers"])
+    number_of_topics_df = pd.DataFrame(output_configs["topics"])
+    avg_probablity_df = pd.DataFrame(output_configs["probabilities"])
 
     # Plot horizontal boxplots for each dataframe: number_of_topics_df, number_of_outliers_df and avg_probablity_df
     fig, axes = plt.subplots(3, 1, figsize=(10, number_of_topics_df.shape[1] * 3))
@@ -141,14 +141,6 @@ def create_boxplots_with_results(output_configs: dict):
 
     avg_probablity_df.boxplot(ax=axes[2], grid=False, vert=False)
     axes[2].set_xlabel("Average probablity of belonging to a non-outlier topic")
-
-    # axes[3].hist([res["outlier_fraction"] for res in outliers_vs_docs_dict.values()],
-    #     bins=30,
-    #     color=[NESTA_COLOURS[0] for res in outliers_vs_docs_dict.values()],
-    #     edgecolor="white",
-    # )
-    # axes[3].set_xlabel('fraction of runs where a document is an outlier')
-    # axes[3].set_ylabel('# of docs')
 
     fig.suptitle(
         "Source: {}, Category: {}\n Keywords filter: {}, # Docs: {}, # Runs: {}".format(
@@ -170,13 +162,19 @@ def create_boxplots_with_results(output_configs: dict):
 
 def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> tuple:
     """
-    Evaluates topic model on a specific number of runs.
+    Evaluates a topic model according to a list of model configurations on a specific number of runs.
 
     Args:
         n_runs (int): number of times to run the model
         docs (list): documents to cluster into topics
-        model_configs (dict): model configurations
-
+        model_configs (dict): model configurations, which might include
+            - nr_topics
+            - representation_model
+            - min_topic_size
+            - vectorizer_model
+            - umap_model
+            - hdbscan_model
+            - embedding_model
     Returns:
         tuple:
             - list of number of topics
@@ -187,10 +185,6 @@ def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> 
     runs_number_of_topics = []
     runs_number_of_outliers = []
     runs_avg_prob = []
-
-    docs_outlier_count = pd.DataFrame(columns=["Document", "outlier_count"])
-    docs_outlier_count["Document"] = docs
-    docs_outlier_count["outlier_count"] = 0
 
     # Getting model configurations
     # default values found here: https://maartengr.github.io/BERTopic/api/bertopic.html#bertopic._bertopic.BERTopic.__init__
@@ -228,33 +222,13 @@ def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> 
             )
             # Appending average probability of the documents (not in the outliers' cluster) belonging to topics
             runs_avg_prob.append(doc_info[doc_info["Topic"] > -1]["Probability"].mean())
-
-            # Updating number of times a doc is an outlier
-            docs_outlier_count = docs_outlier_count.merge(
-                right=doc_info[["Document", "Topic"]], on="Document"
-            )
-            docs_outlier_count["outlier_count"] = docs_outlier_count.apply(
-                lambda x: (
-                    x["outlier_count"] + 1 if x["Topic"] == -1 else x["outlier_count"]
-                ),
-                axis=1,
-            )
-            docs_outlier_count.drop(columns="Topic", inplace=True)
         except:
-            print(f"Run {i} failed due to no topics being found. Skipping...")
-
-        outliers_vs_docs = (
-            docs_outlier_count.groupby("outlier_count")
-            .size()
-            .reset_index(name="num_docs")
-        )
-        outliers_vs_docs = outliers_vs_docs[outliers_vs_docs["outlier_count"] > 0]
+            logger.info(f"Run {i} failed due to no topics being found. Skipping...")
 
     return (
         runs_number_of_topics,
         runs_number_of_outliers,
         runs_avg_prob,
-        outliers_vs_docs,
     )
 
 
@@ -319,10 +293,9 @@ if __name__ == "__main__":
                 source_name, category, path_to_data_file, keywords
             )
 
-            number_of_topics_df = pd.DataFrame()
-            number_of_outliers_df = pd.DataFrame()
-            avg_probablity_df = pd.DataFrame()
-            outliers_vs_docs_dict = dict()
+            number_of_topics_dict = dict()
+            number_of_outliers_dict = dict()
+            avg_probablity_dict = dict()
 
             # for each model specification run and evaluate the model
             for model_param in model_and_additional_params:
@@ -342,13 +315,11 @@ if __name__ == "__main__":
                     runs_number_of_topics,
                     runs_number_of_outliers,
                     runs_avg_prob,
-                    outliers_vs_docs,
                 ) = run_topic_model_evaluation(n_runs, docs, model_param)
 
-                number_of_topics_df[model_name] = runs_number_of_topics
-                number_of_outliers_df[model_name] = runs_number_of_outliers
-                avg_probablity_df[model_name] = runs_avg_prob
-                outliers_vs_docs_dict[model_name] = outliers_vs_docs
+                number_of_topics_dict[model_name] = runs_number_of_topics
+                number_of_outliers_dict[model_name] = runs_number_of_outliers
+                avg_probablity_dict[model_name] = runs_avg_prob
 
             # Create config dictionary with outputs
             output_configs = {
@@ -357,10 +328,9 @@ if __name__ == "__main__":
                 "n_docs": len(docs),
                 "n_runs": n_runs,
                 "keywords": keywords,
-                "outliers_df": number_of_outliers_df,
-                "topics_df": number_of_topics_df,
-                "probabilities_df": avg_probablity_df,
-                "outliers_vs_docs_dict": outliers_vs_docs_dict,
+                "outliers": number_of_outliers_dict,
+                "topics": number_of_topics_dict,
+                "probabilities": avg_probablity_dict,
             }
 
             # Plotting results
