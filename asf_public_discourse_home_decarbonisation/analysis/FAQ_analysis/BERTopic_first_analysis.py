@@ -1,16 +1,15 @@
 """
 python BERTopic_first_analysis.py
 
-This script performs topic modeling on a set of questions using the BERTopic library.
+This script clusters questions together to identify groups of similar questions. To do that we apply BERTopic topic model on a set of questions.
 
 The process includes the following steps:
 1. Load the 'extracted questions' data from a CSV file, extracting the 'Question' column.
 2. Create a BERTopic model and fit it to the questions.
 3. Visualise the topics identified by the model in various ways, including a general topic visualization, a bar chart of the top topics, and a hierarchy of the topics.
 4. Plot the distribution of topics.
-
-The script is designed to be modular, with separate functions for each step of the process. This makes the code easier to read and maintain, and allows for parts of the code to be reused elsewhere if needed.
 """
+
 import pandas as pd
 from bertopic import BERTopic
 import matplotlib.pyplot as plt
@@ -50,6 +49,12 @@ def create_argparser() -> argparse.ArgumentParser:
         "--forum",
         help="forum (i.e. mse or bh)",
         default="bh",
+        type=str,
+    )
+    parser.add_argument(
+        "--post_type",
+        help="post type (i.e. all, original or replies)",
+        default="all",
         type=str,
     )
 
@@ -138,6 +143,35 @@ def plot_topic_distribution(topic_model: BERTopic, figure_file_path: str) -> Non
     )
 
 
+def save_topic_info(topic_model, questions, doc_topics_info_path):
+    """
+    doc_info and topics_info will tell you
+    - which cluster a specific question belongs to;
+    - if a question is representative of the cluster or not;
+
+    Parameters:
+    topic_model (BERTopic): The BERTopic model.
+    questions (list): The list of questions.
+    doc_topics_info_path (str): The path to save the CSV files.
+    """
+    # Get document info and save to CSV
+    doc_info = topic_model.get_document_info(questions)
+    doc_info.to_csv(
+        os.path.join(doc_topics_info_path, "document_info.csv"),
+        index=False,
+        encoding="utf-8",
+    )
+
+    # Get topic info, calculate percentage, and save to CSV
+    topics_info = topic_model.get_topic_info()
+    topics_info["%"] = topics_info["Count"] / len(questions) * 100
+    topics_info.to_csv(
+        os.path.join(doc_topics_info_path, "topics_info.csv"),
+        index=False,
+        encoding="utf-8",
+    )
+
+
 def main():
     """
     Main function to execute the topic modeling workflow.
@@ -149,20 +183,26 @@ def main():
     args = create_argparser()
     category = args.category
     forum = args.forum
+    post_type = args.post_type
     input_data = os.path.join(
         PROJECT_DIR,
-        f"outputs/data/extracted_questions/{forum}/forum_{category}/extracted_questions_{category}_all.csv",
+        f"outputs/data/extracted_questions/{forum}/forum_{category}/extracted_questions_{category}_{post_type}.csv",
     )
     figure_path = os.path.join(
         PROJECT_DIR, f"outputs/figures/extracted_questions/{forum}/forum_{category}/"
     )
+    doc_topics_info_path = os.path.join(
+        PROJECT_DIR, f"outputs/outputs/BERTopic_csv_files/{forum}/forum_{category}/"
+    )
     os.makedirs(figure_path, exist_ok=True)
+    os.makedirs(doc_info_path, exist_ok=True)
     questions = load_data(input_data)
     topic_model, topics, probabilities = create_topic_model(questions)
     visualise_topics(topic_model, figure_path)
     visualise_barchart(topic_model, figure_path)
     visualise_hierarchy(topic_model, figure_path)
     plot_topic_distribution(topic_model, figure_path)
+    save_topic_info(topic_model, questions, doc_topics_info_path)
 
 
 if __name__ == "__main__":

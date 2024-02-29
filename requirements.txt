@@ -13,3 +13,5 @@ fsspec==2023.10.0
 fastparquet==2023.10.1
 pyarrow==14.0.1
 metaflow==2.10.2
+bertopic==0.16.0
+kaleido==0.2.1
