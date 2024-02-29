@@ -1,7 +1,7 @@
 """
 This script is designed to extract questions and specific patterns (that could've been written as questions) from a given forum text dataset.
 Key Functionalities:
-    - Extract Questions: Identifies and extracts questions from sentences based on criteria such finishing with a question mark or starting with a question token (e.g. what, why). Additionally, we also have filtering criteria such as length of sentence and number of tokens.
+    - Extract Questions: Identifies and extracts questions from sentences based on criteria such finishing with a question mark. Additionally, we also have filtering criteria such as length of sentence.
     - Extract Specific Patterns: Targets and extracts specific patterns or phrases with phrases such as "don't know", tailored by the `extract_idk` function.
     - Configurable: Allows runtime configuration through command-line arguments for flexible usage in different scenarios.
 To run this script:
@@ -16,8 +16,7 @@ Example Usage:
     For MSE:
         'python extract_questions.py --forum mse --category green-ethical-moneysaving --post_type original --collection_date_time 2023_11_15 --num_of_words 5'
     For buildhub:
-        'python extract_questions.py --forum bh --category 120_ground_source_heat_pumps_gshp --post_type reply --collection_date_time 231120 --num_of_words 5'
-    Note: In these run commands note the different format in date-time format for the different forums.
+        'python extract_questions.py --forum bh --category 120_ground_source_heat_pumps_gshp --post_type reply --collection_date_time 24_02_01 --num_of_words 5'
 """
 
 import pandas as pd
@@ -46,7 +45,7 @@ def create_argparser() -> argparse.ArgumentParser:
     Creates an argument parser that can receive the following arguments:
     - forum: forum that we are looking at (defaults to "bh" but can be "mse")
     - category: category or sub-forum (defaults to "119_air_source_heat_pumps_ashp")
-    - collection_date_time: collection date/time (defaults to "231120")
+    - collection_date_time: collection date/time (defaults to "24_02_01")
     - num_of_words: minimum number of words a question should have to be included (defaults to 5)
     - post_type: type of post ('original', 'reply', or 'all') (defaults to "all")
     Returns:
@@ -70,7 +69,7 @@ def create_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--collection_date_time",
         help="Collection date/time",
-        default="231120",
+        default="24_02_01",
         type=str,
     )
     parser.add_argument(
@@ -189,7 +188,7 @@ def extract_questions(sentences: List[str]) -> List[str]:
     """
     Extracts and returns a curated list of questions from a list of sentences.
 
-    The function utilises a combination of punctuation analysis (identifying sentences ending with '?').
+    The function utilises punctuation analysis (identifying sentences ending with '?').
 
     Args:
         sentences (List[str]): A list of sentences from which questions are to be extracted.
@@ -243,7 +242,7 @@ def extract_idk(sentences: List[str], inclusion_phrases: List[str]) -> List[str]
     """
     Extracts and returns a list of sentences mentioning at least one of the expressions in inclusion_phrases.
 
-    The function searches for sentences that contain any of a predefined set of phrases indicating uncertainty or lack of knowledge (e.g., "don’t know", "do not know", "do not know how to"). It then puts these into a list.
+    The function searches for sentences that contain any of a predefined set of phrases indicating uncertainty or lack of knowledge (i.e., "don’t know", "do not know"). It then puts these into a list.
 
     This can be particularly useful for analysing text where it's important to both identify expressions of uncertainty and examine the context without these expressions.
 
@@ -271,9 +270,9 @@ def extract_X_from_idk(
     """
     Extracts and returns a list of expressions coming after the inclusion_phrases in sentences.
     Example:
-         - idk_phrases: ["honestly I don't know what a heat pump is", "i have asked multiple people, but still don't know how what to do to install a heat pump in my home"
-         - inclusion_phrases: ["don't know how to", "don't know"]
-         - Returns: ["what a heat pump is", "what to do to install a heat pump in my home"]
+         - idk_phrases: ["honestly I don't know what a heat pump is", "i have asked multiple people, but still don't know how to install a heat pump in my home"
+         - inclusion_phrases: ["don't know"]
+         - Returns: ["what a heat pump is", "how to install a heat pump in my home"]
 
     The function takes a list of inclusion_phrases and sentences mentioning at least one of the expressions in inclusion_phrases. It extracts the text following the inclusion phrase and returns a list of these extracted sentences.
     Args:
@@ -282,7 +281,6 @@ def extract_X_from_idk(
     Returns:
         sentences_without_inclusion (List[str]):
             - This list contains the text following the inclusion phrase.
-
     Note:
         - The function is case-insensitive when searching for the inclusion phrases.
     """
