@@ -16,9 +16,6 @@ To transform this script into a jupyter notebook, we can use the following comma
 # %%
 from bertopic import BERTopic
 from umap import UMAP
-from sklearn.feature_extraction.text import CountVectorizer
-import pandas as pd
-import matplotlib.pyplot as plt
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
 from asf_public_discourse_home_decarbonisation.utils.topic_analysis_utils import (
     get_outputs_from_topic_model,
@@ -43,21 +40,21 @@ mse_data.head()
 # Replacing abbreviations
 mse_data["title"] = mse_data["title"].apply(
     lambda x: x.lower()
-    .replace("ashps", "ashp")
+    .replace("ashps", "air source heat pumps")
     .replace("ashp", "air source heat pump")
-    .replace("gshps", "gshp")
+    .replace("gshps", "ground source heat pumps")
     .replace("gshp", "ground source heat pump")
-    .replace("hps", "hp")
+    .replace("hps", "heat pumps")
     .replace("hp", "heat pump")
     .replace("ufh", "under floor heating")
 )
 mse_data["text"] = mse_data["text"].apply(
     lambda x: x.lower()
-    .replace("ashps", "ashp")
+    .replace("ashps", "air source heat pumps")
     .replace("ashp", "air source heat pump")
-    .replace("gshps", "gshp")
+    .replace("gshps", "ground source heat pumps")
     .replace("gshp", "ground source heat pump")
-    .replace("hps", "hp")
+    .replace("hps", "heat pumps")
     .replace("hp", "heat pump")
     .replace("ufh", "under floor heating")
 )

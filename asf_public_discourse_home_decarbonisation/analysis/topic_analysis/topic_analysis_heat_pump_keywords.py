@@ -19,8 +19,6 @@ from bertopic import BERTopic
 from umap import UMAP
 from bertopic.representation import KeyBERTInspired
 from sklearn.feature_extraction.text import CountVectorizer
-import pandas as pd
-import matplotlib.pyplot as plt
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
 from asf_public_discourse_home_decarbonisation.getters.bh_getters import get_bh_data
 from asf_public_discourse_home_decarbonisation.config.keywords_dictionary import (
@@ -46,21 +44,21 @@ bh_data = get_bh_data(category="all", collection_date="24_02_01")
 # Replacing abbreviations
 mse_data["title"] = mse_data["title"].apply(
     lambda x: x.lower()
-    .replace("ashps", "ashp")
+    .replace("ashps", "air source heat pumps")
     .replace("ashp", "air source heat pump")
-    .replace("gshps", "gshp")
+    .replace("gshps", "ground source heat pumps")
     .replace("gshp", "ground source heat pump")
-    .replace("hps", "hp")
+    .replace("hps", "heat pumps")
     .replace("hp", "heat pump")
     .replace("ufh", "under floor heating")
 )
 mse_data["text"] = mse_data["text"].apply(
     lambda x: x.lower()
-    .replace("ashps", "ashp")
+    .replace("ashps", "air source heat pumps")
     .replace("ashp", "air source heat pump")
-    .replace("gshps", "gshp")
+    .replace("gshps", "ground source heat pumps")
     .replace("gshp", "ground source heat pump")
-    .replace("hps", "hp")
+    .replace("hps", "heat pumps")
     .replace("hp", "heat pump")
     .replace("ufh", "under floor heating")
 )
@@ -70,11 +68,11 @@ bh_data["title"] = (
     .astype(str)
     .apply(
         lambda x: x.lower()
-        .replace("ashps", "ashp")
+        .replace("ashps", "air source heat pumps")
         .replace("ashp", "air source heat pump")
-        .replace("gshps", "gshp")
+        .replace("gshps", "ground source heat pumps")
         .replace("gshp", "ground source heat pump")
-        .replace("hps", "hp")
+        .replace("hps", "heat pumps")
         .replace("hp", "heat pump")
         .replace("ufh", "under floor heating")
     )
@@ -84,11 +82,11 @@ bh_data["text"] = (
     .astype(str)
     .apply(
         lambda x: x.lower()
-        .replace("ashps", "ashp")
+        .replace("ashps", "air source heat pumps")
         .replace("ashp", "air source heat pump")
-        .replace("gshps", "gshp")
+        .replace("gshps", "ground source heat pumps")
         .replace("gshp", "ground source heat pump")
-        .replace("hps", "hp")
+        .replace("hps", "heat pumps")
         .replace("hp", "heat pump")
         .replace("ufh", "under floor heating")
     )
@@ -217,7 +215,7 @@ topic_model.visualize_documents(
     width=1200,
     height=750,
     topics=range(15),
-    title="Top 15 topics in Heat Pump mentions in Builhub",
+    title="Top 15 topics in Heat Pump mentions in Buildhub",
 )
 
 # %%
