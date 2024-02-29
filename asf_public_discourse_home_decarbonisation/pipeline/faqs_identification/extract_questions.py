@@ -26,9 +26,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 from typing import List, Tuple
 import argparse
-from asf_public_discourse_home_decarbonisation.getters.bh_getters import (
-    get_bh_category_data,
-)
+from asf_public_discourse_home_decarbonisation.getters.bh_getters import get_bh_data
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import (
     get_mse_data,
 )
@@ -113,7 +111,7 @@ def get_category_data(
         - If an invalid forum name is provided, the function logs an information message and exits the program.
     """
     if forum == "bh":
-        category_dataframe = get_bh_category_data(category, collection_date_time)
+        category_dataframe = get_bh_data(category, collection_date_time)
     elif forum == "mse":
         category_dataframe = get_mse_data(category, collection_date_time)
     else:
