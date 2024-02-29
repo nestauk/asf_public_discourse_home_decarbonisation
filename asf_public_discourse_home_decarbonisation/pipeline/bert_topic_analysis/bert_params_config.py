@@ -50,22 +50,13 @@ data_source_params = [
             {
                 "category": "119_air_source_heat_pumps_ashp",
             },
-            # {
-            #     "category": "120_ground_source_heat_pumps_gshp",  # too small to generate topics
-            # },
-            # {
-            #     "category": "125_general_alternative_energy_issues",  # too small to generate topics
-            # },
-            # {
-            #     "category": "136_underfloor_heating",
-            # },
-            # {
-            #     "category": "137_central_heating_radiators",
-            # },
-            # {
-            #     "category": "139_boilers_hot_water_tanks",
-            # },
-            # {"category": "140_other_heating_systems"},
+            {
+                "category": "136_underfloor_heating",
+            },
+            {
+                "category": "139_boilers_hot_water_tanks",
+            },
+            {"category": "140_other_heating_systems"},
         ],
     },
 ]
@@ -76,16 +67,14 @@ from sklearn.feature_extraction.text import CountVectorizer
 # Additional parameters like the text column and filter are in the following dictionary instead of in the
 # data_source_params because a different text column/filter would change the model specifities
 model_and_additional_params = [
-    {"model_name": "Basic Model", "text_column": "title", "filter": "original_posts"},
     {
-        "model_name": "`Auto` number of topics",
-        "nr_topics": "auto",
+        "model_name": "Baseline Model",
         "text_column": "title",
         "filter": "original_posts",
     },
     {
-        "model_name": "KeyBERTInspired",
-        "representation_model": KeyBERTInspired(),
+        "model_name": "`Auto` number of topics",
+        "nr_topics": "auto",
         "text_column": "title",
         "filter": "original_posts",
     },
@@ -101,10 +90,16 @@ model_and_additional_params = [
         "text_column": "title",
         "filter": "original_posts",
     },
-    {
-        "model_name": "CountVectorizer",
-        "vectorizer_model": CountVectorizer(stop_words="english"),
-        "text_column": "title",
-        "filter": "original_posts",
-    },
+    # {
+    #     "model_name": "KeyBERTInspired",
+    #     "representation_model": KeyBERTInspired(),
+    #     "text_column": "title",
+    #     "filter": "original_posts",
+    # },
+    # {
+    #     "model_name": "CountVectorizer",
+    #     "vectorizer_model": CountVectorizer(stop_words="english"),
+    #     "text_column": "title",
+    #     "filter": "original_posts",
+    # },
 ]
