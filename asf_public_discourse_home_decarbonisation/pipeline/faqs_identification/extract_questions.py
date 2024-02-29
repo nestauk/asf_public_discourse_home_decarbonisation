@@ -2,10 +2,10 @@
 This script is designed to extract questions and specific patterns (that could've been written as questions) from a given forum text dataset.
 Key Functionalities:
     - Extract Questions: Identifies and extracts questions from sentences based on criteria such finishing with a question mark or starting with a question token (e.g. what, why). Additionally, we also have filtering criteria such as length of sentence and number of tokens.
-    - Extract Specific Patterns: Targets and extracts specific patterns or phrases with phrases such as "I don't know", tailored by the `extract_idk` function.
+    - Extract Specific Patterns: Targets and extracts specific patterns or phrases with phrases such as "don't know", tailored by the `extract_idk` function.
     - Configurable: Allows runtime configuration through command-line arguments for flexible usage in different scenarios.
 To run this script:
-    'python extract_faqs.py --forum <forum> --category <category> --collection_date_time <collection_date_time> --post_type <post_type> --num_of_words <num_of_words>'
+    'python extract_questions.py --forum <forum> --category <category> --collection_date_time <collection_date_time> --post_type <post_type> --num_of_words <num_of_words>'
 where:
     <forum>: The forum that we are looking: `bh` for Buildhub and `mse` for Money Saving Expert.
     <category>: The category within the forum (e.g. `energy`) or `all` for all data for 'mse' and 'combined_data' for all data for 'bh'.
@@ -19,6 +19,7 @@ Example Usage:
         'python extract_questions.py --forum bh --category 120_ground_source_heat_pumps_gshp --post_type reply --collection_date_time 231120 --num_of_words 5'
     Note: In these run commands note the different format in date-time format for the different forums.
 """
+
 import pandas as pd
 from pandas import DataFrame
 import re
@@ -124,118 +125,81 @@ def get_category_data(
 
 def process_category_data(
     category_dataframe: DataFrame,
-    question_words: List[str],
     inclusion_phrases: List[str],
     num_of_words: int,
     post_type: str,
-    forum: str,
 ) -> DataFrame:
     """
     Processes the category-specific data in the provided DataFrame by applying various functions.
 
     Args:
         category_dataframe (DataFrame): The category-specific data to be processed.
-        question_words (List[str]): A list of question words to use when extracting questions.
-        inclusion_phrases (List[str]): A list of inclusion phrases to use when extracting "I don't know" phrases.
+        inclusion_phrases (List[str]): A list of inclusion phrases to use when extracting the "don't know" phrases.
         num_of_words (int): minimum number of words a question should have to be included (defaults to 5)
         post_type (str): The type of post to filter by ('original', 'reply', or 'all') (defaults to "all")
-        forum (str): The forum to filter ("bh" or "mse").
     Returns:
         DataFrame: The processed category-specific data.
-
-    Note:
-        - The function applies the following functions to the DataFrame:
-            - filter_data_by_post_type: Filters the forum dataframe based on the specified post type.
-            - sent_tokenize: Tokenises the text into sentences.
-            - extract_questions: Extracts questions from the sentences.
-            - filter_out_short_questions: Filters out short questions.
-            - extract_idk: Extracts "I don't know" phrases from the sentences.
-            - extract_X_from_idk: Extracts "I don't know" phrases without inclusion phrases.
     """
     # Filter the data by post type
-    category_dataframe = filter_data_by_post_type(category_dataframe, post_type, forum)
+    category_dataframe = filter_data_by_post_type(category_dataframe, post_type)
     # Convert all text to strings to avoid type errors
     category_dataframe["text"] = category_dataframe["text"].astype(str)
     category_dataframe["sentences"] = category_dataframe["text"].apply(sent_tokenize)
 
     # Apply the function to extract questions
     category_dataframe["questions"] = category_dataframe["sentences"].apply(
-        lambda sentences: extract_questions(sentences, question_words)
+        lambda sentences: extract_questions(sentences)
     )
     # Apply the function to filter out short questions
     category_dataframe["questions"] = category_dataframe["questions"].apply(
         lambda questions: filter_out_short_questions(questions, num_of_words)
     )
-    # Apply the function to extract "I don't know" phrases
+    # Apply the function to extract "don't know" phrases
     category_dataframe["idk_phrases"] = category_dataframe["sentences"].apply(
         lambda sentences: extract_idk(sentences, inclusion_phrases)
     )
-    # Apply the function to extract X from the "I don't know" phrases
+    # Apply the function to extract X from the "don't know X" phrases
     category_dataframe["sentences_without_inclusion"] = category_dataframe[
         "idk_phrases"
     ].apply(lambda idk_phrases: extract_X_from_idk(idk_phrases, inclusion_phrases))
     return category_dataframe
 
 
-def filter_data_by_post_type(
-    dataframe: DataFrame, post_type: str, forum: str
-) -> DataFrame:
+def filter_data_by_post_type(dataframe: DataFrame, post_type: str) -> DataFrame:
     """
     Filters the forum dataframe based on the specified post type.
 
     Args:
         dataframe (DataFrame): The forum dataframe to filter.
         post_type (str): The post type to include ("original", "reply", or "all").
-        forum (str): The forum to filter ("bh" or "mse").
 
     Returns:
         The filtered dataframe (DataFrame)
     """
-
     if post_type == "original":
-        if forum == "bh":
-            filtered_dataframe = dataframe.loc[
-                dataframe["post_type"] == "Original"
-            ].copy()
-        elif forum == "mse":
-            filtered_dataframe = dataframe.loc[
-                dataframe["is_original_post"] == 1
-            ].copy()
+        filtered_dataframe = dataframe.loc[dataframe["is_original_post"] == 1].copy()
     elif post_type == "reply":
-        if forum == "bh":
-            filtered_dataframe = dataframe.loc[dataframe["post_type"] == "Reply"].copy()
-        elif forum == "mse":
-            filtered_dataframe = dataframe.loc[
-                dataframe["is_original_post"] == 0
-            ].copy()
+        filtered_dataframe = dataframe.loc[dataframe["is_original_post"] == 0].copy()
     else:
         filtered_dataframe = dataframe
-
     return filtered_dataframe
 
 
-def extract_questions(sentences: List[str], question_words: List[str]) -> List[str]:
+def extract_questions(sentences: List[str]) -> List[str]:
     """
-    Extracts and returns a curated list of questions from a list of sentences, specifically filtering out certain types of questions. This function is designed to identify and include questions that are more substantial and exclude shorter, less informative questions such as "any thoughts?" or "why?".
+    Extracts and returns a curated list of questions from a list of sentences.
 
-    The function utilises a combination of punctuation analysis (identifying sentences ending with '?') and the presence of certain question words at the beginning. However, it also employs a set of criteria to exclude questions that are deemed too brief or lacking in content, even if they technically qualify as questions.
+    The function utilises a combination of punctuation analysis (identifying sentences ending with '?').
 
     Args:
         sentences (List[str]): A list of sentences from which questions are to be extracted.
-        num_of_words (int, optional): The minimum number of words allowed for a question to be considered valid. Defaults to 5.
-        min_length (int, optional): The minimum length of a question to be considered valid. Defaults to 5.
 
     Returns:
-        List[str]: A list of strings, each a question identified from the input sentences. Questions are filtered to exclude those that are brief or deemed less informative.
+        List[str]: A list of strings, each a question identified from the input sentences. Questions are filtered to exclude those that are URLs.
 
-    Note:
-        - The function uses predefined question words to identify potential questions but excludes questions that are brief or deemed less informative, such as "why?" or "any thoughts?".
-        - This exclusion is based on the specific requirements for the type of questions the function is intended to extract, focusing on more substantial and content-rich questions.
     """
-    # Regular expression to match sentences that either end with a "?" or start with a specified question word
-    question_pattern = (
-        r"\b(?:" + "|".join(question_words) + r")\b[^.?!]*|[^.?!]*\?[ ]*(?=[A-Z]|$)"
-    )
+    # Regular expression to match sentences that either end with a "?"
+    question_pattern = r"[^.?!]*\?"
     all_questions = []  # Initialise an empty list to hold all extracted questions
     # Iterate over each sentence in the input list
     for sentence in sentences:
@@ -251,15 +215,14 @@ def extract_questions(sentences: List[str], question_words: List[str]) -> List[s
 
 
 def filter_out_short_questions(
-    questions: List[str], num_of_words: int = 5, min_length: int = 5
+    questions: List[str], num_of_words: int = 5
 ) -> List[str]:
     """
-    Filters out short questions from a list of questions based on the number of words in the question as well as the minimum length of the question.
+    Filters out short questions from a list of questions based on the number of words in the question.
 
     Args:
         questions (List[str]): The list of questions to filter.
         num_of_words (int): The minimum number of words a question should have to be included.
-        min_length (int): The minimum length a question should have to be included.
 
     Returns:
         List[str]: The filtered list of questions.
@@ -268,19 +231,17 @@ def filter_out_short_questions(
     # Skip questions that are 'num_of_words' words or less and contain a question word
     for question in questions:
         words = nltk.word_tokenize(question)
-        if len(words) <= num_of_words and any(
-            word.lower() in question_words for word in words
-        ):
+        if len(words) <= num_of_words:
             continue
-        # Add sentence to all_questions if it's at least min_length long and not just question marks with optional spaces.
-        if len(question) >= min_length and not re.fullmatch(r"\?+\s*", question):
+        # Add sentence to all_questions if it's not just question marks with optional spaces.
+        if not re.fullmatch(r"\?+\s*", question):
             filtered_questions.append(question)
     return filtered_questions
 
 
 def extract_idk(sentences: List[str], inclusion_phrases: List[str]) -> List[str]:
     """
-    Extracts and returns a list of sentences with specific "I don't know" phrases.
+    Extracts and returns a list of sentences mentioning at least one of the expressions in inclusion_phrases.
 
     The function searches for sentences that contain any of a predefined set of phrases indicating uncertainty or lack of knowledge (e.g., "don’t know", "do not know", "do not know how to"). It then puts these into a list.
 
@@ -292,7 +253,7 @@ def extract_idk(sentences: List[str], inclusion_phrases: List[str]) -> List[str]
 
     Returns:
         idk_phrases (List[str]):
-            - This list contains sentences that include any of the predefined "don't know" phrases.
+            - This list contains sentences that include at least one of the expressions in inclusion_phrases.
 
     Note:
         - The function is case-insensitive when searching for the predefined phrases.
@@ -308,47 +269,46 @@ def extract_X_from_idk(
     idk_phrases: List[str], inclusion_phrases: List[str]
 ) -> List[str]:
     """
-    Extracts and returns a list of sentences without the inclusion phrases found in the "I don't know" phrases.
+    Extracts and returns a list of expressions coming after the inclusion_phrases in sentences.
+    Example:
+         - idk_phrases: ["honestly I don't know what a heat pump is", "i have asked multiple people, but still don't know how what to do to install a heat pump in my home"
+         - inclusion_phrases: ["don't know how to", "don't know"]
+         - Returns: ["what a heat pump is", "what to do to install a heat pump in my home"]
 
-    The function takes a list of "I don't know" phrases and a list of inclusion phrases. It searches for sentences in the "I don't know" phrases that contain any of the inclusion phrases. It then extracts the text following the inclusion phrase and returns a list of these extracted sentences.
-
+    The function takes a list of inclusion_phrases and sentences mentioning at least one of the expressions in inclusion_phrases. It extracts the text following the inclusion phrase and returns a list of these extracted sentences.
     Args:
-        idk_phrases (List[str]): A list of "I don't know" phrases. Each item in the list should be a string representing a single sentence.
-        inclusion_phrases (List[str]): A list of inclusion phrases. Each item in the list should be a string representing a phrase to search for in the "I don't know" phrases.
-
+        idk_phrases (List[str]): A list of sentences mentioning at least one of the inclusion_phrases. Each item in the list should be a string representing a single sentence.
+        inclusion_phrases (List[str]): A list of inclusion phrases. Each item in the list should be a string representing an expression (e.g. "don't know")
     Returns:
         sentences_without_inclusion (List[str]):
-            - This list contains sentences extracted from the "I don't know" phrases, excluding the inclusion phrases.
+            - This list contains the text following the inclusion phrase.
 
     Note:
         - The function is case-insensitive when searching for the inclusion phrases.
-        - If an inclusion phrase is not found in a sentence, that sentence will not be included in the output list.
     """
     sentences_without_inclusion = []
+
+    idk_phrases = [phrase.lower() for phrase in idk_phrases]
+    inclusion_phrases = [phrase.lower() for phrase in inclusion_phrases]
+
     for sentence in idk_phrases:
-        for phrase in inclusion_phrases:
-            if phrase.lower() in sentence.lower():
-                start_index = sentence.lower().index(phrase.lower()) + len(phrase)
+        for expression in inclusion_phrases:
+            if expression in sentence:
+                start_index = sentence.index(expression) + len(expression)
                 extracted_text = sentence[start_index:].strip()
                 sentences_without_inclusion.append(extracted_text)
                 break
     return sentences_without_inclusion
 
 
-def logger_statistics(category_dataframe):
+def logger_statistics(category_dataframe: DataFrame):
     """
-    Calculates and logs basic statistics about the category-specific data.
-
+    Calculates and logs basic statistics about the category-specific data:
+          - total number of sentences;
+          - total number of phrases mentioning "do not know" or "don't know";
+          - total number of questions.
     Args:
         category_dataframe (DataFrame): The category-specific data.
-
-    Note:
-        - The function calculates the total number of "idk" phrases, questions, and sentences in the dataframe.
-        - The statistics are logged using the `logging.info()` method.
-
-    Example:
-        logger_statistics(category_dataframe)
-
     """
     total_number_of_idk_phrases = category_dataframe["idk_phrases"].apply(len).sum()
     total_number_of_sentences = category_dataframe["text"].apply(len).sum()
@@ -374,36 +334,17 @@ if __name__ == "__main__":
     )
     # Ensure the output directory exists
     os.makedirs(FORUM_FAQ_PATH, exist_ok=True)
-    question_words = [
-        "what",
-        "how",
-        "where",
-        "when",
-        "who",
-        "why",
-        "which",
-        "really",
-        "any",
-        "what's",
-        "how's",
-        "really",
-        "thoughts",
-        "is",
-    ]
     # List of phrases to include
     inclusion_phrases = [
         "don’t know ",
         "do not know ",
-        "do not know how to ",
     ]
     # Process the category-specific data
     category_dataframe = process_category_data(
         category_dataframe,
-        question_words,
         inclusion_phrases,
         num_of_words,
         post_type,
-        args.forum,
     )
     # Log some basic statistics
     logger_statistics(category_dataframe)
@@ -424,21 +365,13 @@ if __name__ == "__main__":
         FORUM_FAQ_PATH + "extracted_questions_" + category + "_" + post_type + ".csv",
         index=False,
     )
-    # output the "i don't know" and "i don't know X" phrases to a dataframe.
+    # output the "don't know" and "don't know X" phrases to a dataframe.
     idk_phrases_category_dataframe = pd.DataFrame(
         {
             "idk_phrases": all_idk_phrases_in_category,
             "sentences_without_inclusion": all_idk_phrases_without_inclusion_in_category,
         }
     )
-    # Create a new DataFrame with the "i don't know" and "i don't know X" phrases
-    idk_phrases_category_dataframe = pd.DataFrame(
-        columns=["idk_phrases", "sentences_without_inclusion"]
-    )
-    idk_phrases_category_dataframe.loc[:, "idk_phrases"] = all_idk_phrases_in_category
-    idk_phrases_category_dataframe.loc[
-        :, "sentences_without_inclusion"
-    ] = all_idk_phrases_without_inclusion_in_category
     idk_phrases_category_dataframe.to_csv(
         FORUM_FAQ_PATH + "idk_phrases_" + category + "_" + post_type + ".csv",
         index=False,
