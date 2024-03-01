@@ -1,3 +1,4 @@
+# %%
 """
 This script is used to perform topic analysis on the data from the MSE and Buildhub forums,
 focusing on the mentions of "heat pump" related keywords.
@@ -27,6 +28,7 @@ from asf_public_discourse_home_decarbonisation.config.keywords_dictionary import
 from asf_public_discourse_home_decarbonisation.utils.topic_analysis_utils import (
     create_bar_plot_most_common_topics,
     get_outputs_from_topic_model,
+    distribution_of_length_outliers_and_others,
 )
 
 # %% [markdown]
@@ -41,56 +43,13 @@ mse_data = get_mse_data(
 bh_data = get_bh_data(category="all", collection_date="24_02_01")
 
 # %%
-# Replacing abbreviations
-mse_data["title"] = mse_data["title"].apply(
-    lambda x: x.lower()
-    .replace("ashps", "air source heat pumps")
-    .replace("ashp", "air source heat pump")
-    .replace("gshps", "ground source heat pumps")
-    .replace("gshp", "ground source heat pump")
-    .replace("hps", "heat pumps")
-    .replace("hp", "heat pump")
-    .replace("ufh", "under floor heating")
+from asf_public_discourse_home_decarbonisation.pipeline.bert_topic_analysis.evaluate_bertopic_results import (
+    process_abbreviations,
 )
-mse_data["text"] = mse_data["text"].apply(
-    lambda x: x.lower()
-    .replace("ashps", "air source heat pumps")
-    .replace("ashp", "air source heat pump")
-    .replace("gshps", "ground source heat pumps")
-    .replace("gshp", "ground source heat pump")
-    .replace("hps", "heat pumps")
-    .replace("hp", "heat pump")
-    .replace("ufh", "under floor heating")
-)
-# Replacing abbreviations
-bh_data["title"] = (
-    bh_data["title"]
-    .astype(str)
-    .apply(
-        lambda x: x.lower()
-        .replace("ashps", "air source heat pumps")
-        .replace("ashp", "air source heat pump")
-        .replace("gshps", "ground source heat pumps")
-        .replace("gshp", "ground source heat pump")
-        .replace("hps", "heat pumps")
-        .replace("hp", "heat pump")
-        .replace("ufh", "under floor heating")
-    )
-)
-bh_data["text"] = (
-    bh_data["text"]
-    .astype(str)
-    .apply(
-        lambda x: x.lower()
-        .replace("ashps", "air source heat pumps")
-        .replace("ashp", "air source heat pump")
-        .replace("gshps", "ground source heat pumps")
-        .replace("gshp", "ground source heat pump")
-        .replace("hps", "heat pumps")
-        .replace("hp", "heat pump")
-        .replace("ufh", "under floor heating")
-    )
-)
+
+# %%
+mse_data = process_abbreviations(mse_data)
+bh_data = process_abbreviations(bh_data)
 
 # %%
 mse_data["category"].unique()
@@ -123,7 +82,6 @@ umap_model = UMAP(
 topic_model = BERTopic(umap_model=umap_model)
 topics, probs = topic_model.fit_transform(docs)
 
-
 # %%
 topics, topics_info, doc_info = get_outputs_from_topic_model(topic_model, docs)
 
@@ -131,7 +89,7 @@ topics, topics_info, doc_info = get_outputs_from_topic_model(topic_model, docs)
 topics_info.head()
 
 # %%
-doc_info.head()
+distribution_of_length_outliers_and_others(doc_info)
 
 # %%
 create_bar_plot_most_common_topics(topics_info=topics_info, top_n_topics=16)
@@ -158,7 +116,6 @@ topic_model.visualize_hierarchy()
 
 # %%
 topic_model.visualize_term_rank()
-
 
 # %%
 
@@ -188,7 +145,6 @@ umap_model = UMAP(
 topic_model = BERTopic(umap_model=umap_model)
 topics, probs = topic_model.fit_transform(docs)
 
-
 # %%
 topics, topics_info, doc_info = get_outputs_from_topic_model(topic_model, docs)
 
@@ -197,6 +153,9 @@ topics_info.head()
 
 # %%
 doc_info.head()
+
+# %%
+distribution_of_length_outliers_and_others(doc_info)
 
 # %%
 create_bar_plot_most_common_topics(topics_info=topics_info, top_n_topics=16)
