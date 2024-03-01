@@ -122,9 +122,15 @@ def create_boxplots_with_results(output_configs: dict):
     n_docs = output_configs["n_docs"]
     n_runs = output_configs["n_runs"]
     keywords = output_configs["keywords"]
-    number_of_outliers_df = pd.DataFrame(output_configs["outliers"])
-    number_of_topics_df = pd.DataFrame(output_configs["topics"])
-    avg_probablity_df = pd.DataFrame(output_configs["probabilities"])
+    number_of_outliers_df = pd.DataFrame.from_dict(
+        output_configs["outliers"], orient="index"
+    ).T
+    number_of_topics_df = pd.DataFrame.from_dict(
+        output_configs["topics"], orient="index"
+    ).T
+    avg_probablity_df = pd.DataFrame.from_dict(
+        output_configs["probabilities"], orient="index"
+    ).T
 
     # Plot horizontal boxplots for each dataframe: number_of_topics_df, number_of_outliers_df and avg_probablity_df
     fig, axes = plt.subplots(3, 1, figsize=(10, number_of_topics_df.shape[1] * 3))
