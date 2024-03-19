@@ -55,3 +55,32 @@ def get_outputs_from_topic_model(topic_model, docs: list) -> pd.DataFrame:
 
     doc_info = topic_model.get_document_info(docs)
     return topics, topics_info, doc_info
+
+
+def distribution_of_length_outliers_and_others(doc_info: pd.DataFrame):
+    """
+    Creates an histogram showing the distribution of title lengths
+    for documents in the outliers' cluster versus all other documents.
+
+    Args:
+        doc_info (pd.DataFrame): dataframe with information about documents.
+    """
+    doc_info["doc_length"] = doc_info["Document"].str.len()
+
+    plt.figure(figsize=(6, 4))
+    plt.hist(
+        doc_info[doc_info["Topic"] != -1]["doc_length"],
+        bins=30,
+        density=True,
+        alpha=0.6,
+    )
+    plt.hist(
+        doc_info[doc_info["Topic"] == -1]["doc_length"],
+        bins=30,
+        color="red",
+        density=True,
+        alpha=0.6,
+    )
+    plt.legend(["Other clusters", "Outlier cluster"])
+    plt.xlabel("Length of documents")
+    plt.ylabel("Density")
