@@ -404,6 +404,9 @@ def read_and_filter_data(
         else:
             data = get_bh_data(category)
 
+    if proc_abbreviations:
+        data = process_abbreviations(data)
+
     # filter the data based on the keywords
     if keywords is not None:
         data = data[
@@ -414,9 +417,6 @@ def read_and_filter_data(
                 "|".join(keyword_dictionary[keywords]), case=False
             )
         ]
-
-    if proc_abbreviations:
-        data = process_abbreviations(data)
     return data
 
 
