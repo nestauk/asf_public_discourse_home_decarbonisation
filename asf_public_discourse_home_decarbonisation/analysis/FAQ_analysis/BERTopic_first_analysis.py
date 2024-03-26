@@ -24,6 +24,8 @@ from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
 from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 from typing import List, Tuple
 import os
+from umap import UMAP
+import re
 
 set_plotting_styles()
 font_path_ttf = finding_path_to_font("Averta-Regular")
@@ -62,17 +64,65 @@ def create_argparser() -> argparse.ArgumentParser:
     return args
 
 
-def load_data(file_path: str) -> List[str]:
+def deduplicate_and_load_csv(
+    file_path: str, output_path: str, column_name: str = "title_and_text_questions"
+):
     """
-    Loads extracted questions from a CSV file into a list.
+    Deduplicates a CSV file based on a specified column ('Question' as default) and saves the result to a new CSV file. We want this to be done before we start the topic modelling to get diverse representative questions.
 
     Args:
-        file_path (str): The path to the CSV file containing the questions.
+        input_path (str): The path to the input CSV file.
+        output_path (str): The path where the deduplicated CSV file will be saved.
+        column_name (str): The name of the column to check for duplicates. Default is 'Question'.
 
     Returns:
-        List[str]: A list of questions.
+        List[str]: A list of deduplicated questions.
+
+    Example usage:
+        deduplicate_csv('path_to_your_input_file.csv', 'path_to_your_output_file.csv', 'Question')
     """
-    return pd.read_csv(file_path)["Question"].tolist()
+    # Step 1: Read the CSV file into a DataFrame
+    df = pd.read_csv(file_path)
+
+    # Step 2: Remove duplicates based on the specified column
+    deduplicated_df = df.drop_duplicates(subset=[column_name])
+    # Step 3: Replace non-breaking space characters with regular spaces
+    deduplicated_df[column_name] = deduplicated_df[column_name].str.replace("\xa0", " ")
+
+    # Step 3: Convert the questions to lower case
+    deduplicated_df[column_name] = deduplicated_df[column_name].str.lower()
+
+    # Step 4: Replace acronyms with their full forms
+    deduplicated_df[column_name] = deduplicated_df[column_name].apply(
+        lambda x: x.replace("ashps", "air source heat pumps")
+        .replace("ashp", "air source heat pump")
+        .replace("gshps", "ground source heat pumps")
+        .replace("gshp", "ground source heat pump")
+        .replace("hps", "heat pumps")
+        .replace("hp", "heat pump")
+        .replace("ufh", "under floor heating")
+        .replace("temps", "temperatures")
+        .replace("rhi", "renewable heat incentive")
+        .replace("mcs", "microgeneration certification scheme")
+        .replace("dhw", "domestic hot water system")
+        .replace("a2a", "air to air")
+        .replace(" ir ", " infrared ")
+        .replace("uvcs", "unvented cylinders")
+        .replace("uvc", "unvented cylinder")
+    )
+    deduplicated_df[column_name] = deduplicated_df[column_name].apply(
+        lambda x: re.sub(r"\btemp\b", "temperature", x)
+    )
+    # Add spaces before "air" where necessary
+    deduplicated_df[column_name] = deduplicated_df[column_name].apply(
+        lambda x: re.sub(r"(an|of|the)(air)", r"\1 \2", x)
+    )
+
+    # Step 4: Save the deduplicated DataFrame to a new CSV file
+    deduplicated_df.to_csv(output_path, index=False)
+
+    # Step 5: Return the deduplicated questions as a list
+    return deduplicated_df[column_name].tolist()
 
 
 def create_topic_model(questions: List[str]) -> Tuple[BERTopic, List[int], List[float]]:
@@ -85,7 +135,10 @@ def create_topic_model(questions: List[str]) -> Tuple[BERTopic, List[int], List[
     Returns:
         tuple: Contains the fitted BERTopic model, topics, and their probabilities.
     """
-    topic_model = BERTopic()
+    umap_model = UMAP(
+        n_neighbors=15, n_components=5, min_dist=0.0, metric="cosine", random_state=42
+    )
+    topic_model = BERTopic(umap_model=umap_model)
     topics, probabilities = topic_model.fit_transform(questions)
     return topic_model, topics, probabilities
 
@@ -186,7 +239,11 @@ def main():
     post_type = args.post_type
     input_data = os.path.join(
         PROJECT_DIR,
-        f"outputs/data/extracted_questions/{forum}/forum_{category}/extracted_questions_{category}_{post_type}.csv",
+        f"outputs/data/extracted_questions/{forum}/forum_{category}/extracted_title_and_text_questions_{category}_{post_type}.csv",
+    )
+    deduplicated_data_path = os.path.join(
+        PROJECT_DIR,
+        f"outputs/data/extracted_questions/{forum}/forum_{category}/deduplicated_title_and_text_questions_{category}_{post_type}.csv",
     )
     figure_path = os.path.join(
         PROJECT_DIR, f"outputs/figures/extracted_questions/{forum}/forum_{category}/"
@@ -195,8 +252,8 @@ def main():
         PROJECT_DIR, f"outputs/outputs/BERTopic_csv_files/{forum}/forum_{category}/"
     )
     os.makedirs(figure_path, exist_ok=True)
-    os.makedirs(doc_info_path, exist_ok=True)
-    questions = load_data(input_data)
+    os.makedirs(doc_topics_info_path, exist_ok=True)
+    questions = deduplicate_and_load_csv(input_data, deduplicated_data_path)
     topic_model, topics, probabilities = create_topic_model(questions)
     visualise_topics(topic_model, figure_path)
     visualise_barchart(topic_model, figure_path)
