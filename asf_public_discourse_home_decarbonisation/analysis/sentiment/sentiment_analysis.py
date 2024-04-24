@@ -19,16 +19,19 @@ from asf_public_discourse_home_decarbonisation.utils.text_cleaning_utils import 
     remove_username_pattern,
     remove_introduction_patterns,
 )
-
-# Setup logging
+from asf_public_discourse_home_decarbonisation import S3_BUCKET
 import logging
 
+
+# Setup logging
 logger = logging.getLogger(__name__)
 
 
 def argparser() -> argparse.Namespace:
     """
-    Argparser function to parse arguments from the command line: n_runs, path_to_config_file, path_to_data
+    Argparser function to parse arguments from the command line: data_source
+
+    data_source takes either `mse` for Money Saving Expert data, `buildhub` for BuildHub data or a path to a local or S3 data source.
     Returns:
         argparse.Namespace: parsed arguments
     """
@@ -36,28 +39,36 @@ def argparser() -> argparse.Namespace:
     parser.add_argument(
         "--data_source",
         type=str,
-        help='"mse", "buildhub" or path to data source (local or S3)',
+        help='"mse", "buildhub" or name of a different source',
+    )
+    parser.add_argument(
+        "--source_path",
+        type=str,
+        help="path to data source (local or S3) if different from MSE and Buildhub",
     )
     args = parser.parse_args()
     return args
 
 
-def prep_data_for_sentiment_analysis(data: pd.DataFrame) -> pd.DataFrame:
+def prep_data_for_sentiment_analysis(
+    data: pd.DataFrame, data_source: str
+) -> pd.DataFrame:
     """
     Preprocess the data for sentiment analysis.
     Args:
         data (pd.DataFrame): the data to preprocess
+        data_source (str): data source name
     Returns:
         pd.DataFrame: the preprocessed data
     """
     # Remove URLs
     data["text"] = data["text"].apply(remove_urls)
 
-    # Process abbreviations
-    data = process_abbreviations(data)
-
     # Convert text to lowercase
     data["text"] = data["text"].str.lower()
+
+    # Process abbreviations
+    data = process_abbreviations(data)
 
     # Remove username patterns
     data["text"] = data["text"].apply(remove_username_pattern)
@@ -65,43 +76,87 @@ def prep_data_for_sentiment_analysis(data: pd.DataFrame) -> pd.DataFrame:
     # Remove introduction patterns
     data["text"] = data["text"].apply(remove_introduction_patterns)
 
+    if data_source == "buildhub":
+        data.rename(columns={"url": "id"}, inplace=True)
+        data.rename(columns={"date": "datetime"}, inplace=True)
+        data["datetime"] = pd.to_datetime(data["datetime"])
+
+    data["year"] = data["datetime"].dt.year
+
     return data
 
 
-def sentence_sentiment(data):
+def compute_sentence_sentiment(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Computes sentiment for each sentence in the data.
+
+    Args:
+        data (pd.DataFrame): dataframe with columns "id", "year", "text", "is_original_post"
+
+    Returns:
+        pd.DataFrame: dataframe with one additional column, the sentiment column
+    """
     data["sentences"] = data["text"].apply(sent_tokenize)
 
     data = (
-        data[["id", "datetime", "date", "sentences", "is_original_post"]]
+        data[["id", "year", "sentences", "is_original_post"]]
         .explode("sentences")
         .reset_index(drop=True)
     )
 
     data = data[data["sentences"].str.contains("heat pump")]
 
-    data["sentiment_flair"] = data["sentences"].apply(compute_sentiment_with_flair)
+    data["sentiment"] = data["sentences"].apply(compute_sentiment_with_flair)
 
     return data
 
 
-if __name__ == "__main__":
-    # Get the data
-    data = read_public_discourse_data(source="data_source")
+def compute_average_and_yearly_stats(data: pd.DataFrame, filter_term: str):
+    """
+    Computes average sentiment and yearly sentiment breakdown
+    (i.e. number of sentences with POS/NEG sentiment per year).
 
+    Args:
+        data (pd.DataFrame): Data with id and sentiment columns
+
+    Returns:
+        pd.DataFrame: _description_
+    """
+    avg_sentiment = data["sentiment"].mean()
+    logger.info(f"Average sentiment for `{filter_term}`: {avg_sentiment}")
+    breakdown_per_year = data.groupby(["year", "sentiment"])["id"].count().unstack()
+
+    logger.info(
+        f"Yearly sentiment breakdown for `{filter_term}`:\n{breakdown_per_year}"
+    )
+
+    return breakdown_per_year
+
+
+if __name__ == "__main__":
+    args = argparser()
+    data_source = args.data_source
+    source_path = args.source_path
+
+    # filter terms
+    filter_terms = ["heat pump", "boiler"]
+
+    # Get the data
+    if source_path is None:
+        data = read_public_discourse_data(source=data_source)
+    else:
+        data = read_public_discourse_data(source=source_path)
+
+    # preparing data for sentiment analysis
     data = prep_data_for_sentiment_analysis(data)
 
-    # Filter data for posts containing "heat pump" & compute sentence sentiment
-    hp_data = data[data["text"].str.contains("heat pump")]
-    hp_data = sentence_sentiment(hp_data)
+    # Compute sentiment for sentences containing specific terms
+    for term in filter_terms:
+        filtered_data = data[data["text"].str.contains(term)]
+        filtered_data = compute_sentence_sentiment(filtered_data)
+        yearly_stats = compute_average_and_yearly_stats(filtered_data, term)
 
-    hp_sentiment_per_year = (
-        hp_data.groupby(["year", "sentiment_flair"])["id"].count().unstack()
-    )
-
-    # Filter data for posts containing "boiler" & compute sentence sentiment
-    boiler_data = data[data["text"].str.contains("boiler")]
-    boiler_data = sentence_sentiment(boiler_data)
-
-    boiler_sentiment_per_year = (
-        boiler_data.groupby(["year", "sentiment_flair"])["id"].count().unstack()
-    )
+        yearly_stats.to_csv(
+            f"s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/yearly_sentiment_stats_source_{data_source}_term_{term}.csv",
+            index=False,
+        )
