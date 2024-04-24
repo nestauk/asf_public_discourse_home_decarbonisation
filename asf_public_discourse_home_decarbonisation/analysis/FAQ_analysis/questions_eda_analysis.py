@@ -115,7 +115,7 @@ def wrap_text_with_ellipsis(text: str, line_width: int, max_lines: int) -> str:
 
 def plot_question_counts(
     question_counts: pd.Series, top_n: int = 5, figure_path: str = None
-) -> None:
+):
     """
     Plots a horizontal bar chart of the most frequent questions.
     Args:
@@ -139,35 +139,6 @@ def plot_question_counts(
     plt.show()
 
 
-"""
-def plot_question_counts(
-    question_counts: pd.Series, min_frequency: int = 2, figure_path: str = None
-) -> None:
-
-    Plots a horizontal bar chart of the questions with a frequency above a certain value.
-
-    Args:
-        question_counts (pd.Series): A Series containing question counts, indexed by question text.
-        min_frequency (int): The minimum frequency to display.
-
-    top_questions = question_counts[question_counts >= min_frequency]
-    wrapped_questions = [wrap_text_with_ellipsis(q, 40, 2) for q in top_questions.index]
-
-    plt.figure(figsize=(12, 8))
-    plt.barh(wrapped_questions, top_questions.values, color=NESTA_COLOURS[0])
-    plt.gcf().subplots_adjust(left=0.5)
-    plt.xlabel("Frequency")
-    plt.ylabel("Questions")
-    plt.title(f"Questions with Frequency Above {min_frequency}")
-    plt.gca().invert_yaxis()
-    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.savefig(
-        figure_path + "most_frequent_questions.png", dpi=300, bbox_inches="tight"
-    )
-    plt.show()
-"""
-
-
 def main():
     """
     Main function to perform data loading, question counting, and plotting the most frequent questions.
@@ -186,6 +157,14 @@ def main():
     )
     os.makedirs(output_figures_path, exist_ok=True)
     extracted_questions_df = load_data(input_data)
+    extracted_questions_df["contains_qm"] = extracted_questions_df["Question"].apply(
+        lambda x: True if "?" in x else False
+    )
+    print(
+        "Contains question mark?\n",
+        extracted_questions_df["contains_qm"].value_counts(),
+    )
+    extracted_questions_df["Question"] = extracted_questions_df["Question"].str.lower()
     question_counts = get_question_counts(extracted_questions_df)
     plot_question_counts(question_counts, figure_path=output_figures_path)
     dont_knows_path = os.path.join(
