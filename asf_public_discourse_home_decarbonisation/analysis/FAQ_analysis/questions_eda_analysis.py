@@ -7,8 +7,6 @@ The process includes the following steps:
 2. Count the frequency of each question.
 3. Wrap the text of each question and add an ellipsis if it exceeds a certain length.
 4. Plot the counts of the most frequent questions.
-
-The script is designed to be modular, with separate functions for each step of the process. This makes the code easier to read and maintain, and allows for parts of the code to be reused elsewhere if needed.
 """
 
 from asf_public_discourse_home_decarbonisation.config.plotting_configs import (
