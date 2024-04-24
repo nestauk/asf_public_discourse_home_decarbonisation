@@ -1,3 +1,16 @@
+"""
+Script to compute sentence level sentiment analysis in posts mentioning certain terms (such as "heat pump" or "boiler").
+- It starts by reading in data from the specified source (MSE, BuildHub or another) and preprocesses it for sentiment analysis;
+- For each of the terms ("heat pump" and "boiler"), it then computes the sentiment of each sentence mentioning the term;
+- After that, the average sentiment and a yearly sentiment breakdown (number of negative/positive sentences per year) are also computed.
+
+To run this script:
+`python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentiment_analysis.py --data_source DATA_SOURCE --source_path SOURCE_PATH`
+where
+- DATA_SOURCE (required): the data source name, e.g. "mse" or "buildhub" or the name of another source of data
+- SOURCE_PATH (optional): if data source is different from "mse"/"buildhub" then provide the path to the data source (local or S3).
+"""
+
 # Package imports
 import argparse
 import nltk
@@ -29,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 def argparser() -> argparse.Namespace:
     """
-    Argparser function to parse arguments from the command line: data_source
+    Argparser function to parse arguments from the command line: data_source and source_path.
 
     data_source takes either `mse` for Money Saving Expert data, `buildhub` for BuildHub data or a path to a local or S3 data source.
     Returns:
@@ -45,6 +58,7 @@ def argparser() -> argparse.Namespace:
         "--source_path",
         type=str,
         help="path to data source (local or S3) if different from MSE and Buildhub",
+        required=False,  # making source_path optional
     )
     args = parser.parse_args()
     return args
@@ -61,6 +75,11 @@ def prep_data_for_sentiment_analysis(
     Returns:
         pd.DataFrame: the preprocessed data
     """
+    if data_source == "buildhub":
+        data["text"] = data["text"].astype(str)
+        data.rename(columns={"url": "id"}, inplace=True)
+        data.rename(columns={"date": "datetime"}, inplace=True)
+
     # Remove URLs
     data["text"] = data["text"].apply(remove_urls)
 
@@ -68,7 +87,7 @@ def prep_data_for_sentiment_analysis(
     data["text"] = data["text"].str.lower()
 
     # Process abbreviations
-    data = process_abbreviations(data)
+    data["text"] = data["text"].apply(process_abbreviations)
 
     # Remove username patterns
     data["text"] = data["text"].apply(remove_username_pattern)
@@ -76,23 +95,19 @@ def prep_data_for_sentiment_analysis(
     # Remove introduction patterns
     data["text"] = data["text"].apply(remove_introduction_patterns)
 
-    if data_source == "buildhub":
-        data.rename(columns={"url": "id"}, inplace=True)
-        data.rename(columns={"date": "datetime"}, inplace=True)
-        data["datetime"] = pd.to_datetime(data["datetime"])
-
+    data["datetime"] = pd.to_datetime(data["datetime"])
     data["year"] = data["datetime"].dt.year
 
     return data
 
 
-def compute_sentence_sentiment(data: pd.DataFrame) -> pd.DataFrame:
+def compute_sentence_sentiment(data: pd.DataFrame, term: str) -> pd.DataFrame:
     """
-    Computes sentiment for each sentence in the data.
+    Computes sentiment for each sentence in the data containing the term.
 
     Args:
         data (pd.DataFrame): dataframe with columns "id", "year", "text", "is_original_post"
-
+        term (str): term that needs to be present in sentence data
     Returns:
         pd.DataFrame: dataframe with one additional column, the sentiment column
     """
@@ -104,7 +119,7 @@ def compute_sentence_sentiment(data: pd.DataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
 
-    data = data[data["sentences"].str.contains("heat pump")]
+    data = data[data["sentences"].str.contains(term)]
 
     data["sentiment"] = data["sentences"].apply(compute_sentiment_with_flair)
 
@@ -120,15 +135,24 @@ def compute_average_and_yearly_stats(data: pd.DataFrame, filter_term: str):
         data (pd.DataFrame): Data with id and sentiment columns
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: a dataframe with number of POSITIVE and NEGATIVE sentences per year
     """
-    avg_sentiment = data["sentiment"].mean()
-    logger.info(f"Average sentiment for `{filter_term}`: {avg_sentiment}")
-    breakdown_per_year = data.groupby(["year", "sentiment"])["id"].count().unstack()
-
-    logger.info(
-        f"Yearly sentiment breakdown for `{filter_term}`:\n{breakdown_per_year}"
+    breakdown_per_year = (
+        data.groupby(["year", "sentiment"])["id"].count().unstack(fill_value=0)
     )
+    logger.info(
+        f"Yearly sentiment breakdown for `{filter_term}` (# of sentences):\n{breakdown_per_year}"
+    )
+
+    breakdown_per_year_percent = (
+        breakdown_per_year.div(breakdown_per_year.sum(axis=1), axis=0) * 100
+    )
+    logger.info(
+        f"Yearly sentiment breakdown for `{filter_term}` (% of sentences):\n{breakdown_per_year_percent}"
+    )
+
+    avg_neg = len(data[data["sentiment"] == "NEGATIVE"]) / len(data) * 100
+    logger.info(f"Average % of negative sentences (all time):\n{avg_neg}")
 
     return breakdown_per_year
 
@@ -148,15 +172,28 @@ if __name__ == "__main__":
         data = read_public_discourse_data(source=source_path)
 
     # preparing data for sentiment analysis
-    data = prep_data_for_sentiment_analysis(data)
+    data = prep_data_for_sentiment_analysis(data, data_source)
 
     # Compute sentiment for sentences containing specific terms
     for term in filter_terms:
+        logger.info(f"Computing sentiment for term: `{term}`")
         filtered_data = data[data["text"].str.contains(term)]
-        filtered_data = compute_sentence_sentiment(filtered_data)
+
+        filtered_data = compute_sentence_sentiment(filtered_data, term)
+        filtered_data.to_csv(
+            f"s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/sentence_sentiment_source_{data_source}_term_{term}.csv",
+            index=False,
+        )
+        logger.info(
+            f"Sentences and respective sentiment saved to `s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/`"
+        )
+
         yearly_stats = compute_average_and_yearly_stats(filtered_data, term)
 
         yearly_stats.to_csv(
             f"s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/yearly_sentiment_stats_source_{data_source}_term_{term}.csv",
             index=False,
+        )
+        logger.info(
+            f"Yearly sentiment stats saved to `s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/`"
         )

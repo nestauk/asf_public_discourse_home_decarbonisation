@@ -96,21 +96,21 @@ def read_public_discourse_data(
     category: str = "all",
     collection_date: str = None,
     processing_level: str = "raw",
-):
+) -> pd.DataFrame:
     """
     Reads forum data or from another source.
     If a path_to_data_file is provided, it reads the data from the file (local or S3 location).
     Otherwise, it reads either from MSE or Buildhub.
 
     Args:
-        source (str): `mse` for Money Saving Expert,  `buildhub` for Buildhub or (local or S3) path to a csv file.
+        source (str): `mse` for Money Saving Expert, `buildhub` for Buildhub or (local or S3) path to a csv file.
         category (str, optional): category/subf-roum filter. Defaults to "all" (i.e. data from all sub-forums collected).
         path_to_data_file (str, optional):
         collection_date (str, optional): Data collection date. Defaults to None.
         processing_level (str, optional): processing level, either "raw" or "processed". Defaults to "raw". Only available for MSE data.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: the data
     """
     if source == "mse":
         if collection_date is None:
