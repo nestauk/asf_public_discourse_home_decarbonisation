@@ -1,11 +1,28 @@
 import re
 
 
-def remove_urls(text):
+def remove_urls(text: str) -> str:
+    """Remove URLs from text.
+
+    Args:
+        text (str): text to process
+
+    Returns:
+        str: text with URLs removed
+    """
     return re.sub(r"http\S+", " ", text)
 
 
-def remove_username_pattern(text):
+def remove_username_pattern(text: str) -> str:
+    """
+    Remove the pattern "username wrote:" from text.
+
+    Args:
+        text (str): text to process
+
+    Returns:
+        str: text with the pattern removed
+    """
     # Define the pattern to match "username wrote:" and remove it
     pattern = re.compile(r"\w+\s+wrote: »\n")
     cleaned_text = re.sub(pattern, " ", text)
@@ -13,7 +30,16 @@ def remove_username_pattern(text):
     return cleaned_text
 
 
-def remove_introduction_patterns(text):
+def remove_introduction_patterns(text: str) -> str:
+    """Remove introduction patterns from text.
+
+    Args:
+        text (str): text to process
+
+    Returns:
+        str: text with introduction patterns removed
+    """
+
     # Define the patterns to match and remove
     patterns = [
         r"\b(hi|hello|heya|hey)\s+(everyone|all|there)?[!,.]?\s*\n?",
@@ -62,7 +88,16 @@ def process_abbreviations(text: str) -> str:
     return text
 
 
-def ends_with_punctuation(sentence):
+def ends_with_punctuation(sentence: str) -> bool:
+    """
+    Check if a sentence ends with punctuation.
+
+    Args:
+        sentence (str): sentence to check
+
+    Returns:
+        bool: True if the sentence ends with punctuation, False otherwise
+    """
     # Regular expression to match a sentence ending with punctuation
     pattern = r"[.!?]$"
     return bool(re.search(pattern, sentence))
