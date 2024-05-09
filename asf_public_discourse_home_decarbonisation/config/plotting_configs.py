@@ -37,6 +37,21 @@ NESTA_COLOURS = [
     "#000000",
 ]
 
+NESTA_FLOURISH_COLOURS = [
+    "#0000ff",
+    "#f6a4b7",
+    "#18a48c",
+    "#eb003b",
+    "#9a1bbe",
+    "#fdb633",
+    "#97d9e3",
+    "#d2c9c0",
+    "#0f294a",
+    "#ff6e47",
+    "#a59bee",
+    "#646363",
+]
+
 figsize_x = 8
 figsize_y = 4
 
@@ -90,6 +105,7 @@ def configure_plots(fig, chart_title: str = "", chart_subtitle: str = ""):
         )
         .configure_view(strokeWidth=0)
     )
+
 
 def set_spines():
     """
