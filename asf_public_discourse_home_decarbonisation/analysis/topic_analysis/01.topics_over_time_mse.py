@@ -13,6 +13,9 @@
 # - We use BERTopic to recluster certain topics of conversation - the "heat pump" and "boilers" topic.
 #
 #
+# Note that the growth plots live in Flourish.
+#
+#
 # To convert this script to a jupyter notebook and explore results:
 # ```
 # pip install jupytext
