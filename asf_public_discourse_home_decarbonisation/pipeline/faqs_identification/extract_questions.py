@@ -33,6 +33,7 @@ from asf_public_discourse_home_decarbonisation.getters.mse_getters import (
 import os
 from asf_public_discourse_home_decarbonisation import PROJECT_DIR
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 nltk.download("punkt")
@@ -139,6 +140,11 @@ def process_category_data(
     """
     # Filter the data by post type
     category_dataframe = filter_data_by_post_type(category_dataframe, post_type)
+
+    # Remove URLs
+    category_dataframe["text"] = category_dataframe["text"].apply(remove_urls)
+    category_dataframe = process_abbreviations(category_dataframe)
+
     # Convert all text to strings to avoid type errors
     category_dataframe["text"] = category_dataframe["text"].astype(str)
     category_dataframe["sentences"] = category_dataframe["text"].apply(sent_tokenize)
@@ -200,9 +206,6 @@ def extract_questions(sentences: List[str]) -> List[str]:
     all_questions = []  # Initialise an empty list to hold all extracted questions
     # Iterate over each sentence in the input list
     for sentence in sentences:
-        # Skip sentences that likely represent URLs
-        if "/" in sentence and sentence.count("/") > 2:
-            continue
         # Find all matches in the sentence
         potential_questions = re.findall(
             question_pattern, sentence, flags=re.IGNORECASE
