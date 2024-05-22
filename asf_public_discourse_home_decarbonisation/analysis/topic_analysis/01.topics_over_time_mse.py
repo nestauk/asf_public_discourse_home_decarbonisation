@@ -144,7 +144,7 @@ len(docs)
 # - We're using `CountVectorizer(stop_words="english")` as the vectorizer to have meaningful representations, without stopwords;
 #     - Alternatively you can use OpenAI to generate a custom topic label for each topic;
 # - We're setting `random_state=42` in UMAP for reproducibility, not changing any of the remaining default parameters used in BERTopic UMAP;
-# - We're setting `nr_topics=30` as the number of topics to identify so that we have a manageable number of topics.
+# - We're setting `nr_topics=300` as the number of topics to identify so that we have a manageable number of topics.
 
 # %%
 vectorizer_model = CountVectorizer(stop_words="english")
