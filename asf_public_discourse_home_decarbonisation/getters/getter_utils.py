@@ -4,7 +4,8 @@ import pickle
 import pandas as pd
 import boto3
 from typing import List, Union, Dict
-
+import gzip
+from io import BytesIO
 from asf_public_discourse_home_decarbonisation import logger, S3_BUCKET
 
 
@@ -40,6 +41,36 @@ def load_s3_data(bucket_name: str, file_path: str) -> Union[pd.DataFrame, Dict]:
     else:
         logger.error(
             'Function not supported for file type other than "*.csv", "*.json", "*.pkl" or "*.parquet"'
+        )
+
+
+def save_to_s3(bucket_name, output_var, output_file_dir):
+    s3 = get_s3_resource()
+
+    obj = s3.Object(bucket_name, output_file_dir)
+
+    if fnmatch(output_file_dir, "*.csv"):
+        output_var.to_csv("s3://" + bucket_name + "/" + output_file_dir, index=False)
+    elif fnmatch(output_file_dir, "*.parquet"):
+        output_var.to_parquet(
+            "s3://" + bucket_name + "/" + output_file_dir, index=False
+        )
+    elif fnmatch(output_file_dir, "*.pkl") or fnmatch(output_file_dir, "*.pickle"):
+        obj.put(Body=pickle.dumps(output_var))
+    elif fnmatch(output_file_dir, "*.gz"):
+        obj.put(Body=gzip.compress(json.dumps(output_var).encode()))
+    elif fnmatch(output_file_dir, "*.txt"):
+        obj.put(Body=output_var)
+    elif (
+        fnmatch(output_file_dir, "*.jpg")
+        or fnmatch(output_file_dir, "*.png")
+        or fnmatch(output_file_dir, "*.jpeg")
+    ):
+        image_data = BytesIO(output_var)
+        obj.put(Body=image_data)
+    else:
+        logger.error(
+            'Function not supported for file type other than "*.csv", "*.parquet", "*.jsonl.gz", "*.png", "*.jpeg".'
         )
 
 
