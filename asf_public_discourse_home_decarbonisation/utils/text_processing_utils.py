@@ -30,6 +30,23 @@ def remove_username_pattern(text: str) -> str:
     return cleaned_text
 
 
+def replace_username_mentions(text: str) -> str:
+    """
+    Replace username mentions with a space.
+
+    Args:
+        text (str): text to process
+
+    Returns:
+        str: text with username mentions replaced
+    """
+    # Define the pattern to match username mentions and replace them
+    pattern = re.compile(r"@\w+\s")
+    cleaned_text = re.sub(pattern, " ", text)
+
+    return cleaned_text
+
+
 def remove_introduction_patterns(text: str) -> str:
     """Remove introduction patterns from text.
 
@@ -83,6 +100,9 @@ def process_abbreviations(text: str) -> str:
         .replace("uvcs", " unvented cylinders ")
         .replace("uvc", " unvented cylinder ")
     )
+
+    # Getting rid of double spaces
+    text = " ".join(text.split())
     return text
 
 
