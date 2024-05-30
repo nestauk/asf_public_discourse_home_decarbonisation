@@ -2,7 +2,7 @@
 Apply a sentiment model to sentences and save scores.
 Collect and save sentiment for sentences by running:
 
-`python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse"`
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --relevant_clusters "11,21,54,18,19,31,40,51,52"
 
 For other uses, the class can be used with:
 
@@ -30,9 +30,10 @@ from asf_public_discourse_home_decarbonisation.getters.getter_utils import (
     load_s3_data,
 )
 from asf_public_discourse_home_decarbonisation import S3_BUCKET
-from asf_public_discourse_home_decarbonisation.utils.text_cleaning_utils import (
-    preprocess,
-)
+
+# from asf_public_discourse_home_decarbonisation.utils.text_cleaning_utils import (
+#     preprocess,
+# )
 
 
 class SentenceBasedSentiment(object):
@@ -66,8 +67,8 @@ class SentenceBasedSentiment(object):
         if isinstance(texts, str):
             texts = [texts]
 
-        if self.process_data:
-            texts = [preprocess(text) for text in texts]
+        # if self.process_data:
+        #     texts = [preprocess(text) for text in texts]
 
         encoded_input = self.tokenizer(
             texts, padding=True, truncation=True, return_tensors="pt"
@@ -101,6 +102,11 @@ def parse_arguments(parser):
         required=True,
     )
     parser.add_argument(
+        "--filter_by_expression",
+        help="Filter by expression e.g. 'heat pump'. Defaults to None.",
+        default=None,
+    )
+    parser.add_argument(
         "--process_data",
         help="True to process data, if not processed already. Defaults to False.",
         default=False,
@@ -108,6 +114,11 @@ def parse_arguments(parser):
     parser.add_argument(
         "--relevant_clusters",
         help="Relevant clusters e.g. '1,2,10'. Defaults to None (all clusters).",
+        default=None,
+    )
+    parser.add_argument(
+        "--irrelevant_clusters",
+        help="Irrelevant clusters/clusters to remove e.g. '1,2,10'. Defaults to None.",
         default=None,
     )
     return parser.parse_args()
@@ -121,22 +132,24 @@ if __name__ == "__main__":
     chunk_size = 100
 
     source = args.source
-    input_path = (
-        f"/data/{source}/outputs/topic_analysis/{source}_sentence_docs_info.csv"
-    )
+    input_path = f"data/{source}/outputs/topic_analysis/{source}_{args.filter_by_expression}_sentence_docs_info.csv"
 
     sentences = load_s3_data(
         S3_BUCKET,
         input_path,
     )
 
+    sentences = sentences[sentences["Topic"] != -1]
+
+    if args.irrelevant_clusters is not None:
+        relevant_clusters = [int(i) for i in args.irrelevant_clusters.split(",")]
+        sentences = sentences[~sentences["Topic"].isin(relevant_clusters)]
+
     if args.relevant_clusters is not None:
         relevant_clusters = [int(i) for i in args.relevant_clusters.split(",")]
         sentences = sentences[sentences["Topic"].isin(relevant_clusters)]
 
-    output_name = (
-        f"/data/{source}/outputs/sentiment/{source}_sentence_topics_sentiment.csv"
-    )
+    output_name = f"data/{source}/outputs/sentiment/{source}_{args.filter_by_expression}_sentence_topics_sentiment.csv"
 
     sentences_texts = list(sentences["Document"].unique())
 
@@ -155,8 +168,8 @@ if __name__ == "__main__":
 
     print(all_sentiment.head())
 
-    # save_to_s3(
-    #     S3_BUCKET,
-    #     all_sentiment,
-    #     output_name,
-    # )
+    save_to_s3(
+        S3_BUCKET,
+        all_sentiment,
+        output_name,
+    )
