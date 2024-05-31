@@ -1,7 +1,11 @@
 """
 Identifying topics of conversation from sentences.
 
-python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_year 2018
+For MSE:
+python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "2018-01-01" --end_date "2024-05-22"
+
+For Buildhub:
+python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "buildhub" --start_date "2018-01-01" --end_date "2024-05-22"
 
 """
 
@@ -10,6 +14,7 @@ import argparse
 import pandas as pd
 import string
 import re
+from datetime import datetime
 from bertopic import BERTopic
 from umap import UMAP
 from nltk.tokenize import sent_tokenize, word_tokenize
@@ -21,6 +26,7 @@ logger = logging.getLogger(__name__)
 # Local imports
 from asf_public_discourse_home_decarbonisation import S3_BUCKET
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
+from asf_public_discourse_home_decarbonisation.getters.bh_getters import get_bh_data
 from asf_public_discourse_home_decarbonisation.utils.topic_analysis_utils import (
     get_outputs_from_topic_model,
 )
@@ -53,16 +59,16 @@ def parse_arguments() -> argparse.Namespace:
         default="heat pump",
     )
     parser.add_argument(
-        "--start_year",
-        help="Analysis start year. Default to None (all data)",
+        "--start_date",
+        help="Analysis start date in the format YYYY-MM-DD. Default to None (all data)",
         default=None,
-        type=int,
+        type=str,
     )
     parser.add_argument(
-        "--end_year",
-        help="Analysis end year. Defaults to None (all data)",
+        "--end_date",
+        help="Analysis end date in the format YYYY-MM-DD. Defaults to None (all data)",
         default=None,
-        type=int,
+        type=str,
     )
     return parser.parse_args()
 
@@ -76,6 +82,9 @@ def cleaning_and_enhancing_forum_data(forum_data: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: enhanced forum data
     """
+    forum_data["text"] = forum_data["text"].astype(str)
+    forum_data["title"] = forum_data["title"].astype(str)
+
     forum_data["text"] = forum_data["text"].apply(remove_urls)
     forum_data["text"] = forum_data["text"].apply(remove_username_pattern)
     forum_data["text"] = forum_data["text"].apply(replace_username_mentions)
@@ -148,7 +157,7 @@ def remove_small_sentences(sentences_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def prepping_data_for_topic_analysis(
-    forum_data: pd.DataFrame, filter_by_expression: str, start_year: int, end_year: int
+    forum_data: pd.DataFrame, filter_by_expression: str, start_date: int, end_date: int
 ) -> pd.DataFrame:
     """_summary_
 
@@ -164,10 +173,14 @@ def prepping_data_for_topic_analysis(
     # Data cleaning
     forum_data = cleaning_and_enhancing_forum_data(forum_data)
 
-    if start_year is not None:
-        forum_data = forum_data[forum_data["year"] >= start_year]
-    if end_year is not None:
-        forum_data = forum_data[forum_data["year"] <= end_year]
+    if start_date is not None:
+        forum_data = forum_data[
+            forum_data["date"] >= datetime.strptime(start_date, "%Y-%m-%d").date()
+        ]
+    if end_date is not None:
+        forum_data = forum_data[
+            forum_data["date"] <= datetime.strptime(end_date, "%Y-%m-%d").date()
+        ]
 
     # Focusing on conversations mentioning a certain expression e.g. "heat pump"
     if filter_by_expression is not None:
@@ -240,6 +253,30 @@ def update_topics_with_duplicates(
     return updated_topics_info
 
 
+def update_docs_with_duplicates(doc_info: pd.DataFrame, sentences_data: pd.DataFrame):
+    """_summary_
+
+    Args:
+        doc_info (pd.DataFrame): _description_
+        sentences_data (pd.DataFrame): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    sentence_counts = (
+        sentences_data.groupby("sentences", as_index=False)[["id"]]
+        .count()
+        .rename(columns={"id": "count"})
+    )
+
+    updated_doc_info = doc_info.merge(
+        sentence_counts, left_on="Document", right_on="sentences"
+    )
+
+    return updated_doc_info
+
+
 def topic_model_definition(min_topic_size: int, reduce_outliers_to_zero: bool):
     """_summary_
 
@@ -280,18 +317,24 @@ if __name__ == "__main__":
         forum_data = get_mse_data(
             category="all", collection_date="2023_11_15", processing_level="raw"
         )
+    elif source == "buildhub":
+        forum_data = get_bh_data(category="all")
+        forum_data.rename(columns={"url": "id", "date": "datetime"}, inplace=True)
+    else:
+        raise ValueError("Invalid source")
 
     sentences_data = prepping_data_for_topic_analysis(
-        forum_data, filter_by_expression, args.start_year, args.end_year
+        forum_data, filter_by_expression, args.start_date, args.end_date
     )
 
     docs = sentences_data.drop_duplicates("sentences")["sentences"]
     dates = list(sentences_data.drop_duplicates("sentences")["date"])
 
-    if source == "mse":
-        min_topic_size = 100
-    else:
-        min_topic_size = 50
+    min_topic_size = 100
+    # if source == "mse":
+    #     min_topic_size = 100
+    # else:
+    #     min_topic_size = 30
 
     topic_model = topic_model_definition(min_topic_size, reduce_outliers_to_zero)
     topics, probs = topic_model.fit_transform(docs)
@@ -311,6 +354,7 @@ if __name__ == "__main__":
         topics_info.sort_values("Count", ascending=False)
 
     topics_info = update_topics_with_duplicates(topics_info, doc_info, sentences_data)
+    doc_info = update_docs_with_duplicates(doc_info, sentences_data)
 
     topics_info.to_csv(
         f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_sentence_topics_info.csv",
@@ -318,5 +362,9 @@ if __name__ == "__main__":
     )
     doc_info.to_csv(
         f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_sentence_docs_info.csv",
+        index=False,
+    )
+    sentences_data.to_csv(
+        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_sentences_data.csv",
         index=False,
     )
