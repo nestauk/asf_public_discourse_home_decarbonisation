@@ -89,7 +89,17 @@ topic_sentimet.sort_values("negative", ascending=False, inplace=True)
 
 # %%
 topic_sentimet.plot(
-    kind="barh", stacked=True, color=["red", "grey", "green"], figsize=(9, 6)
+    kind="barh", stacked=True, color=["red", "grey", "green"], figsize=(9, 20)
+)
+plt.legend(title="Sentiment", bbox_to_anchor=(1.05, 1), loc="upper left")
+
+
+# %%
+topic_sentimet.sort_values("positive", ascending=False, inplace=True)
+
+# %%
+topic_sentimet.plot(
+    kind="barh", stacked=True, color=["red", "grey", "green"], figsize=(9, 20)
 )
 plt.legend(title="Sentiment", bbox_to_anchor=(1.05, 1), loc="upper left")
 
@@ -113,7 +123,7 @@ sentiment_and_counts_per_topic = (
 import altair as alt
 
 # %%
-sentiment_and_counts_per_topic
+sentiment_and_counts_per_topic.sort_values("count", inplace=True)
 
 # %%
 a = (
@@ -125,7 +135,7 @@ a = (
         color=alt.Color(
             "sentiment_number:Q",
             scale=alt.Scale(
-                scheme="redyellowgreen", domain=[-1, 1]  # Set the color scale range
+                scheme="redyellowgreen", domain=[-1, 0.5]  # Set the color scale range
             ),
             title="Average sentiment",
         ),
@@ -188,21 +198,96 @@ sentiment_over_time = sentiment_over_time.merge(
 )
 
 # %%
-sentiment_over_time = (
+topics_sentiment_over_time = (
     sentiment_over_time.groupby(["Name", "year"])
     .agg({"sentiment_number": "mean"})
     .unstack()
 )
 
 # %%
-sentiment_over_time.columns = sentiment_over_time.columns.droplevel()
+topics_sentiment_over_time.columns = topics_sentiment_over_time.columns.droplevel()
 
 # %%
-sentiment_over_time.T.plot(kind="line", figsize=(14, 8), color=NESTA_COLOURS)
+topics_sentiment_over_time = topics_sentiment_over_time.T
+
+# %%
+topics_sentiment_over_time.plot(kind="line", figsize=(14, 8), color=NESTA_COLOURS)
+plt.legend(title="Topic", bbox_to_anchor=(1.05, 1), loc="upper left")
+plt.title("Sentiment over time per topic of conversation about heat pumps")
+
+# %%
+topics_sentiment_over_time["all_topics"] = sentiment_over_time.groupby(["year"]).agg(
+    {"sentiment_number": "mean"}
+)["sentiment_number"]
+
+# %%
+topics_sentiment_over_time.columns
+
+# %%
+topics_sentiment_over_time[["11_noise_quiet_noisy_microgeneration", "all_topics"]].plot(
+    kind="line", figsize=(14, 8), color=NESTA_COLOURS
+)
 plt.legend(title="Topic", bbox_to_anchor=(1.05, 1), loc="upper left")
 plt.title("Sentiment over time per topic of conversation about heat pumps")
 
 # %%
 
+
+# %%
+
+
+# %% [markdown]
+# ## Examples
+
+# %%
+examples = (
+    sentiment_over_time[
+        (sentiment_over_time["sentiment"] == "negative")
+        & (sentiment_over_time["Document"].str.contains("heat pump"))
+    ]
+    .drop_duplicates("sentences")
+    .sort_values("score", ascending=False)
+    .drop_duplicates("Name")[["Document", "score", "Name"]]
+)
+for i in range(len(examples)):
+    print(examples["Document"].iloc[i])
+    print(examples["score"].iloc[i])
+    print(examples["Name"].iloc[i])
+    print("---")
+
+# %%
+examples = (
+    sentiment_over_time[(sentiment_over_time["sentiment"] == "negative")]
+    .drop_duplicates("sentences")
+    .sort_values("score", ascending=False)
+    .drop_duplicates("Name")[["Document", "score", "Name"]]
+)
+for i in range(len(examples)):
+    print(examples["Document"].iloc[i])
+    print(examples["score"].iloc[i])
+    print(examples["Name"].iloc[i])
+    print("---")
+
+# %%
+
+
+# %%
+
+
+# %% [markdown]
+# ## Number of sentences over time
+
+# %%
+counts_over_time = (
+    sentiment_over_time.groupby(["Name", "month"])["text"].count().unstack().fillna(0).T
+)
+
+# %%
+counts_over_time = counts_over_time.div(counts_over_time.sum(axis=1), axis=0)
+
+# %%
+counts_over_time[-11:].plot(kind="line", figsize=(14, 8), color=NESTA_COLOURS)
+plt.legend(title="Topic", bbox_to_anchor=(1.05, 1), loc="upper left")
+plt.title("Proportion of conversations per topic")
 
 # %%
