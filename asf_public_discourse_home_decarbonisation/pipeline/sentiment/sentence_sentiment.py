@@ -4,6 +4,7 @@ Collect and save sentiment for sentences by running:
 
 MSE:
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,4,5,7,8,9,10,11,18,19,20,21,22,25,31,32,40,51,52,54"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6"
 
 Buildhub:
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64"
