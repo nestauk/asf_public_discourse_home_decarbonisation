@@ -70,6 +70,12 @@ def parse_arguments() -> argparse.Namespace:
         default=None,
         type=str,
     )
+    parser.add_argument(
+        "--n_gram_range",
+        help="Topic representation with ngrams",
+        default=False,
+        type=bool,
+    )
     return parser.parse_args()
 
 
@@ -277,13 +283,12 @@ def update_docs_with_duplicates(doc_info: pd.DataFrame, sentences_data: pd.DataF
     return updated_doc_info
 
 
-def topic_model_definition(min_topic_size: int, reduce_outliers_to_zero: bool):
+def topic_model_definition(min_topic_size: int, n_gram_range: bool = False):
     """_summary_
 
     Args:
         min_topic_size (int): _description_
-        reduce_outliers_to_zero (bool): _description_
-
+        n_gram_range (bool, optional): _description_. Defaults to False.
     Returns:
         _type_: _description_
     """
@@ -291,12 +296,12 @@ def topic_model_definition(min_topic_size: int, reduce_outliers_to_zero: bool):
     umap_model = UMAP(
         n_neighbors=15, n_components=5, min_dist=0.0, metric="cosine", random_state=42
     )
-    if reduce_outliers_to_zero:
+    if n_gram_range:
         topic_model = BERTopic(
             umap_model=umap_model,
             min_topic_size=min_topic_size,
             vectorizer_model=vectorizer_model,
-            calculate_probabilities=True,
+            n_gram_range=(1, 4),
         )
     else:
         topic_model = BERTopic(
@@ -304,6 +309,7 @@ def topic_model_definition(min_topic_size: int, reduce_outliers_to_zero: bool):
             min_topic_size=min_topic_size,
             vectorizer_model=vectorizer_model,
         )
+
     return topic_model
 
 
@@ -312,13 +318,14 @@ if __name__ == "__main__":
     source = args.source
     reduce_outliers_to_zero = args.reduce_outliers_to_zero
     filter_by_expression = args.filter_by_expression
+    n_gram_range = args.n_gram_range
 
     if source == "mse":
         forum_data = get_mse_data(
-            category="all", collection_date="2023_11_15", processing_level="raw"
+            category="all", collection_date="2024_06_03", processing_level="raw"
         )
     elif source == "buildhub":
-        forum_data = get_bh_data(category="all")
+        forum_data = get_bh_data(category="all", collection_date="24_05_23")
         forum_data.rename(columns={"url": "id", "date": "datetime"}, inplace=True)
     else:
         raise ValueError("Invalid source")
@@ -327,16 +334,12 @@ if __name__ == "__main__":
         forum_data, filter_by_expression, args.start_date, args.end_date
     )
 
-    docs = sentences_data.drop_duplicates("sentences")["sentences"]
+    docs = list(sentences_data.drop_duplicates("sentences")["sentences"])
     dates = list(sentences_data.drop_duplicates("sentences")["date"])
 
     min_topic_size = 100
-    # if source == "mse":
-    #     min_topic_size = 100
-    # else:
-    #     min_topic_size = 30
 
-    topic_model = topic_model_definition(min_topic_size, reduce_outliers_to_zero)
+    topic_model = topic_model_definition(min_topic_size, n_gram_range)
     topics, probs = topic_model.fit_transform(docs)
     topics_, topics_info, doc_info = get_outputs_from_topic_model(topic_model, docs)
 
@@ -346,9 +349,7 @@ if __name__ == "__main__":
     )
 
     if reduce_outliers_to_zero:
-        new_topics = topic_model.reduce_outliers(
-            docs, topics, probabilities=probs, strategy="probabilities"
-        )
+        new_topics = topic_model.reduce_outliers(docs, topics, strategy="embeddings")
         topic_model.update_topics(docs, topics=new_topics)
         topics, topics_info, doc_info = get_outputs_from_topic_model(topic_model, docs)
         topics_info.sort_values("Count", ascending=False)
