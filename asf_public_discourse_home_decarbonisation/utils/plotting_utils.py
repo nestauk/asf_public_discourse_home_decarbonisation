@@ -25,8 +25,9 @@ import numpy as np
 import math
 from nltk.probability import FreqDist
 from wordcloud import WordCloud
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -455,4 +456,86 @@ def plot_tag_horizontal_bar_chart(
     plt.tight_layout()
     if output_path:
         plt.savefig(os.path.join(output_path, filename))
+    plt.show()
+
+
+def format_key_terms(key_terms_colour_dict: Dict[str, str]) -> str:
+    """
+    Format the key terms for display. If there are two key terms, they are joined with ' and '.
+    If there are three or more key terms, the first n-1 terms are joined with ', ', and then the last term is appended with ' and '.
+
+    Parameters:
+    key_terms_colour_dict (Dict[str, str]): A dictionary where keys are the key terms and values are their corresponding colors.
+
+    Returns:
+    str: The formatted string of key terms.
+    """
+    key_terms = list(key_terms_colour_dict.keys())
+    if len(key_terms) == 2:
+        return " and ".join([term.capitalize() for term in key_terms])
+    else:
+        return (
+            ", ".join([term.capitalize() for term in key_terms[:-1]])
+            + " and "
+            + key_terms[-1].capitalize()
+        )
+
+
+def plot_mentions_line_chart(
+    df_monthly: pd.DataFrame, key_terms_colour_dict: dict, plot_type: str = "both"
+):
+    """
+    Plot the distribution of posts mentioning the key terms over time.
+
+    Parameters:
+    df_monthly (pd.DataFrame): The resampled dataframe with mentions and averages.
+    key_terms_colour_dict (dict): Dictionary of key terms to plot and their corresponding colors.
+    plot_type (str): The type of plot to display. Options are "rolling", "both", "discrete". Default is "both".
+    """
+    plt.figure(figsize=(12, 6))
+
+    # Plot scatter and line plots for each key term
+    for term, colour in key_terms_colour_dict.items():
+        column_name = f"mentions_{term.replace(' ', '_')}"
+        avg_column_name = f"{column_name}_avg"
+
+        if plot_type == "rolling":
+            plt.plot(
+                df_monthly.index,
+                df_monthly[avg_column_name],
+                label=f"{term.capitalize()} Mentions",
+                color=colour,
+            )
+        elif plot_type == "both":
+            plt.scatter(
+                df_monthly.index,
+                df_monthly[column_name],
+                alpha=0.3,
+                label=f"{term.capitalize()} Mentions",
+                color=colour,
+            )
+            plt.plot(
+                df_monthly.index,
+                df_monthly[avg_column_name],
+                label=f"{term.capitalize()} Rolling Average",
+                color=colour,
+            )
+        elif plot_type == "discrete":
+            plt.plot(
+                df_monthly.index,
+                df_monthly[column_name],
+                label=f"{term.capitalize()} Mentions",
+                color=colour,
+            )
+
+    # Set the labels and title
+    plt.xlabel("Date")
+    plt.ylabel("Number of Posts and Replies")
+    # Get the key terms and join them with commas
+    key_terms = format_key_terms(key_terms_colour_dict)
+    plt.title(f"Distribution of Posts and Replies Mentioning {key_terms} over Time")
+
+    # Set y-axis gridlines
+    plt.grid(axis="y", color="0.95")
+    plt.legend()
     plt.show()
