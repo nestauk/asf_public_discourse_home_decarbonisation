@@ -45,10 +45,288 @@ key_terms_colour = {"heat pump": "#97D9E3", "boiler": "#0F294A"}
 plot_mentions_line_chart(bh_data_monthly, key_terms_colour, plot_type="both")
 
 
-# In[4]:
+# In[28]:
 
 
-# In[ ]:
+categories_dict = {
+    "Cost": [
+        "16_price_prices_pay_money",
+        "30_10k_price_cost_paid",
+        "145_cost_month_year_electricity",
+        "53_cost_pump_source_air",
+        "134_oil_litre_year_price",
+        "97_vat_reclaim_plus_zero",
+        "139_quote_quotes_quoting_got",
+    ],
+    "Power": [
+        "7_kwh_kw_12kw_power",
+        "18_kw_pump_kwh_source",
+        "38_kw_kwh_average_day",
+        "138_standby_consumption_power_ecodan",
+    ],
+    "Heating Systems": {
+        "Heat Pumps": [
+            "1_source_air_pump_heat",
+            "31_pumps_heat_pump_work",
+            "45_ground_source_pump_borehole",
+            "126_energy_consumption_efficiency_rating",
+            "144_ecodan_ecodans_r32_know",
+            "68_split_monoblock_monobloc_unit",
+        ],
+        "Water Heating": [
+            "6_hot_domestic_water_heating",
+            "109_cylinder_reheat_unvented_cylinders",
+            "146_willis_heater_heaters_immersion",
+            "75_legionella_cycle_legionnaires_bacteria",
+            "81_domestic_hot_kwh_water",
+        ],
+        "Floor Heating": [
+            "9_floor_heating_underfloor_floors",
+            "14_floor_heating_pump_underfloor",
+            "88_buffer_floor_heating_tank",
+            "90_radiators_floor_heating_underfloor",
+            "142_rads_floor_heating_upstairs",
+        ],
+        "Boilers and Stoves": [
+            "3_boiler_boilers_gas_combi",
+            "41_boiler_gas_oil_source",
+            "44_stove_wood_burner_log",
+            "125_lpg_gas_mains_bulk",
+        ],
+        "Hydrogen": [
+            "103_hydrogen_green_natural_gas",
+        ],
+        "General Heating": [
+            "23_heating_systems_resistance_design",
+            "28_slab_concrete_floor_cooling",
+            "42_defrost_defrosting_defrosts_cycle",
+            "79_degrees_temperature_temp_set",
+        ],
+    },
+    "Components": {
+        "Pipes and Valves": [
+            "8_pipe_pipes_pipework_copper",
+            "37_valve_valves_bypass_port",
+        ],
+        "Tanks and Cylinders": [
+            "22_buffer_tank_pump_heat",
+            "26_cylinder_unvented_cylinders_telford",
+            "57_tank_tanks_loft_litre",
+            "64_cylinder_domestic_hot_water",
+            "74_buffer_tank_tanks_size",
+            "107_tank_temperature_temp_degrees",
+            "129_immersion_immersions_3kw_solic",
+        ],
+        "Pumps and Circulators": [
+            "15_pump_pumps_speed_circulation",
+            "147_ftc6_ftc_ftc5_controller",
+        ],
+        "Thermostats and Controllers": [
+            "36_thermostat_thermostats_room_control",
+            "55_controller_controls_control_controllers",
+            "91_settings_setting_parameters_change",
+            "141_ecodan_controller_ftc6_cooling",
+        ],
+        "Radiators and Manifolds": [
+            "19_radiators_radiator_output_temperature",
+            "34_manifold_manifolds_mixer_blending",
+            "40_rads_rad_warm_temp",
+        ],
+        "Compressors and Refrigerants": [
+            "43_compressor_compressors_scroll_crankcase",
+            "89_refrigerant_fridge_refrigeration_refrigerants",
+            "133_glycol_ethylene_exchanger_propylene",
+        ],
+        "Fans and Coils": [
+            "77_floor_tiles_flooring_floors",
+            "86_inverter_driven_inverters_drive",
+        ],
+        "Noise": [
+            "4_noise_sound_noisy_quiet",
+        ],
+        "Miscellaneous Components": [
+            "49_flow_rate_rates_meter",
+            "50_wiring_cable_wires_wire",
+            "65_zones_zone_zoning_single",
+            "121_phase_single_3phase_transformer",
+            "127_blinds_external_windows_velux",
+            "135_warranty_year_manufacturer_item",
+            "137_trvs_trv_open_rads",
+            "143_batteries_battery_storage_life",
+        ],
+    },
+    "Installation": [
+        "10_installer_installers_install_installation",
+        "25_plumber_plumbers_plumbing_electrician",
+        "94_vaillant_daikin_installer_schematics",
+        "118_manual_manuals_instructions_copy",
+    ],
+    "Temperature and Control": [
+        "13_flow_temp_temperature_temps",
+        "36_thermostat_thermostats_room_control",
+        "55_controller_controls_control_controllers",
+        "79_degrees_temperature_temp_set",
+        "91_settings_setting_parameters_change",
+        "147_ftc6_ftc_ftc5_controller",
+    ],
+    "Certification and Incentives": [
+        "21_certification_microgeneration_scheme_certificate",
+        "51_grant_bus_grants_5k",
+        "96_epc_incentive_renewable_rating",
+        "136_certification_microgeneration_scheme_certified",
+    ],
+    "Energy and Efficiency": [
+        "52_carbon_co2_emissions_fossil",
+        "62_octopus_tariff_cosy_agile",
+        "115_efficiency_efficient_inefficient_penalty",
+        "108_tariff_tariffs_economy_tou",
+        "126_energy_consumption_efficiency_rating",
+    ],
+    "Design and Planning": [
+        "67_planning_lpa_pd_permission",
+        "69_size_sizing_oversizing_fit",
+        "111_design_designers_designer_professional",
+    ],
+    "Weather and Climate": [
+        "32_winter_weather_cold_rain",
+        "85_house_warm_cold_days",
+        "110_climate_change_global_scientists",
+    ],
+    "Calculation and Data": [
+        "46_loss_calculations_calcs_spreadsheet",
+        "112_spreadsheet_excel_chart_data",
+        "56_numbers_figures_maths_calculations",
+    ],
+    "Water Systems": [
+        "57_tank_tanks_loft_litre",
+        "64_cylinder_domestic_hot_water",
+        "75_legionella_cycle_legionnaires_bacteria",
+        "81_domestic_hot_kwh_water",
+        "107_tank_temperature_temp_degrees",
+        "109_cylinder_reheat_unvented_cylinders",
+        "129_immersion_immersions_3kw_solic",
+    ],
+    "Miscellaneous": [
+        "2_thread_post_question_forum",
+        "63_build_self_builders_builder",
+        "66_garden_kitchen_room_bedroom",
+        "104_loops_loop_100m_loopcad",
+        "105_2023by_2022by_editeddecember_2021by",
+        "119_trees_wood_tree_timber",
+        "128_200mm_150mm_100mm_spacing",
+        "130_photos_pics_photo_picture",
+        "132_problem_issue_issues_problems",
+        "124_e7_e10_domestic_boost",
+    ],
+}
 
 
-# In[ ]:
+# In[29]:
+
+
+import boto3
+import pandas as pd
+from io import StringIO
+
+s3 = boto3.client("s3", region_name="us-east-1")  # or your preferred region
+bucket = "asf-public-discourse-home-decarbonisation"
+key = "data/buildhub/outputs/topic_analysis/buildhub_heat pump_sentence_topics_info.csv"
+
+obj = s3.get_object(Bucket=bucket, Key=key)
+data = obj["Body"].read().decode("utf-8")
+df = pd.read_csv(StringIO(data))
+
+df.head()
+
+
+# In[30]:
+
+
+new_dict = {}
+
+for category, topics in categories_dict.items():
+    if isinstance(topics, dict):
+        new_dict[category] = {}
+        for subcategory, subtopics in topics.items():
+            new_dict[category][subcategory] = {}
+            for topic in subtopics:
+                count = df.loc[df["Name"] == topic, "updated_count"].values[0]
+                new_dict[category][subcategory][topic] = count
+    else:
+        new_dict[category] = {}
+        for topic in topics:
+            count = df.loc[df["Name"] == topic, "updated_count"].values[0]
+            new_dict[category][topic] = count
+
+
+# In[31]:
+
+
+print(new_dict)
+
+
+# In[32]:
+
+
+import matplotlib.pyplot as plt
+
+aggregated_data = {
+    "Cost": sum(new_dict["Cost"].values()),
+    "Power": sum(new_dict["Power"].values()),
+    "Heat Pumps": sum(new_dict["Heating Systems"]["Heat Pumps"].values()),
+    "Water Heating": sum(new_dict["Heating Systems"]["Water Heating"].values()),
+    "Floor Heating": sum(new_dict["Heating Systems"]["Floor Heating"].values()),
+    "Boilers and Stoves": sum(
+        new_dict["Heating Systems"]["Boilers and Stoves"].values()
+    ),
+    "Hydrogen": sum(new_dict["Heating Systems"]["Hydrogen"].values()),
+    "General Heating": sum(new_dict["Heating Systems"]["General Heating"].values()),
+    "Pipes and Valves": sum(new_dict["Components"]["Pipes and Valves"].values()),
+    "Tanks and Cylinders": sum(new_dict["Components"]["Tanks and Cylinders"].values()),
+    "Pumps and Circulators": sum(
+        new_dict["Components"]["Pumps and Circulators"].values()
+    ),
+    "Thermostats and Controllers": sum(
+        new_dict["Components"]["Thermostats and Controllers"].values()
+    ),
+    "Radiators and Manifolds": sum(
+        new_dict["Components"]["Radiators and Manifolds"].values()
+    ),
+    "Compressors and Refrigerants": sum(
+        new_dict["Components"]["Compressors and Refrigerants"].values()
+    ),
+    "Fans and Coils": sum(new_dict["Components"]["Fans and Coils"].values()),
+    "Noise": sum(new_dict["Components"]["Noise"].values()),
+    "Miscellaneous Components": sum(
+        new_dict["Components"]["Miscellaneous Components"].values()
+    ),
+    "Installation": sum(new_dict["Installation"].values()),
+    "Temperature and Control": sum(new_dict["Temperature and Control"].values()),
+    "Certification and Incentives": sum(
+        new_dict["Certification and Incentives"].values()
+    ),
+    "Energy and Efficiency": sum(new_dict["Energy and Efficiency"].values()),
+    "Design and Planning": sum(new_dict["Design and Planning"].values()),
+    "Weather and Climate": sum(new_dict["Weather and Climate"].values()),
+    "Calculation and Data": sum(new_dict["Calculation and Data"].values()),
+    "Water Systems": sum(new_dict["Water Systems"].values()),
+    "Miscellaneous": sum(new_dict["Miscellaneous"].values()),
+}
+# Sort the data by values for better visualization
+sorted_aggregated_data = dict(
+    sorted(aggregated_data.items(), key=lambda item: item[1], reverse=True)
+)
+
+# Plot the aggregated data
+plt.figure(figsize=(12, 8))
+plt.barh(
+    list(sorted_aggregated_data.keys()),
+    list(sorted_aggregated_data.values()),
+    color="#0000FF",
+)
+plt.ylabel("Categories")
+plt.xlabel("Number of Sentences")
+plt.title("Bar Chart of Aggregated Dictionary Data")
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+plt.show()
