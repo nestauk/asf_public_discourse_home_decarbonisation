@@ -42,6 +42,7 @@ from asf_public_discourse_home_decarbonisation.config.keywords_dictionary import
 )
 from asf_public_discourse_home_decarbonisation.config.plotting_configs import (
     set_plotting_styles,
+    NESTA_COLOURS,
 )
 
 import logging
@@ -79,6 +80,12 @@ def argparser() -> argparse.Namespace:
         help="Path to data file, if not standard forum data.",
         default=None,
     )
+    parser.add_argument(
+        "--process_abbreviations",
+        type=bool,
+        help="Whether to process abbreviations",
+        default=True,
+    )
     args = parser.parse_args()
     return args
 
@@ -103,6 +110,34 @@ def get_configuration_params_file(path_to_config_file: str) -> tuple:
     model_and_additional_params = config_module.model_and_additional_params
 
     return data_source_params, model_and_additional_params
+
+
+def process_abbreviations(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Replaces abbreviations in the title and text columns of the dataframe with their full forms.
+
+    Args:
+        data (pd.DataFrame): dataframe to process
+
+    Returns:
+        pd.DataFrame: dataframe with abbreviations replaced
+    """
+    for col in ["title", "text"]:
+        data[col] = (
+            data[col]
+            .astype(str)
+            .apply(
+                lambda x: x.lower()
+                .replace("ashps", "air source heat pumps")
+                .replace("ashp", "air source heat pump")
+                .replace("gshps", "ground source heat pumps")
+                .replace("gshp", "ground source heat pump")
+                .replace("hps", "heat pumps")
+                .replace("hp", "heat pump")
+                .replace("ufh", "under floor heating")
+            )
+        )
+    return data
 
 
 def create_boxplots_with_results(output_configs: dict):
@@ -166,6 +201,92 @@ def create_boxplots_with_results(output_configs: dict):
     plt.close()
 
 
+def plot_distribution_of_outliers(output_configs: dict):
+    """
+    Creates and saves a figure with boxplots, one for each model being assessed,
+    showing fraction of documents in the y-axis versus number of runs where
+    a document is an outlier (x-axis).
+
+    Args:
+        output_configs (dict): dictionary with results information
+    """
+
+    # Extracting information from output_configs dictionary
+    source_name = output_configs["data_source"]
+    category = output_configs["category"]
+    n_docs = output_configs["n_docs"]
+    n_runs = output_configs["n_runs"]
+    keywords = output_configs["keywords"]
+    outliers_vs_docs_dict = output_configs["distribution_outliers"]
+
+    fig, axes = plt.subplots(
+        len(outliers_vs_docs_dict), 1, figsize=(10, len(outliers_vs_docs_dict) * 3)
+    )
+
+    if n_runs <= 20:
+        for i, (model_name, outliers_vs_docs) in enumerate(
+            outliers_vs_docs_dict.items()
+        ):
+            outliers_vs_docs = (
+                outliers_vs_docs.groupby("outlier_count", as_index=False)
+                .nunique()[["outlier_count", "Document"]]
+                .rename(columns={"Document": "num_docs"})
+            )
+            bars = axes[i].bar(
+                outliers_vs_docs["outlier_count"],
+                outliers_vs_docs["num_docs"] / n_docs * 100,
+                color=NESTA_COLOURS[0],
+                edgecolor="white",
+            )
+            axes[i].set_xlabel("# of runs in which a document is an outlier")
+            axes[i].set_title(model_name)
+
+            # Add numbers above the bars
+            for bar in bars:
+                height = bar.get_height()
+                axes[i].text(
+                    bar.get_x() + bar.get_width() / 2,
+                    height,
+                    f"{height:.2f}",
+                    ha="center",
+                    va="bottom",
+                )
+    else:
+        for i, (model_name, outliers_vs_docs) in enumerate(
+            outliers_vs_docs_dict.items()
+        ):
+            axes[i].hist(
+                outliers_vs_docs["outlier_count"],
+                bins="auto",
+                density=True,
+                color=NESTA_COLOURS[0],
+                edgecolor="white",
+            )
+            axes[i].set_xlabel("# of runs in which a document is an outlier")
+            axes[i].set_title(model_name)
+
+    fig.suptitle(
+        "Percentage of docs vs. Number of runs being outlier\nSource: {}, Category: {}\n Keywords filter: {}, # Docs: {}, # Runs: {}".format(
+            source_name,
+            category,
+            keywords,
+            n_docs,
+            n_runs,
+        )
+    )
+
+    plt.tight_layout()
+
+    plt.savefig(
+        os.path.join(
+            TOPIC_ANALYSIS_EVALUATION_PATH,
+            f"outliers_distribution_{source_name}_{category}_{keywords}_{n_runs}runs.png",
+        )
+    )
+
+    plt.close()
+
+
 def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> tuple:
     """
     Evaluates a topic model according to a list of model configurations on a specific number of runs.
@@ -191,6 +312,10 @@ def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> 
     runs_number_of_topics = []
     runs_number_of_outliers = []
     runs_avg_prob = []
+
+    docs_outlier_count = pd.DataFrame(columns=["Document", "outlier_count"])
+    docs_outlier_count["Document"] = docs
+    docs_outlier_count["outlier_count"] = 0
 
     # Getting model configurations
     # default values found here: https://maartengr.github.io/BERTopic/api/bertopic.html#bertopic._bertopic.BERTopic.__init__
@@ -228,6 +353,18 @@ def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> 
             )
             # Appending average probability of the documents (not in the outliers' cluster) belonging to topics
             runs_avg_prob.append(doc_info[doc_info["Topic"] > -1]["Probability"].mean())
+
+            # Updating number of times a doc is an outlier
+            docs_outlier_count = docs_outlier_count.merge(
+                right=doc_info[["Document", "Topic"]], on="Document"
+            )
+            docs_outlier_count["outlier_count"] = docs_outlier_count.apply(
+                lambda x: (
+                    x["outlier_count"] + 1 if x["Topic"] == -1 else x["outlier_count"]
+                ),
+                axis=1,
+            )
+            docs_outlier_count.drop(columns="Topic", inplace=True)
         except:
             logger.info(f"Run {i} failed due to no topics being found. Skipping...")
 
@@ -235,11 +372,16 @@ def run_topic_model_evaluation(n_runs: int, docs: list, model_configs: dict) -> 
         runs_number_of_topics,
         runs_number_of_outliers,
         runs_avg_prob,
+        docs_outlier_count,
     )
 
 
 def read_and_filter_data(
-    source_name: str, category: str, path_to_data_file: str, keywords: list
+    source_name: str,
+    category: str,
+    path_to_data_file: str,
+    keywords: list,
+    proc_abbreviations: bool,
 ) -> pd.DataFrame:
     """
     Loads and filters data before applying topic analysis.
@@ -249,6 +391,7 @@ def read_and_filter_data(
         category (str): category e.g. "all"
         path_to_data_file (str): path to data file if not the standard forum data
         keywords (list): list of keywords to filter the data
+        proc_abbreviations (bool): whether to process abbreviations in the data
 
     Returns:
         pd.DataFrame: filtered data
@@ -260,6 +403,9 @@ def read_and_filter_data(
             data = get_mse_data(category)
         else:
             data = get_bh_data(category)
+
+    if proc_abbreviations:
+        data = process_abbreviations(data)
 
     # filter the data based on the keywords
     if keywords is not None:
@@ -279,6 +425,7 @@ if __name__ == "__main__":
     n_runs = args.n_runs
     path_to_config_file = args.path_to_config_file
     path_to_data_file = args.path_to_data_file
+    proc_abbreviations = args.process_abbreviations
 
     (
         data_source_params,
@@ -296,12 +443,13 @@ if __name__ == "__main__":
             category = slice.get("category")
             keywords = slice.get("keywords")
             data = read_and_filter_data(
-                source_name, category, path_to_data_file, keywords
+                source_name, category, path_to_data_file, keywords, proc_abbreviations
             )
 
             number_of_topics_dict = dict()
             number_of_outliers_dict = dict()
             avg_probablity_dict = dict()
+            distribution_outliers_dict = dict()
 
             # for each model specification run and evaluate the model
             for model_param in model_and_additional_params:
@@ -321,11 +469,13 @@ if __name__ == "__main__":
                     runs_number_of_topics,
                     runs_number_of_outliers,
                     runs_avg_prob,
+                    distribution_outliers,
                 ) = run_topic_model_evaluation(n_runs, docs, model_param)
 
                 number_of_topics_dict[model_name] = runs_number_of_topics
                 number_of_outliers_dict[model_name] = runs_number_of_outliers
                 avg_probablity_dict[model_name] = runs_avg_prob
+                distribution_outliers_dict[model_name] = distribution_outliers
 
             # Create config dictionary with outputs
             output_configs = {
@@ -337,7 +487,10 @@ if __name__ == "__main__":
                 "outliers": number_of_outliers_dict,
                 "topics": number_of_topics_dict,
                 "probabilities": avg_probablity_dict,
+                "distribution_outliers": distribution_outliers_dict,
             }
 
             # Plotting results
             create_boxplots_with_results(output_configs)
+
+            plot_distribution_of_outliers(output_configs)
