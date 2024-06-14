@@ -266,7 +266,7 @@ def plot_word_cloud(
     freq_dist: Dict[str, int],
     output_path: str,
     title: Optional[str] = "",
-    threshold: Optional[int] = 1000,
+    threshold: Optional[int] = 100,
 ):
     """
     Generates and saves a word cloud from a frequency distribution of words.
@@ -303,50 +303,54 @@ def plot_word_cloud(
 
 ######## 4.Generate bigram and trigram frequency distributions ########
 def plot_top_ngrams(
-    freq_dist: FreqDist, n: int, ngram_type: str, color: str, output_path: str
+    freq_dist: FreqDist,
+    ngram_type: str,
+    color: str,
+    output_path: str,
+    orientation: str = "horizontal",
+    n: Optional[int] = None,
+    threshold: Optional[int] = 20,
 ):
     """
-    Processes and plots the top N most common n-grams.
+    Processes and plots the top N most common n-grams or n-grams above a certain frequency threshold.
 
     Args:
         freq_dist (FreqDist): Frequency distribution of n-grams.
-        n (int): Number of top n-grams to plot.
         ngram_type (str): Type of n-grams ('bigram' or 'trigram').
         color (str): Color for the plot.
         output_path (str): Path to save the plot.
+        orientation (str, optional): Orientation of the plot ('horizontal' or 'vertical'). Defaults to 'horizontal'.
+        n (int, optional): Number of top n-grams to plot. Defaults to None.
+        threshold (int, optional): Minimum frequency threshold for n-grams to be included. Defaults to 20.
     """
-    # Get the top N most common n-grams
+    # Get the n-grams based on the specified condition
     top_ngrams = freq_dist.most_common(n)
-
-    # Separate n-grams and frequencies
     ngram_labels, ngram_freqs = zip(*top_ngrams)
-
+    filtered_ngram_freqs = tuple(k for k in ngram_freqs if k >= threshold)
+    n_filter_top = len(filtered_ngram_freqs)
+    if n_filter_top < 3:
+        return logging.info("Not enough entries as n-grams are below the threshold.")
+    filtered_ngram_label = ngram_labels[:n_filter_top]
     # Convert n-gram tuples to strings for labeling
-    ngram_labels = [" ".join(label) for label in ngram_labels]
+    filtered_ngram_labels = [" ".join(label) for label in filtered_ngram_label]
+    if orientation == "horizontal":
+        # Plot n-grams - horizontal
+        plt.figure(figsize=(12, 8))
+        plt.barh(filtered_ngram_labels, filtered_ngram_freqs, color=color)
+        plt.xlabel("Frequency")
+        plt.ylabel(f"{ngram_type.title()}s")
+    else:
+        # Plot n-grams - vertical
+        plt.figure(figsize=(12, 8))
+        plt.bar(filtered_ngram_labels, filtered_ngram_freqs, color=color)
+        plt.ylabel("Frequency")
+        plt.xlabel(f"{ngram_type.title()}s")
+        plt.xticks(rotation=45)
 
-    # Plot n-grams
-    plt.figure(figsize=(12, 8))
-    plt.bar(ngram_labels, ngram_freqs, color=color)
-    plt.ylabel("Frequency")
-    plt.xlabel(f"{ngram_type.title()}s")
-    plt.xticks(rotation=45)
-    plt.title(f"Top {n} Most Common {ngram_type.title()}s")
-    plt.tight_layout()
-    plt.savefig(
-        os.path.join(output_path, f"Top_{n}_Most_Common_{ngram_type.title()}s.png")
-    )
-    plt.show()
-
-    # Plot n-grams - horizontal
-    plt.figure(figsize=(12, 8))
-    plt.barh(ngram_labels, ngram_freqs, color=color)
-    plt.xlabel("Frequency")
-    plt.ylabel(f"{ngram_type.title()}s")
-    plt.title(f"Top {n} Most Common {ngram_type.title()}s")
     plt.tight_layout()
     plt.savefig(
         os.path.join(
-            output_path, f"Top_{n}_Most_Common_{ngram_type.title()}s_horizontal.png"
+            output_path, f"Top_{n}_Most_Common_{ngram_type.title()}s_{orientation}.png"
         )
     )
     plt.show()

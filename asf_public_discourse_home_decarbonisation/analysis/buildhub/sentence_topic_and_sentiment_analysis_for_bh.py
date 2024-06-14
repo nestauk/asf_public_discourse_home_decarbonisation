@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 from asf_public_discourse_home_decarbonisation.getters.bh_getters import get_bh_data
@@ -19,14 +19,14 @@ from asf_public_discourse_home_decarbonisation.utils.preprocessing_utils import 
 )
 
 
-# In[2]:
+# In[ ]:
 
 
 bh_data = get_bh_data(category="all")
 print("Date Range:", bh_data["date"].min(), "to", bh_data["date"].max())
 
 
-# In[3]:
+# In[ ]:
 
 
 key_terms = ["heat pump", "boiler"]
@@ -38,14 +38,14 @@ bh_data_monthly = resample_and_calculate_averages_for_linechart(
 )
 
 
-# In[4]:
+# In[ ]:
 
 
 key_terms_colour = {"heat pump": "#97D9E3", "boiler": "#0F294A"}
 plot_mentions_line_chart(bh_data_monthly, key_terms_colour, plot_type="both")
 
 
-# In[28]:
+# In[12]:
 
 
 categories_dict = {
@@ -141,9 +141,6 @@ categories_dict = {
             "77_floor_tiles_flooring_floors",
             "86_inverter_driven_inverters_drive",
         ],
-        "Noise": [
-            "4_noise_sound_noisy_quiet",
-        ],
         "Miscellaneous Components": [
             "49_flow_rate_rates_meter",
             "50_wiring_cable_wires_wire",
@@ -155,6 +152,9 @@ categories_dict = {
             "143_batteries_battery_storage_life",
         ],
     },
+    "Noise": [
+        "4_noise_sound_noisy_quiet",
+    ],
     "Installation": [
         "10_installer_installers_install_installation",
         "25_plumber_plumbers_plumbing_electrician",
@@ -221,25 +221,26 @@ categories_dict = {
 }
 
 
-# In[29]:
+# In[6]:
 
 
-import boto3
-import pandas as pd
-from io import StringIO
+# import boto3
+# import pandas as pd
+# from io import StringIO
 
-s3 = boto3.client("s3", region_name="us-east-1")  # or your preferred region
-bucket = "asf-public-discourse-home-decarbonisation"
-key = "data/buildhub/outputs/topic_analysis/buildhub_heat pump_sentence_topics_info.csv"
+# s3 = boto3.client('s3', region_name='us-east-1')  # or your preferred region
+# bucket = 'asf-public-discourse-home-decarbonisation'
+# key = 'data/buildhub/outputs/topic_analysis/buildhub_heat pump_sentence_topics_info.csv'
 
-obj = s3.get_object(Bucket=bucket, Key=key)
-data = obj["Body"].read().decode("utf-8")
-df = pd.read_csv(StringIO(data))
-
+# obj = s3.get_object(Bucket=bucket, Key=key)
+# data = obj['Body'].read().decode('utf-8')
+# df = pd.read_csv(StringIO(data))
+file_path = "/Users/aidan.kelly/nesta/ASF/asf_public_discourse_home_decarbonisation/asf_public_discourse_home_decarbonisation/analysis/buildhub/files/buildhub_heat pump_sentence_topics_info.csv"
+df = pd.read_csv(file_path)
 df.head()
 
 
-# In[30]:
+# In[2]:
 
 
 new_dict = {}
@@ -259,13 +260,13 @@ for category, topics in categories_dict.items():
             new_dict[category][topic] = count
 
 
-# In[31]:
+# In[ ]:
 
 
 print(new_dict)
 
 
-# In[32]:
+# In[ ]:
 
 
 import matplotlib.pyplot as plt
@@ -326,7 +327,131 @@ plt.barh(
 )
 plt.ylabel("Categories")
 plt.xlabel("Number of Sentences")
-plt.title("Bar Chart of Aggregated Dictionary Data")
+plt.title("Comparison of categories based on the number of sentences")
 plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.show()
+
+
+# In[31]:
+
+
+import pandas as pd
+
+file_path = "./files/buildhub_heat pump_sentence_docs_info.csv"
+df = pd.read_csv(file_path)
+cluster = categories_dict["Noise"]
+filtered_df = df[df["Name"].isin(cluster)]
+
+
+print(filtered_df["sentences"])
+
+
+with open("mcs_installation_sentences.txt", "w") as f:
+    for sentence in filtered_df["sentences"]:
+        if "microgeneration certification" in sentence:
+            f.write(sentence + "\n-----\n")
+
+
+# In[32]:
+
+
+from asf_public_discourse_home_decarbonisation.utils.preprocessing_utils import (
+    preprocess_text,
+    calculate_ngram_threshold,
+    process_ngrams,
+)
+
+from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
+    plot_word_cloud,
+    plot_top_ngrams,
+)
+from nltk import FreqDist
+
+import pandas as pd
+
+file_path = "./files/buildhub_heat pump_sentence_docs_info.csv"
+df = pd.read_csv(file_path)
+
+new_stopwords = [
+    "would",
+    "hours",
+    "hour",
+    "minute",
+    "minutes",
+    "ago",
+    "dan",
+    "(presumably",
+    "looks",
+    "like",
+    "need",
+    "ap50",
+    ".3page",
+    "fraser",
+    "lamont",
+    "got",
+    "bit",
+    "sure",
+    "steamytea",
+    "could",
+    "get",
+    "still",
+    "october",
+    "6",
+    "2013",
+    "january",
+    "2016",
+    "moderator",
+    "thisreport",
+    "pretty",
+    "&",
+    "-",
+]
+
+
+def preprocess_for_tokens_and_word_freq_dist(df, category_name, new_stopwords):
+    cluster = categories_dict[category_name]
+    filtered_df = df[df["Name"].isin(cluster)]
+    filtered_df.rename(columns={"sentences": "text"}, inplace=True)
+    filtered_df["text"] = filtered_df["text"].str.rstrip(".!?")
+    filtered_df["text"] = filtered_df["text"].str.replace(",", "")
+    filtered_tokens = preprocess_text(filtered_df, new_stopwords)
+    word_freq_dist = FreqDist(filtered_tokens)
+    return filtered_tokens, word_freq_dist
+
+
+categories_of_interest = ["Weather and Climate", "Cost", "Noise"]
+
+tokens = {}
+freq_dist = {}
+for category in categories_of_interest:
+    tokens[category], freq_dist[category] = preprocess_for_tokens_and_word_freq_dist(
+        df, category, new_stopwords
+    )
+    plot_word_cloud(freq_dist[category], "./", threshold=75)
+    raw_bigram_freq_dist, bigram_threshold = calculate_ngram_threshold(
+        tokens[category], 2, 0.0008
+    )
+    raw_trigram_freq_dist, trigram_threshold = calculate_ngram_threshold(
+        tokens[category], 3, 0.0004
+    )
+    weather_bigram_freq_dist = process_ngrams(raw_bigram_freq_dist, bigram_threshold)
+    weather_trigram_freq_dist = process_ngrams(raw_trigram_freq_dist, trigram_threshold)
+    plot_top_ngrams(
+        raw_bigram_freq_dist,
+        n=20,
+        ngram_type="Bigram",
+        color=NESTA_COLOURS[0],
+        output_path="./",
+    )
+    plot_top_ngrams(
+        raw_trigram_freq_dist,
+        n=20,
+        ngram_type="Trigram",
+        color=NESTA_COLOURS[0],
+        output_path="./",
+    )
+
+
+# print(noise_freq_dist)
+# plot_word_cloud(noise_freq_dist, "./", threshold=75)

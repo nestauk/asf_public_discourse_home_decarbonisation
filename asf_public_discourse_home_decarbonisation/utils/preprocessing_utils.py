@@ -1,7 +1,7 @@
 import pandas as pd
 from nltk.corpus import stopwords
 
-# from nltk.util import bigrams, trigrams, ngrams
+from nltk.util import bigrams, trigrams, ngrams
 from collections import Counter
 import re
 from typing import List, Tuple, Dict
@@ -212,3 +212,25 @@ def resample_and_calculate_averages_for_linechart(
         )
 
     return df_monthly
+
+
+def calculate_ngram_threshold(tokens: List[str], n: int, freq_multiplier: float) -> int:
+    """
+    Calculates and returns the frequency threshold for n-grams.
+
+    Args:
+        tokens (List[str]): A list of tokens from which n-grams are generated.
+        n (int): The 'n' in n-grams, representing the number of elements in each gram.
+        freq_multiplier (float): The multiplier to calculate the frequency threshold.
+
+    Returns:
+        int: The calculated threshold for n-grams.
+    """
+    # Calculate initial frequency distribution for n-grams
+    raw_ngram_freq_dist = FreqDist(ngrams(tokens, n))
+
+    # Calculate total count and threshold for n-grams
+    total_ngrams = sum(raw_ngram_freq_dist.values())
+    ngram_threshold = round(max(3, total_ngrams * freq_multiplier))
+
+    return raw_ngram_freq_dist, ngram_threshold
