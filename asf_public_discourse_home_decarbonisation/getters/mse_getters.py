@@ -15,6 +15,7 @@ mse_categories = [
     "lpg-heating-oil-solid-other-fuels",
     "energy",
     "is-this-quote-fair",
+    "heat-pumps",
 ]
 
 
