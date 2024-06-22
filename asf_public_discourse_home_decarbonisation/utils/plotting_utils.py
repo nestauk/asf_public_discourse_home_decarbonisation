@@ -333,6 +333,9 @@ def plot_top_ngrams(
     filtered_ngram_label = ngram_labels[:n_filter_top]
     # Convert n-gram tuples to strings for labeling
     filtered_ngram_labels = [" ".join(label) for label in filtered_ngram_label]
+    # Reverse the order of the labels and frequencies
+    filtered_ngram_labels = filtered_ngram_labels[::-1]
+    filtered_ngram_freqs = filtered_ngram_freqs[::-1]
     if orientation == "horizontal":
         # Plot n-grams - horizontal
         plt.figure(figsize=(12, 8))
