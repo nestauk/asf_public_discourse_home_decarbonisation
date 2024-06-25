@@ -14,6 +14,7 @@ mse_categories = [
     "green-ethical-moneysaving",
     "lpg-heating-oil-solid-other-fuels",
     "energy",
+    "heat-pumps",
     "is-this-quote-fair",
 ]
 
