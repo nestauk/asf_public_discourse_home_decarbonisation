@@ -15,6 +15,7 @@ from umap import UMAP
 from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn.feature_extraction.text import CountVectorizer
 import logging
+import openai
 
 logger = logging.getLogger(__name__)
 
@@ -240,12 +241,15 @@ def update_topics_with_duplicates(
     return updated_topics_info
 
 
-def topic_model_definition(min_topic_size: int, reduce_outliers_to_zero: bool):
+def topic_model_definition(
+    min_topic_size: int, reduce_outliers_to_zero: bool, representation_model: openai
+):
     """_summary_
 
     Args:
         min_topic_size (int): _description_
         reduce_outliers_to_zero (bool): _description_
+        representation_model (openai): _description_
 
     Returns:
         _type_: _description_
@@ -260,6 +264,14 @@ def topic_model_definition(min_topic_size: int, reduce_outliers_to_zero: bool):
             min_topic_size=min_topic_size,
             vectorizer_model=vectorizer_model,
             calculate_probabilities=True,
+        )
+    elif representation_model is not None:
+        topic_model = BERTopic(
+            umap_model=umap_model,
+            min_topic_size=min_topic_size,
+            vectorizer_model=vectorizer_model,
+            calculate_probabilities=True,
+            representation_model=representation_model,
         )
     else:
         topic_model = BERTopic(
