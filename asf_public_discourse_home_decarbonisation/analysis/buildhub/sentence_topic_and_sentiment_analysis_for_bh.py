@@ -1,7 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
+# %%
 
-# In[1]:
+
+# %%
 
 
 from asf_public_discourse_home_decarbonisation.getters.bh_getters import get_bh_data
@@ -18,15 +18,13 @@ from asf_public_discourse_home_decarbonisation.utils.preprocessing_utils import 
     resample_and_calculate_averages_for_linechart,
 )
 
-
-# In[2]:
+# %%
 
 
 bh_data = get_bh_data(category="all", collection_date="24_05_21")
 print("Date Range:", bh_data["date"].min(), "to", bh_data["date"].max())
 
-
-# In[3]:
+# %%
 
 
 key_terms = ["heat pump", "boiler"]
@@ -38,22 +36,19 @@ bh_data_monthly = resample_and_calculate_averages_for_linechart(
     bh_data, key_terms=key_terms, cadence_of_aggregation="M", window=12
 )
 
-
-# In[4]:
+# %%
 
 
 bh_data_original_post = bh_data[bh_data["is_original_post"] == 1]
 bh_data_original_post["mentions_heat_pump"].sum()
 
-
-# In[5]:
+# %%
 
 
 key_terms_colour = {"heat pump": "#97D9E3", "boiler": "#0F294A"}
 plot_mentions_line_chart(bh_data_monthly, key_terms_colour, plot_type="discrete")
 
-
-# In[6]:
+# %%
 
 
 categories_dict = {
@@ -299,8 +294,7 @@ categories_dict = {
     },
 }
 
-
-# In[7]:
+# %%
 
 
 # import boto3
@@ -315,12 +309,14 @@ import pandas as pd
 # obj = s3.get_object(Bucket=bucket, Key=key)
 # data = obj['Body'].read().decode('utf-8')
 # df = pd.read_csv(StringIO(data))
-topics_info_file_path = "./files/buildhub_heat pump_sentence_topics_info.csv"
-topics_info = pd.read_csv(topics_info_file_path)
+# topics_info_file_path = "./files/buildhub_heat pump_sentence_topics_info.csv"
+# topics_info = pd.read_csv(topics_info_file_path)
+topics_info = pd.read_csv(
+    "s3://asf-public-discourse-home-decarbonisation/data/buildhub/outputs/topic_analysis/buildhub_heat pump_sentence_topics_info.csv"
+)
 topics_info.head()
 
-
-# In[8]:
+# %%
 
 
 dict_with_counts = {}
@@ -356,14 +352,12 @@ for category, subcategories in categories_dict.items():
             ].values[0]
             dict_with_counts[category][topic] = count
 
-
-# In[9]:
+# %%
 
 
 print(dict_with_counts)
 
-
-# In[10]:
+# %%
 
 
 import matplotlib.pyplot as plt
@@ -410,8 +404,7 @@ plt.yticks(fontsize=12)
 plt.tight_layout()
 plt.show()
 
-
-# In[11]:
+# %%
 
 
 granular_category_data = {}
@@ -471,14 +464,16 @@ plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.show()
 
-
-# In[12]:
+# %%
 
 
 import pandas as pd
 
-file_path = "./files/buildhub_heat pump_sentence_docs_info.csv"
-docs_info = pd.read_csv(file_path)
+# file_path = "./files/buildhub_heat pump_sentence_docs_info.csv"
+# docs_info = pd.read_csv(file_path)
+docs_info = pd.read_csv(
+    "s3://asf-public-discourse-home-decarbonisation/data/buildhub/outputs/topic_analysis/buildhub_heat pump_sentence_docs_info.csv"
+)
 cluster = categories_dict["Noise"].values()
 filtered_docs_info = docs_info[docs_info["Name"].isin(cluster)]
 
@@ -494,8 +489,7 @@ with open("Noise_cluster.txt", "w") as f:
 #        if "microgeneration certification" in sentence:
 #            f.write(sentence + "\n-----\n")
 
-
-# In[13]:
+# %%
 
 
 from asf_public_discourse_home_decarbonisation.utils.preprocessing_utils import (
@@ -611,8 +605,7 @@ for category in categories_of_interest:
 # print(noise_freq_dist)
 # plot_word_cloud(noise_freq_dist, "./", threshold=75)
 
-
-# In[14]:
+# %%
 
 
 sentiment_data = pd.read_csv(
@@ -622,40 +615,34 @@ sentences_data = pd.read_csv(
     f"s3://asf-public-discourse-home-decarbonisation/data/buildhub/outputs/topic_analysis/buildhub_heat pump_sentences_data.csv"
 )
 
-
-# In[15]:
+# %%
 
 
 len(sentiment_data[sentiment_data["score"] > 0.75]) / len(sentiment_data) * 100
 
-
-# In[15]:
+# %%
 
 
 docs_info = docs_info.merge(sentiment_data, left_on="Document", right_on="text")
 
-
-# In[16]:
+# %%
 
 
 docs_info
 
-
-# In[17]:
+# %%
 
 
 topic_sentiment = (
     docs_info.groupby(["Name", "sentiment"]).nunique()["Document"].unstack().fillna(0)
 )
 
-
-# In[18]:
+# %%
 
 
 topic_sentiment.head()
 
-
-# In[19]:
+# %%
 
 
 topic_sentiment["proportion_negative"] = topic_sentiment["negative"] / (
@@ -664,16 +651,14 @@ topic_sentiment["proportion_negative"] = topic_sentiment["negative"] / (
     + topic_sentiment["neutral"]
 )
 
-
-# In[20]:
+# %%
 
 
 topic_sentiment["ratio_to_negative"] = (
     topic_sentiment["positive"] + topic_sentiment["neutral"]
 ) / (topic_sentiment["negative"])
 
-
-# In[21]:
+# %%
 
 
 renamed_topic_sentiment = topic_sentiment.copy()
@@ -724,15 +709,13 @@ filtered_renamed_topic_sentiment = renamed_topic_sentiment[
 # filtered_renamed_topic_sentiment
 renamed_topic_sentiment
 
-
-# In[22]:
+# %%
 
 
 filtered_renamed_topic_sentiment.sort_values(by="proportion_negative", ascending=False)
 filtered_renamed_topic_sentiment
 
-
-# In[23]:
+# %%
 
 
 filtered_renamed_topic_sentiment = filtered_renamed_topic_sentiment[
@@ -745,8 +728,7 @@ filtered_renamed_topic_sentiment = (
     * 100
 )
 
-
-# In[24]:
+# %%
 
 
 filtered_renamed_topic_sentiment.sort_values("negative", ascending=False, inplace=True)
@@ -764,8 +746,7 @@ def replace_numbers_with_blank(index):
 # topic_sentiment.index = topic_sentiment.index.str.replace('_', ' ')
 top_30_negative = filtered_renamed_topic_sentiment.head(30)
 
-
-# In[25]:
+# %%
 
 
 import matplotlib.pyplot as plt
@@ -775,8 +756,7 @@ top_30_negative.plot(
 )
 plt.legend(title="Sentiment", bbox_to_anchor=(1.05, 1), loc="upper left")
 
-
-# In[26]:
+# %%
 
 
 # Sort by positive sentiment and take the top 30
@@ -801,8 +781,7 @@ negative_topics = set(top_30_negative.index)
 common_topics = positive_topics & negative_topics
 common_topics = list(common_topics)
 
-
-# In[27]:
+# %%
 
 
 # Get the 'neutral' values of the common topics
@@ -815,11 +794,10 @@ polarised_topics.plot(
 )
 plt.legend(title="Sentiment", bbox_to_anchor=(1.05, 1), loc="upper left")
 
+# %%
 
-# In[ ]:
 
-
-# In[42]:
+# %%
 
 
 rows_list = []
@@ -870,31 +848,34 @@ top_20_negative = (
 )
 # Plot the DataFrame
 top_20_negative.plot(
-    kind="barh", stacked=True, color=["red", "grey", "green"], figsize=(12, 8)
+    kind="barh",
+    stacked=True,
+    color=[NESTA_COLOURS[4], NESTA_COLOURS[11], NESTA_COLOURS[1]],
+    figsize=(12, 8),
 )
 plt.legend(title="Sentiment", bbox_to_anchor=(1.05, 1), loc="upper left")
+plt.ylabel("")
 
-
-# In[ ]:
+# %%
 
 
 # ### SENTIMENT OVER TIME
 
-# In[68]:
+# %%
 
 
 sentences_data["year"] = pd.to_datetime(sentences_data["date"]).dt.to_period("Y")
+sentences_data["month"] = pd.to_datetime(sentences_data["date"]).dt.to_period("M")
+
 sentences_data
 
-
-# In[69]:
+# %%
 
 
 sentiment_over_time = sentences_data[["sentences", "id", "year", "month"]]
 sentiment_over_time
 
-
-# In[70]:
+# %%
 
 
 sentiment_over_time = sentiment_over_time.merge(
@@ -902,16 +883,14 @@ sentiment_over_time = sentiment_over_time.merge(
 )
 sentiment_over_time
 
-
-# In[71]:
+# %%
 
 
 sentiment_over_time["sentiment_number"] = sentiment_over_time["sentiment"].map(
     {"negative": -1, "neutral": 0, "positive": 1}
 )
 
-
-# In[72]:
+# %%
 
 
 aggregated_docs_info = docs_info.copy()
@@ -932,8 +911,7 @@ for category, subcategories in categories_dict.items():
 aggregated_docs_info
 # aggregated_docs_info.to_csv("aggregated_docs_info.csv", index=False)
 
-
-# In[73]:
+# %%
 
 
 sentiment_over_time = sentiment_over_time.merge(
@@ -943,8 +921,7 @@ sentiment_over_time = sentiment_over_time.merge(
 )
 sentiment_over_time
 
-
-# In[74]:
+# %%
 
 
 # Filter out rows where 'Name' is not the specific name
@@ -966,8 +943,7 @@ with open("Noise_2020_august_cluster.txt", "w") as f:
         # if "microgeneration certification" in sentence:
         f.write(sentence + "\n-----\n")
 
-
-# In[75]:
+# %%
 
 
 # print(sentiment_over_time_grants.head())
@@ -987,8 +963,7 @@ sentiment_over_time["proportion_negative"] = (
     sentiment_over_time["negative"] / sentiment_over_time["total"]
 )
 
-
-# In[77]:
+# %%
 
 
 sentiment_over_time
@@ -1010,8 +985,7 @@ mean_proportion_negative
 
 # sentiment_over_time
 
-
-# In[78]:
+# %%
 
 
 # sentiment_over_time
@@ -1019,8 +993,7 @@ sentiment_over_time.reset_index(inplace=True)
 sentiment_over_time = pd.concat([sentiment_over_time, mean_proportion_negative])
 sentiment_over_time
 
-
-# In[79]:
+# %%
 
 
 topics_to_select = [
@@ -1075,8 +1048,7 @@ plt.xticks(rotation="vertical")
 
 plt.show()
 
-
-# In[80]:
+# %%
 
 
 import matplotlib.pyplot as plt
@@ -1114,11 +1086,10 @@ plt.xticks(rotation="vertical")
 
 plt.show()
 
+# %%
 
-# In[ ]:
 
-
-# In[61]:
+# %%
 
 
 # Define a dictionary that maps topics to colors
@@ -1144,8 +1115,7 @@ plt.xlabel("Year")
 plt.title("Sentiment over time per topic of conversation about heat pumps")
 plt.grid(True, axis="y", alpha=0.3)
 
-
-# In[122]:
+# %%
 
 
 sentences_data["month"] = pd.to_datetime(sentences_data["date"]).dt.to_period("M")
@@ -1251,11 +1221,12 @@ plt.title("Sentiment over time per topic of conversation about heat pumps")
 plt.grid(True, axis = 'y', alpha = 0.3)
 """
 
-
-# In[118]:
+# %%
 
 
 sentiment_over_time_grants
 
+# %%
 
-# In[ ]:
+
+# %%
