@@ -67,7 +67,10 @@ sentences_data.head()
 doc_info.head()
 
 # %%
-topics_info.head()
+doc_info[doc_info["Topic"] == 1]["Document"].iloc[7]
+
+# %%
+topics_info[topics_info["Name"].str.contains("dryer")]["Representative_Docs"].values
 
 # %%
 topics_info["Topic"].nunique(), topics_info["Topic"].max()
@@ -126,7 +129,7 @@ print(
 # %%
 mentions_df = mse_data.copy()
 
-key_terms = ["heat pump", "boiler", "solar"]
+key_terms = ["heat pump", "boiler"]  # , "solar"]
 # Preprocess data
 for term in key_terms:
     column_name = f"mentions_{term.replace(' ', '_')}"
@@ -157,11 +160,18 @@ mentions_df["year"] = mentions_df["datetime"].dt.year
 
 # %%
 monthly_mentions = mentions_df.groupby("year_month")[
-    ["mentions_heat_pump", "mentions_boiler", "mentions_solar"]
+    ["mentions_heat_pump", "mentions_boiler"]
 ].sum()
 yearly_mentions = mentions_df.groupby("year")[
-    ["mentions_heat_pump", "mentions_boiler", "mentions_solar"]
+    ["mentions_heat_pump", "mentions_boiler"]
 ].sum()
+
+# monthly_mentions = mentions_df.groupby("year_month")[
+#     ["mentions_heat_pump", "mentions_boiler", "mentions_solar"]
+# ].sum()
+# yearly_mentions = mentions_df.groupby("year")[
+#     ["mentions_heat_pump", "mentions_boiler", "mentions_solar"]
+# ].sum()
 
 # %%
 monthly_prop = monthly_mentions.div(monthly_mentions.sum(axis=0))
@@ -215,6 +225,9 @@ plt.legend(["Heat Pumps", "Boilers", "Solar panels/PV"], loc="upper left")
 plt.xticks(rotation=45)
 plt.title("Number of mentions of heating technologies in posts")
 plt.xlabel("")
+
+# %%
+monthly_mentions
 
 # %%
 monthly_mentions[175:].plot(
@@ -264,7 +277,10 @@ for term in key_terms:
     column_name = f"mentions_{term.replace(' ', '_')}"
     if term != "solar":
         ids = mentions_df[
-            mentions_df["title"].str.contains(term, case=False)
+            (
+                mentions_df["title"].str.contains(term, case=False)
+                | mentions_df["text"].str.contains(term, case=False)
+            )
             & (mentions_df["is_original_post"] == 1)
         ]["id"].unique()
 
@@ -274,7 +290,10 @@ for term in key_terms:
     else:
         terms = ["solar pv", "solar panel", "solar photovoltaic"]
         ids = mentions_df[
-            mentions_df["title"].str.contains("|".join(terms), case=False)
+            (
+                mentions_df["title"].str.contains("|".join(terms), case=False)
+                | mentions_df["text"].str.contains("|".join(terms), case=False)
+            )
             & (mentions_df["is_original_post"] == 1)
         ]["id"].unique()
 
@@ -292,6 +311,14 @@ mentions_df["year_month"] = mentions_df["datetime"].dt.to_period("M")
 mentions_df["year"] = mentions_df["datetime"].dt.year
 
 # %%
+# monthly_mentions = mentions_df.groupby("year_month")[
+#     ["mentions_heat_pump", "mentions_boiler"]
+# ].sum()
+# yearly_mentions = mentions_df.groupby("year")[
+#     ["mentions_heat_pump", "mentions_boiler"]
+# ].sum()
+
+
 monthly_mentions = mentions_df.groupby("year_month")[
     ["mentions_heat_pump", "mentions_boiler", "mentions_solar"]
 ].sum()
@@ -353,11 +380,18 @@ plt.title("Number of mentions of heating technologies in posts and replies")
 plt.xlabel("")
 
 # %%
+monthly_mentions
+
+# %%
 monthly_mentions[175:].plot(
     kind="line",
     figsize=(10, 6),
     color=[NESTA_COLOURS[8], NESTA_COLOURS[7], NESTA_COLOURS[11]],
 )
+# monthly_mentions[175:].plot(
+#     kind="line", figsize=(10, 6), color=[NESTA_COLOURS[8], NESTA_COLOURS[7]]
+# )
+# plt.legend(["Heat Pumps", "Boilers"], loc="upper left")
 plt.legend(["Heat Pumps", "Boilers", "Solar panels/PV"], loc="upper left")
 plt.xticks(rotation=45)
 plt.title("Number of mentions of heating technologies in posts and replies")
@@ -386,7 +420,7 @@ plt.title("Proportion of mentions of heating technologies in posts")
 plt.xlabel("")
 
 # %%
-# here
+
 
 # %% [markdown]
 # ## Renaming and grouping topics
@@ -571,7 +605,7 @@ aggregated_topics.plot(
 plt.legend().remove()
 plt.xlabel("Number of sentences")
 plt.ylabel("")
-plt.yticks(fontsize=20)
+plt.yticks(fontsize=22)
 
 # %% [markdown]
 # # Sentiment of aggregated topics
@@ -623,6 +657,11 @@ agg_topic_sentiment.plot(
 plt.legend(title="Sentiment", bbox_to_anchor=(1.05, 1), loc="upper left")
 plt.xlabel("Percentage of sentences", fontsize=20)
 plt.ylabel("")
+plt.yticks(fontsize=26)
+plt.xticks(fontsize=20)
+x_values = range(20, 100, 20)
+for x in x_values:
+    plt.axvline(x=x, color="grey", linestyle="--", linewidth=0.8, alpha=1)
 
 # %%
 
@@ -998,6 +1037,9 @@ for agg in topics_date.aggregated_topic_names.unique():
         print("No sentiment data for topic: ", agg)
 
 # %%
+# topics_date["topic_names"].replace({"Planning permissions and councils": "Planning permissions", "Planning/development permissions":"Planning permissions"}, inplace=True)
+
+# %%
 for agg in topics_date.aggregated_topic_names.unique():
     if len(topic_sentimet_f) > 0:
         time_counts = (
@@ -1062,9 +1104,6 @@ for agg in topics_date.aggregated_topic_names.unique():
         print("No sentiment data for topic: ", agg)
 
 # %%
-
-
-# %%
 for t in doc_info["topic_names"].unique():
     docs_in_topic = doc_info[doc_info["topic_names"] == t]
     docs_in_topic = docs_in_topic.merge(
@@ -1095,7 +1134,12 @@ for t in doc_info["topic_names"].unique():
     print("---")
 
 # %%
-docs_in_topic = doc_info[doc_info["topic_names"].str.startswith("EPCs")]
+doc_info["topic_names"].unique()
+
+# %%
+docs_in_topic = doc_info[
+    doc_info["topic_names"].str.startswith("Energy prices and electricity cost")
+]
 docs_in_topic = docs_in_topic.merge(
     sentiment_data, how="left", left_on="Document", right_on="text"
 )
@@ -1105,17 +1149,16 @@ pos = docs_in_topic[docs_in_topic["sentiment"] == "positive"].sort_values(
 neg = docs_in_topic[docs_in_topic["sentiment"] == "negative"].sort_values(
     "sentiment", ascending=False
 )
+neu = docs_in_topic[docs_in_topic["sentiment"] == "neutral"].sort_values(
+    "sentiment", ascending=False
+)
 
 # %%
-pos.Document.iloc[3]
+for i in range(len(neg)):
+    print(neg.Document.iloc[i])
 
 # %%
-neg.Document.iloc[5]
 
-# %%
-len(docs_in_topic[docs_in_topic["Document"].str.contains("heat pump")]) / len(
-    docs_in_topic
-) * 100
 
 # %% [markdown]
 # ## Growth vs. size - comparing 2020 to 2023 (full years)
