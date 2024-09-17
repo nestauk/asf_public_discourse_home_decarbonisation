@@ -1,6 +1,13 @@
 """
 Identifying topics of conversation from sentences.
 
+This pipeline:
+- Gets forum data
+- Cleans and enhances the forum data
+- Breaks the text into sentences
+- Applies topic analysis to identify topics of conversation
+- Outputs are saved to S3
+
 For MSE:
 2018-2024 analysis: python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "2018-01-01" --end_date "2024-05-22"
 2016-2024 analysis: python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "2016-01-01" --end_date "2024-05-23"
