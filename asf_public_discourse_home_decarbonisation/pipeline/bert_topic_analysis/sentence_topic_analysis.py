@@ -2,11 +2,12 @@
 Identifying topics of conversation from sentences.
 
 For MSE:
-python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "2018-01-01" --end_date "2024-05-22"
+2018-2024 analysis: python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "2018-01-01" --end_date "2024-05-22"
+2016-2024 analysis: python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "2016-01-01" --end_date "2024-05-23"
 
 For Buildhub:
-python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "buildhub" --start_date "2018-01-01" --end_date "2024-05-22"
-
+2018-2024 analysis: python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "buildhub" --start_date "2018-01-01" --end_date "2024-05-22"
+2016-2024 analysis: python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "buildhub" --start_date "2016-01-01" --end_date "2024-05-23"
 """
 
 # Package imports
@@ -71,17 +72,20 @@ def parse_arguments() -> argparse.Namespace:
         default=None,
         type=str,
     )
-    parser.add_argument(
-        "--n_gram_range",
-        help="Topic representation with ngrams",
-        default=False,
-        type=bool,
-    )
     return parser.parse_args()
 
 
 def cleaning_and_enhancing_forum_data(forum_data: pd.DataFrame) -> pd.DataFrame:
-    """_summary_
+    """
+    Cleans and enhances forum data by:
+    - Removing URLs
+    - Removing username patterns
+    - Replacing username mentions
+    - Removing introduction patterns
+    - Adding space after punctuation ("?", ".", "!"), so that sentences are correctly split
+    - Processing abbreviations such as "ashp" to "air source heat pump"
+    - Adding a column with the whole text (title + text)
+    - Adding columns with the datetime, date, and year
 
     Args:
         forum_data (pd.DataFrame): forum data
@@ -125,13 +129,14 @@ def cleaning_and_enhancing_forum_data(forum_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_sentence_df(forum_data: pd.DataFrame) -> pd.DataFrame:
-    """_summary_
+    """
+    Transforms the whole text into sentences and creates a dataframe with the sentences.
 
     Args:
-        forum_data (pd.DataFrame): _description_
+        forum_data (pd.DataFrame): forum data
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: sentences data
     """
     forum_data["sentences"] = forum_data["whole_text"].apply(sent_tokenize)
 
@@ -143,13 +148,14 @@ def create_sentence_df(forum_data: pd.DataFrame) -> pd.DataFrame:
 
 
 def remove_small_sentences(sentences_data: pd.DataFrame) -> pd.DataFrame:
-    """_summary_
+    """
+    Removes small sentences with less than 5 tokens.
 
     Args:
-        sentences_data (pd.DataFrame): _description_
+        sentences_data (pd.DataFrame): sentences data
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: filtered sentences data
     """
     sentences_data["tokens"] = sentences_data["sentences"].apply(word_tokenize)
     sentences_data["non_punctuation_tokens"] = sentences_data["tokens"].apply(
@@ -166,7 +172,13 @@ def remove_small_sentences(sentences_data: pd.DataFrame) -> pd.DataFrame:
 def prepping_data_for_topic_analysis(
     forum_data: pd.DataFrame, filter_by_expression: str, start_date: int, end_date: int
 ) -> pd.DataFrame:
-    """_summary_
+    """
+    Prepares the data for topic analysis by:
+    - Cleaning and enhancing the forum data
+    - Filtering by expression
+    - Transforming text into sentences
+    - Removing small sentences
+    - Removing sentences thanking people
 
     Args:
         forum_data (pd.DataFrame): _description_
@@ -221,16 +233,17 @@ def prepping_data_for_topic_analysis(
 
 def update_topics_with_duplicates(
     topics_info: pd.DataFrame, doc_info: pd.DataFrame, sentences_data: pd.DataFrame
-):
-    """_summary_
+) -> pd.DataFrame:
+    """
+    Updates the topics information with the number of duplicates.
 
     Args:
-        topics_info (pd.DataFrame): _description_
-        doc_info (pd.DataFrame): _description_
-        sentences_data (pd.DataFrame): _description_
+        topics_info (pd.DataFrame): dataframe with the topics information
+        doc_info (pd.DataFrame): dataframe with the document information
+        sentences_data (pd.DataFrame): dataframe with the sentences data
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: updated topics information
     """
     updated_topics_info = sentences_data[
         ["sentences", "datetime", "date", "year", "id"]
@@ -260,15 +273,18 @@ def update_topics_with_duplicates(
     return updated_topics_info
 
 
-def update_docs_with_duplicates(doc_info: pd.DataFrame, sentences_data: pd.DataFrame):
-    """_summary_
+def update_docs_with_duplicates(
+    doc_info: pd.DataFrame, sentences_data: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Updates the document information with the number of duplicates.
 
     Args:
-        doc_info (pd.DataFrame): _description_
-        sentences_data (pd.DataFrame): _description_
+        doc_info (pd.DataFrame): dataframe with the document information
+        sentences_data (pd.DataFrame): dataframe with the sentences data
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: dataframe with the updated document information
     """
 
     sentence_counts = (
@@ -284,15 +300,13 @@ def update_docs_with_duplicates(doc_info: pd.DataFrame, sentences_data: pd.DataF
     return updated_doc_info
 
 
-def topic_model_definition(
-    min_topic_size: int, n_gram_range: bool = False, representation_model: openai = None
-):
-    """_summary_
+def topic_model_definition(min_topic_size: int, representation_model: openai = None):
+    """
+    Defines the topic model according to a set of parameters.
 
     Args:
-        min_topic_size (int): _description_
-        n_gram_range (bool, optional): _description_. Defaults to False.
-        representation_model (openai): _description_
+        min_topic_size (int): minimum topic size
+        representation_model (openai): representation model
     Returns:
         _type_: _description_
     """
@@ -300,14 +314,7 @@ def topic_model_definition(
     umap_model = UMAP(
         n_neighbors=15, n_components=5, min_dist=0.0, metric="cosine", random_state=42
     )
-    if n_gram_range:
-        topic_model = BERTopic(
-            umap_model=umap_model,
-            min_topic_size=min_topic_size,
-            vectorizer_model=vectorizer_model,
-            n_gram_range=(1, 4),
-        )
-    elif representation_model is not None:
+    if representation_model is not None:
         topic_model = BERTopic(
             umap_model=umap_model,
             min_topic_size=min_topic_size,
@@ -330,7 +337,6 @@ if __name__ == "__main__":
     source = args.source
     reduce_outliers_to_zero = args.reduce_outliers_to_zero
     filter_by_expression = args.filter_by_expression
-    n_gram_range = args.n_gram_range
 
     if source == "mse":
         forum_data = get_mse_data(
@@ -351,7 +357,7 @@ if __name__ == "__main__":
 
     min_topic_size = 100
 
-    topic_model = topic_model_definition(min_topic_size, n_gram_range)
+    topic_model = topic_model_definition(min_topic_size)
     topics, probs = topic_model.fit_transform(docs)
     topics_, topics_info, doc_info = get_outputs_from_topic_model(topic_model, docs)
 
@@ -370,14 +376,14 @@ if __name__ == "__main__":
     doc_info = update_docs_with_duplicates(doc_info, sentences_data)
 
     topics_info.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_sentence_topics_info.csv",
+        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{args.start_date}_{args.end_date}_sentence_topics_info.csv",
         index=False,
     )
     doc_info.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_sentence_docs_info.csv",
+        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{args.start_date}_{args.end_date}_sentence_docs_info.csv",
         index=False,
     )
     sentences_data.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_sentences_data.csv",
+        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{args.start_date}_{args.end_date}_sentences_data.csv",
         index=False,
     )
