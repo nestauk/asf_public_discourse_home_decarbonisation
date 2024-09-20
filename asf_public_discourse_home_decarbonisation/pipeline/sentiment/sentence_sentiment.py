@@ -12,10 +12,12 @@ sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 
 Alternatively you can compute and save sentiment for sentences in the forum data by running:
 
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --process_data PROCESS_DATA --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --process_data PROCESS_DATA --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
 where
 - SOURCE is the source of the data e.g. "mse" or "buildhub"
 - [optional] FILTER_BY_EXPRESSION is the expression to filter by e.g. "heat pump"
+- [optional] START_DATE is the analysis start date in the format YYYY-MM-DD. Default to None (i.e. all data)
+- [optional] END_DATE is the analysis end date in the format YYYY-MM-DD. Defaults to None (all data)
 - PROCESS_DATA is True to process data, if not processed already. Defaults to False.
 - [optional] RELEVANT_CLUSTERS is the clusters to keep e.g. "1,2,10"
 - [optional] IRRELEVANT_CLUSTERS is the clusters to remove e.g. "1,2,10"
@@ -121,6 +123,18 @@ def parse_arguments(parser):
         default=None,
     )
     parser.add_argument(
+        "--start_date",
+        help="Analysis start date in the format YYYY-MM-DD. Default to None (all data)",
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
+        "--end_date",
+        help="Analysis end date in the format YYYY-MM-DD. Defaults to None (all data)",
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
         "--process_data",
         help="True to process data, if not processed already. Defaults to False.",
         default=False,
@@ -146,7 +160,7 @@ if __name__ == "__main__":
     chunk_size = 100
 
     source = args.source
-    input_path = f"data/{source}/outputs/topic_analysis/{source}_{args.filter_by_expression}_sentence_docs_info.csv"
+    input_path = f"data/{source}/outputs/topic_analysis/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}_sentence_docs_info.csv"
 
     sentences = load_s3_data(
         S3_BUCKET,
@@ -163,7 +177,7 @@ if __name__ == "__main__":
         relevant_clusters = [int(i) for i in args.relevant_clusters.split(",")]
         sentences = sentences[sentences["Topic"].isin(relevant_clusters)]
 
-    output_name = f"data/{source}/outputs/sentiment/{source}_{args.filter_by_expression}_sentence_topics_sentiment.csv"
+    output_name = f"data/{source}/outputs/sentiment/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}_sentence_topics_sentiment.csv"
 
     sentences_texts = list(sentences["Document"].unique())
 
