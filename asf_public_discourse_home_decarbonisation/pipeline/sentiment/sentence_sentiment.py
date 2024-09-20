@@ -1,21 +1,30 @@
 """
-Apply a sentiment model to sentences and save scores.
-Collect and save sentiment for sentences by running:
+Compute sentiment of sentences and save the sentence, the label and the respective probability.
 
-MSE:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,4,5,7,8,9,10,11,18,19,20,21,22,25,31,32,40,51,52,54"
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6"
-
-Buildhub:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64"
-
-For other uses, the class can be used with:
-
+The SentenceBasedSentiment class created here can be used as:
+```
 from asf_public_discourse_home_decarbonisation.pipeline.sentiment.sentence_sentiment import SentenceBasedSentiment
 sentiment_model = SentenceBasedSentiment(process_data=False)
 texts = ["This is a really great sentence", "This sentence is awful", "Cat"]
 sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 >> [("This is a really great sentence", 'positive', 0.97741115), ("This sentence is awful", 'negative', 0.9255473), ("Cat", 'neutral', 0.6470574)]
+```
+
+Alternatively you can compute and save sentiment for sentences in the forum data by running:
+
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --process_data PROCESS_DATA --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
+where
+- SOURCE is the source of the data e.g. "mse" or "buildhub"
+- [optional] FILTER_BY_EXPRESSION is the expression to filter by e.g. "heat pump"
+- PROCESS_DATA is True to process data, if not processed already. Defaults to False.
+- [optional] RELEVANT_CLUSTERS is the clusters to keep e.g. "1,2,10"
+- [optional] IRRELEVANT_CLUSTERS is the clusters to remove e.g. "1,2,10"
+
+Examples for MSE:
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6"
+
+Examples for Buildhub:
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64"
 """
 
 # Package imports
