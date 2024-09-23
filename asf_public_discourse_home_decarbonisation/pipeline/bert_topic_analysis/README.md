@@ -6,7 +6,7 @@ This folder contains scripts to perform topic analysis on text data, using [BERT
 
 Using `sentence_topic_analysis.py`
 
-This script performs topic analysis ousing sentences inputted from forum text data using BERTopic. To run the script:
+This script performs topic analysis on sentences extracted from forum text using BERTopic. To run the script:
 
 `python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source SOURCE --start_date START_DATE --end_date END_DATE --reduce_outliers_to_zero REDUCE_OUTLIERS_TO_ZERO --filter_by_expression FILTER_BY_EXPRESSION --min_topic_size MIN_TOPIC_SIZE`
 
