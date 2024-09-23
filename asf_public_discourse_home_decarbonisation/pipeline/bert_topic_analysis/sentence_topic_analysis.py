@@ -241,7 +241,7 @@ def prepping_data_for_topic_analysis(
 
         forum_data = forum_data[forum_data["id"].isin(ids_to_keep)]
 
-    # ransforming text into sentences and striping white sapces
+    # Breaking down text into sentences and striping white spaces
     sentences_data = create_sentence_df(forum_data)
 
     # Remove small sentences
