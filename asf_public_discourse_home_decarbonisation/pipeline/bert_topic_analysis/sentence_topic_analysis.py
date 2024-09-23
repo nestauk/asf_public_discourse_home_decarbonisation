@@ -361,6 +361,7 @@ def topic_model_definition(min_topic_size: int, representation_model: OpenAI = N
             umap_model=umap_model,
             min_topic_size=min_topic_size,
             vectorizer_model=vectorizer_model,
+            calculate_probabilities=True,
         )
 
     return topic_model
