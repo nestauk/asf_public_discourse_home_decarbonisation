@@ -161,7 +161,7 @@ def cleaning_and_enhancing_forum_data(forum_data: pd.DataFrame) -> pd.DataFrame:
 
 def create_sentence_df(forum_data: pd.DataFrame) -> pd.DataFrame:
     """
-    Transforms the whole text into sentences and creates a dataframe with the sentences.
+    Breaks down the whole text into sentences and creates a dataframe with the sentences.
 
     Args:
         forum_data (pd.DataFrame): forum data
