@@ -180,7 +180,7 @@ if __name__ == "__main__":
     # the topics should be the same as above, but a different representation model is used
     representation_model = OpenAI(
         openai_key,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         chat=True,
         prompt=representative_question_prompt,
         nr_docs=max(
