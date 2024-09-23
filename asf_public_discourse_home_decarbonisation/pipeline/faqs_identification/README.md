@@ -8,7 +8,7 @@ Using `faq_identification.py`
 
 This script performs topic analysis on questions data, to identify groups of frequently asked questions.
 It uses sentences in forum discussions as input data, so it requires sentences data to be available on S3.
-
+It saves the topics and documents information in the S3 bucket (with the option of having the LLM generated representative question as a column). 
 To run the script:
 `python asf_public_discourse_home_decarbonisation/pipeline/faqs_identification/faq_identification.py --source SOURCE --reduce_outliers_to_zero REDUCE_OUTLIERS_TO_ZERO --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --min_topic_size MIN_TOPIC_SIZE --openai_key OPENAI_KEY`
 
