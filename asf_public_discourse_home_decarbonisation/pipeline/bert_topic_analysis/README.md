@@ -22,7 +22,15 @@ where:
 ## Evaluating the results of difference models and hyperparamters
 
 `evaluate_bertopic_results.py`
-This script evaluates the results of the topic analysis on different metrics.
+This script evaluates the results of the topic analysis on different metrics (percentage of outliers and average probablity of belonging to a non-outlier topic) by changing BERTopic model specification such as:
+
+- number of topics
+- representation model
+- minimum topic size
+- vectorizer model
+- UMAP model
+- HDBSCAN model
+- embedding model
 
 `bert_params_config.py`
 File with parameters to test BERTopic in `evaluate_bertopic_results.py`
