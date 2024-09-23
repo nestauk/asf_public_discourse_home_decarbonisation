@@ -167,12 +167,13 @@ if __name__ == "__main__":
         reduce_outliers_to_zero=reduce_outliers_to_zero,
     )
 
+    path_to_save_prefix = f"s3://{S3_BUCKET}/data/{source}/outputs/faqs/{source}_{filter_by_expression}_{start_date}_{end_date}"
     topics_info.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_FAQ_topics_info_no_representation.csv",
+        f"{path_to_save_prefix}_FAQ_topics_info_no_representation.csv",
         index=False,
     )
     doc_info.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_FAQ_docs_info_no_representation.csv",
+        f"{path_to_save_prefix}_FAQ_docs_info_no_representation.csv",
         index=False,
     )
 
@@ -199,10 +200,10 @@ if __name__ == "__main__":
     )
 
     topics_info_OpenAI.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_FAQ_topics_info_OpenAI_representation.csv",
+        f"{path_to_save_prefix}_FAQ_topics_info_OpenAI_representation.csv",
         index=False,
     )
     doc_info_OpenAI.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_FAQ_docs_info_OpenAI_representation.csv",
+        f"{path_to_save_prefix}_FAQ_docs_info_OpenAI_representation.csv",
         index=False,
     )
