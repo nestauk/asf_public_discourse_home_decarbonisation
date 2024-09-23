@@ -178,13 +178,15 @@ def create_sentence_df(forum_data: pd.DataFrame) -> pd.DataFrame:
     return sentences_data
 
 
-def remove_small_sentences(sentences_data: pd.DataFrame) -> pd.DataFrame:
+def remove_small_sentences(
+    sentences_data: pd.DataFrame, min_n_tokens: int = 5
+) -> pd.DataFrame:
     """
-    Removes small sentences with less than 5 tokens.
+    Removes small sentences with less than `min_n_tokens` tokens.
 
     Args:
         sentences_data (pd.DataFrame): sentences data
-
+        min_n_tokens (int): minimum number of tokens
     Returns:
         pd.DataFrame: filtered sentences data
     """
@@ -195,13 +197,17 @@ def remove_small_sentences(sentences_data: pd.DataFrame) -> pd.DataFrame:
 
     sentences_data["n_tokens"] = sentences_data["non_punctuation_tokens"].apply(len)
 
-    sentences_data = sentences_data[sentences_data["n_tokens"] > 5]
+    sentences_data = sentences_data[sentences_data["n_tokens"] > min_n_tokens]
 
     return sentences_data
 
 
 def prepping_data_for_topic_analysis(
-    forum_data: pd.DataFrame, filter_by_expression: str, start_date: int, end_date: int
+    forum_data: pd.DataFrame,
+    filter_by_expression: str,
+    start_date: int,
+    end_date: int,
+    phrases_to_remove: list = ["thank", "happy to help", "kind wishes", "kind regards"],
 ) -> pd.DataFrame:
     """
     Prepares the data for topic analysis by:
@@ -216,7 +222,7 @@ def prepping_data_for_topic_analysis(
         filter_by_expression (str): expression to filter data by e.g. "heat pump". If None, all data is kept.
         start_date (int): start date
         end_date (int): end date
-
+        phrases_to_remove (list): list of phrases to remove from the sentences. Defaults to ["thank", "happy to help", "kind wishes", "kind regards"]
     Returns:
         pd.DataFrame: dataframe with sentences data
     """
@@ -245,15 +251,12 @@ def prepping_data_for_topic_analysis(
     sentences_data = create_sentence_df(forum_data)
 
     # Remove small sentences
-    sentences_data = remove_small_sentences(sentences_data)
+    sentences_data = remove_small_sentences(sentences_data, min_n_tokens=5)
 
     # Removing sentences thanking people
     sentences_data = sentences_data[
-        ~(
-            sentences_data["sentences"].str.contains("thank", case=False)
-            | sentences_data["sentences"].str.contains("happy to help", case=False)
-            | sentences_data["sentences"].str.contains("kind wishes", case=False)
-            | sentences_data["sentences"].str.contains("kind regards", case=False)
+        ~sentences_data["sentences"].str.contains(
+            "|".join(phrases_to_remove), case=False
         )
     ]
 
@@ -391,7 +394,11 @@ if __name__ == "__main__":
 
     # Creating dataset of sentences and preparing inputs for topic analysis
     sentences_data = prepping_data_for_topic_analysis(
-        forum_data, filter_by_expression, start_date, end_date
+        forum_data,
+        filter_by_expression,
+        start_date,
+        end_date,
+        phrases_to_remove=["thank", "happy to help", "kind wishes", "kind regards"],
     )
 
     docs = list(sentences_data.drop_duplicates("sentences")["sentences"])
@@ -419,16 +426,17 @@ if __name__ == "__main__":
     topics_info = update_topics_with_duplicates(topics_info, doc_info, sentences_data)
     doc_info = update_docs_with_duplicates(doc_info, sentences_data)
 
+    path_to_save_prefix = f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}"
     # Saving outputs to S3
     topics_info.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_sentence_topics_info.csv",
+        f"{path_to_save_prefix}_sentence_topics_info.csv",
         index=False,
     )
     doc_info.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_sentence_docs_info.csv",
+        f"{path_to_save_prefix}_sentence_docs_info.csv",
         index=False,
     )
     sentences_data.to_csv(
-        f"s3://{S3_BUCKET}/data/{source}/outputs/topic_analysis/{source}_{filter_by_expression}_{start_date}_{end_date}_sentences_data.csv",
+        f"{path_to_save_prefix}_sentences_data.csv",
         index=False,
     )
