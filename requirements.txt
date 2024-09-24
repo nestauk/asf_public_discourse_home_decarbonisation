@@ -15,3 +15,4 @@ pyarrow==14.0.1
 metaflow==2.10.2
 bertopic==0.16.0
 flair==0.13.1
+openai==1.7.1
