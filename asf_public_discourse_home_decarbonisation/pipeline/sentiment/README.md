@@ -10,7 +10,7 @@ You can use the `SentenceBasedSentiment` class defined in the script to get sent
 
 ```
 from asf_public_discourse_home_decarbonisation.pipeline.sentiment.sentence_sentiment import SentenceBasedSentiment
-sentiment_model = SentenceBasedSentiment(process_data=False)
+sentiment_model = SentenceBasedSentiment()
 texts = ["This is a really great sentence", "This sentence is awful", "Cat"]
 sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 >> [("This is a really great sentence", 'positive', 0.97741115), ("This sentence is awful", 'negative', 0.9255473), ("Cat", 'neutral', 0.6470574)]
@@ -21,7 +21,7 @@ The output is a list of tuples where each tuple contains the sentence, sentiment
 Alternatively yu can also run the script from the command line to compute the sentiment of sentences used in the topic analysis:
 
 ```
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --process_data PROCESS_DATA --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
 where
 - SOURCE is the source of the data e.g. "mse" or "buildhub"
 - [optional] FILTER_BY_EXPRESSION is the expression to filter by e.g. "heat pump"

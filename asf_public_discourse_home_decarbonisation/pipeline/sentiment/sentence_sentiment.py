@@ -4,7 +4,7 @@ Computes sentiment of sentences and outputs the sentence, the label and the resp
 The SentenceBasedSentiment class created here can be used as:
 ```
 from asf_public_discourse_home_decarbonisation.pipeline.sentiment.sentence_sentiment import SentenceBasedSentiment
-sentiment_model = SentenceBasedSentiment(process_data=False)
+sentiment_model = SentenceBasedSentiment()
 texts = ["This is a really great sentence", "This sentence is awful", "Cat"]
 sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 >> [("This is a really great sentence", 'positive', 0.97741115), ("This sentence is awful", 'negative', 0.9255473), ("Cat", 'neutral', 0.6470574)]
@@ -12,7 +12,7 @@ sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 
 Alternatively you can compute and save sentiment for sentences saved on S3 by running:
 
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --process_data PROCESS_DATA --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
 where
 - SOURCE is the source of the data e.g. "mse" or "buildhub"
 - [optional] FILTER_BY_EXPRESSION is the expression to filter by e.g. "heat pump"
@@ -57,7 +57,6 @@ class SentenceBasedSentiment(object):
         """
         Args:
             model_name (str, optional): Model name. Defaults to "cardiffnlp/twitter-roberta-base-sentiment-latest".
-            process_data (bool, optional): True to process data, if not processed already. Defaults to False.
         """
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -121,11 +120,6 @@ def parse_arguments(parser):
         help="Analysis end date in the format YYYY-MM-DD. Defaults to None (all data)",
         default=None,
         type=str,
-    )
-    parser.add_argument(
-        "--process_data",
-        help="True to process data, if not processed already. Defaults to False.",
-        default=False,
     )
     parser.add_argument(
         "--relevant_clusters",
