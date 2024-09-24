@@ -36,7 +36,7 @@ from asf_public_discourse_home_decarbonisation import S3_BUCKET
 from asf_public_discourse_home_decarbonisation.pipeline.faqs_identification.openai_prompt import (
     representative_question_prompt,
 )
-from asf_public_discourse_home_decarbonisation.pipeline.bert_topic_analysis.sentence_topic_analysis import (
+from asf_public_discourse_home_decarbonisation.utils.topic_analysis_utils import (
     update_topics_with_duplicates,
     update_docs_with_duplicates,
     topic_model_definition,
