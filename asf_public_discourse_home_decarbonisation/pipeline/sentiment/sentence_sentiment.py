@@ -34,7 +34,6 @@ from transformers import AutoTokenizer, AutoConfig
 import numpy as np
 from scipy.special import softmax
 from tqdm import tqdm
-import os
 from argparse import ArgumentParser
 from typing import Union
 import pandas as pd
@@ -44,6 +43,7 @@ from asf_public_discourse_home_decarbonisation.getters.getter_utils import (
     save_to_s3,
     load_s3_data,
 )
+from asf_public_discourse_home_decarbonisation.utils.general_utils import list_chunks
 from asf_public_discourse_home_decarbonisation import S3_BUCKET
 
 
@@ -97,12 +97,6 @@ class SentenceBasedSentiment(object):
         )
 
         return results
-
-
-def list_chunks(orig_list: list, chunk_size: int = 100):
-    """Chunks list into batches of a specified chunk_size."""
-    for i in range(0, len(orig_list), chunk_size):
-        yield orig_list[i : i + chunk_size]
 
 
 def parse_arguments(parser):

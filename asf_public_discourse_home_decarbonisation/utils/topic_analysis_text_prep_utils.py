@@ -126,6 +126,7 @@ def prepping_data_for_topic_analysis(
     start_date: int,
     end_date: int,
     phrases_to_remove: list = ["thank", "happy to help", "kind wishes", "kind regards"],
+    only_keep_sentences_with_expression: bool = False,
 ) -> pd.DataFrame:
     """
     Prepares the data for topic analysis by:
@@ -140,7 +141,8 @@ def prepping_data_for_topic_analysis(
         filter_by_expression (str): expression to filter data by e.g. "heat pump". If None, all data is kept.
         start_date (int): start date
         end_date (int): end date
-        phrases_to_remove (list): list of phrases to remove from the sentences. Defaults to ["thank", "happy to help", "kind wishes", "kind regards"]
+        phrases_to_remove (list): list of phrases to remove from the sentences. Defaults to ["thank", "happy to help", "kind wishes", "kind regards"
+        only_keep_sentences_with_expression (bool): whether to only keep sentences containing the expression after creating the sentences df. Defaults to False.
     Returns:
         pd.DataFrame: dataframe with sentences data
     """
@@ -158,15 +160,54 @@ def prepping_data_for_topic_analysis(
 
     # Focusing on conversations mentioning a certain expression e.g. "heat pump"
     if filter_by_expression is not None:
-        ids_to_keep = forum_data[
-            (forum_data["whole_text"].str.contains(filter_by_expression, case=False))
-            & (forum_data["is_original_post"] == 1)
-        ]["id"].unique()
+        if filter_by_expression == "solar panel":
+            ids_to_keep = forum_data[
+                (
+                    forum_data["whole_text"].str.contains(
+                        "|".join(
+                            ["solar panel", "solar pv", "solar photovoltaic", " pv "]
+                        ),
+                        case=False,
+                    )
+                )
+                & (forum_data["is_original_post"] == 1)
+            ]["id"].unique()
+        else:
+            ids_to_keep = forum_data[
+                (
+                    forum_data["whole_text"].str.contains(
+                        filter_by_expression, case=False
+                    )
+                )
+                & (forum_data["is_original_post"] == 1)
+            ]["id"].unique()
 
         forum_data = forum_data[forum_data["id"].isin(ids_to_keep)]
 
     # Breaking down text into sentences and striping white spaces
     sentences_data = create_sentence_df(forum_data)
+
+    if only_keep_sentences_with_expression:
+        # filtering again after breaking into sentences
+        if filter_by_expression == "solar panel":
+            sentences_data = sentences_data[
+                (
+                    sentences_data["sentences"].str.contains(
+                        "|".join(
+                            ["solar panel", "solar pv", "solar photovoltaic", " pv "]
+                        ),
+                        case=False,
+                    )
+                )
+            ]
+        else:
+            sentences_data = sentences_data[
+                (
+                    sentences_data["sentences"].str.contains(
+                        filter_by_expression, case=False
+                    )
+                )
+            ]
 
     # Remove small sentences
     sentences_data = remove_small_sentences(sentences_data, min_n_tokens=5)
