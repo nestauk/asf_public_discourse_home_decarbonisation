@@ -2,6 +2,10 @@
 
 This folder contains scripts with utils for procesing text data, running topic analysis and plotting results.
 
+## General utils, `general_utils.py`
+
+General utils used across different pipelines.
+
 ## Text processing utils, `text_processing_utils.py`
 
 Forum analysis specific text processing utils: such as removing URLs, processing abbreviations and checking if a sentence ends with punctuation.
@@ -12,9 +16,13 @@ Utils for preparing forum data for topic analysis: cleaning text, creating a dat
 
 ## Topic analysis utils, `topic_analysis_utils.py`
 
-Topic analysis utils (specific for BERTopic) such as: topic model definition and updating topics and docs with duplicate numbers\*.
+Topic analysis utils (specific for [BERTopic](https://maartengr.github.io/BERTopic/index.html)) such as: topic model definition and updating topics and docs with duplicate numbers\*.
 
 \*duplicate numbers: topic analysis uses unique documents has input. Then we update the number of documents in each topic with the number of duplicates in the original dataset.
+
+## Sentiment analysis utils, `sentiment_analysis_utils.py`
+
+Utils for computing sentiment using [Flair library](https://flairnlp.github.io/docs/tutorial-basics/tagging-sentiment).
 
 ## Plotting utils, `plotting_utils.py`
 
