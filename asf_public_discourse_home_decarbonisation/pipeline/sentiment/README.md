@@ -27,7 +27,6 @@ where
 - [optional] FILTER_BY_EXPRESSION is the expression to filter by e.g. "heat pump"
 - [optional] START_DATE is the analysis start date in the format YYYY-MM-DD. Default to None (i.e. all data)
 - [optional] END_DATE is the analysis end date in the format YYYY-MM-DD. Defaults to None (i.e. all data)
-- [optional] PROCESS_DATA is True to process data, if not processed already. Defaults to False.
 - [optional] RELEVANT_CLUSTERS is the clusters to keep e.g. "1,2,10"
 - [optional] IRRELEVANT_CLUSTERS is the clusters to remove e.g. "1,2,10"
 ```

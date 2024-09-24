@@ -18,7 +18,6 @@ where
 - [optional] FILTER_BY_EXPRESSION is the expression to filter by e.g. "heat pump"
 - [optional] START_DATE is the analysis start date in the format YYYY-MM-DD. Default to None (i.e. all data)
 - [optional] END_DATE is the analysis end date in the format YYYY-MM-DD. Defaults to None (all data)
-- PROCESS_DATA is True to process data, if not processed already. Defaults to False.
 - [optional] RELEVANT_CLUSTERS is the clusters to keep e.g. "1,2,10"
 - [optional] IRRELEVANT_CLUSTERS is the clusters to remove e.g. "1,2,10"
 
@@ -47,10 +46,6 @@ from asf_public_discourse_home_decarbonisation.getters.getter_utils import (
 )
 from asf_public_discourse_home_decarbonisation import S3_BUCKET
 
-# from asf_public_discourse_home_decarbonisation.utils.text_cleaning_utils import (
-#     preprocess,
-# )
-
 
 class SentenceBasedSentiment(object):
     """Find sentiment scores for sentences"""
@@ -58,7 +53,6 @@ class SentenceBasedSentiment(object):
     def __init__(
         self,
         model_name="cardiffnlp/twitter-roberta-base-sentiment-latest",
-        process_data=False,
     ):
         """
         Args:
@@ -66,7 +60,6 @@ class SentenceBasedSentiment(object):
             process_data (bool, optional): True to process data, if not processed already. Defaults to False.
         """
         self.model_name = model_name
-        self.process_data = process_data
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name, use_fast=True, model_max_length=512
         )
@@ -86,9 +79,6 @@ class SentenceBasedSentiment(object):
 
         if isinstance(texts, str):
             texts = [texts]
-
-        # if self.process_data:
-        #     texts = [preprocess(text) for text in texts]
 
         encoded_input = self.tokenizer(
             texts, padding=True, truncation=True, return_tensors="pt"
