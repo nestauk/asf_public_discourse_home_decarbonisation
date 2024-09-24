@@ -41,7 +41,7 @@ To run the script, use the following command:
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "YYYY-MM-DD" --end_date "YYYY-MM-DD"
 ```
 
-## 👍👎 Sentence level sentiment and changes over time (using Flair), [legacy script]
+## 👍👎 Sentence level sentiment and changes over time (using Flair), `sentence_sentiment_flair.py` [legacy script]
 
 Computes sentiment at the sentence level for sentences containing specific terms such as "heat pump" and "boiler". It then computes the number of positive and negative sentences per year for each specific search term.
 
