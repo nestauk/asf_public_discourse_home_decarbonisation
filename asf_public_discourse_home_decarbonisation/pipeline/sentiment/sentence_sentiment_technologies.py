@@ -1,9 +1,12 @@
 """
+
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "2018-01-01" --end_date "2024-05-22"
 """
 
 # Package imports
 from tqdm import tqdm
 import pandas as pd
+from argparse import ArgumentParser
 
 # Local imports
 from asf_public_discourse_home_decarbonisation.getters.getter_utils import (
@@ -18,35 +21,55 @@ from asf_public_discourse_home_decarbonisation.utils.general_utils import list_c
 from asf_public_discourse_home_decarbonisation.utils.topic_analysis_text_prep_utils import (
     prepping_data_for_topic_analysis,
 )
+from asf_public_discourse_home_decarbonisation import config
+
+
+def parse_arguments(parser):
+    parser.add_argument(
+        "--start_date",
+        help="Analysis start date in the format YYYY-MM-DD. Default to None (all data)",
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
+        "--end_date",
+        help="Analysis end date in the format YYYY-MM-DD. Defaults to None (all data)",
+        default=None,
+        type=str,
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-
     chunk_size = 100
+    parser = ArgumentParser()
+    args = parse_arguments(parser)
 
-    mse_data = get_mse_data(category="all", collection_date="2024_06_03")
+    mse_data = get_mse_data(
+        category="all", collection_date=config["latest_data_collection_date"]["mse"]
+    )
 
     hp_sentences_data = prepping_data_for_topic_analysis(
         mse_data,
         "heat pump",
-        "2018-01-01",
-        "2024-05-22",
+        args.start_date,
+        args.end_date,
         only_keep_sentences_with_expression=True,
     )
 
     solar_sentences_data = prepping_data_for_topic_analysis(
         mse_data,
         "solar panel",
-        "2018-01-01",
-        "2024-05-22",
+        args.start_date,
+        args.end_date,
         only_keep_sentences_with_expression=True,
     )
 
     boilers_sentences_data = prepping_data_for_topic_analysis(
         mse_data,
         "boiler",
-        "2018-01-01",
-        "2024-05-22",
+        args.start_date,
+        args.end_date,
         only_keep_sentences_with_expression=True,
     )
 
@@ -63,7 +86,6 @@ if __name__ == "__main__":
     sentiment_model = SentenceBasedSentiment()
 
     # BOILERS
-
     all_sentiment = []
     for text in tqdm(list_chunks(boilers_sentences_data, chunk_size=chunk_size)):
         sentiment_scores = sentiment_model.get_sentence_sentiment(text)
@@ -73,7 +95,8 @@ if __name__ == "__main__":
 
     print(all_sentiment.head())
 
-    output_name = f"data/mse/outputs/sentiment/comparing_technologies/mse_boiler_sentences_sentiment.csv"
+    path_to_save_prefix = f"data/mse/outputs/sentiment/comparing_technologies/{args.start_date}_{args.end_date}"
+    output_name = f"{path_to_save_prefix}_mse_boiler_sentences_sentiment.csv"
 
     save_to_s3(
         S3_BUCKET,
@@ -91,7 +114,7 @@ if __name__ == "__main__":
 
     print(all_sentiment.head())
 
-    output_name = f"data/mse/outputs/sentiment/comparing_technologies/mse_solar_panel_sentences_sentiment.csv"
+    output_name = f"{path_to_save_prefix}_mse_solar_panel_sentences_sentiment.csv"
 
     save_to_s3(
         S3_BUCKET,
@@ -99,7 +122,7 @@ if __name__ == "__main__":
         output_name,
     )
 
-    # HPS
+    # Heat pumps
     all_sentiment = []
     for text in tqdm(list_chunks(hp_sentences_data, chunk_size=chunk_size)):
         sentiment_scores = sentiment_model.get_sentence_sentiment(text)
@@ -109,7 +132,7 @@ if __name__ == "__main__":
 
     print(all_sentiment.head())
 
-    output_name = f"data/mse/outputs/sentiment/comparing_technologies/mse_heat_pump_sentences_sentiment.csv"
+    output_name = f"{path_to_save_prefix}_mse_heat_pump_sentences_sentiment.csv"
 
     save_to_s3(
         S3_BUCKET,
