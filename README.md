@@ -17,7 +17,36 @@ In the context of the 🌿 **[sustainable future mission](https://www.nesta.org.
 You can read more about this project [here](https://www.nesta.org.uk/project/understanding-public-discourse-on-home-decarbonisation/).
 
 ## 🗂️ Repository structure
-[to add]
+[to be continued]
+
+Below we have the repository structure and we highlight a few of the key scripts:
+```
+asf_public_discourse_home_decarbonisation
+├───analysis/
+│    Analysis scripts
+├───config/
+│    Configuration scripts
+│    ├─ base.yaml - should be updated with latest data collection date
+├───getters/
+│    Scripts with functions to load data
+│    ├─ getter_utils.py - general getter utils
+│    ├─ mse_getters.py - Money Saving Expert getters
+│    ├─ bh_getters.py - Buildhub getters
+├───notebooks/
+│    Notebooks with prototype code for pipeline
+├───pipeline/
+│    Subdirs with scripts to process data and produce outputs
+│    ├─ data_processing_flows/ - processing text data from forums
+│    ├─ bert_topic_analysis/ - topic analysis identification
+|    |    |- sentence_topic_analysis.py - identifying topics of conversation from sentences in forum conversations
+│    ├─ faqs_identification/ - frequently asked questions identification
+|    |    |- faq_identification.py - identifying frequently asked questions in forum conversations
+│    ├─ sentiment/ - scripts to compute sentiment
+|    |    |- sentence_sentiment.py - computing sentiment of sentences
+│    ├─ README.md - instructions to run the different pipelines
+├───utils/
+│    Utils scripts for cleaning and visualising text data, applying topic analysis and sentiment analysis.
+```
 
 ## 🆕 Latest analyses
 Latest data collection: [to add]
