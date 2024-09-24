@@ -1,3 +1,13 @@
+"""
+Forum analysis specific text processing utils such as:
+- Removing URLs
+- Removing username patterns
+- Replacing username mentions
+- Removing introduction patterns
+- Processing abbreviations
+- Checking if a sentence ends with punctuation
+"""
+
 import re
 
 
