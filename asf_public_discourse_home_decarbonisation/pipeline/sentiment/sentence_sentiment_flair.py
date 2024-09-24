@@ -29,7 +29,7 @@ from asf_public_discourse_home_decarbonisation.utils.sentiment_analysis_utils im
 from asf_public_discourse_home_decarbonisation.getters.getter_utils import (
     read_public_discourse_data,
 )
-from asf_public_discourse_home_decarbonisation.utils.text_cleaning_utils import (
+from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
     process_abbreviations,
     remove_urls,
     remove_username_pattern,
