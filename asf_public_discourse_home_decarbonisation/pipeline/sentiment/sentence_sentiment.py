@@ -22,10 +22,10 @@ where
 - [optional] IRRELEVANT_CLUSTERS is the clusters to remove e.g. "1,2,10"
 
 Examples for MSE:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6" --start_date "2016-01-01" --end_date "2024-05-22"
 
 Examples for Buildhub:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64" --start_date "2016-01-01" --end_date "2024-05-22"
 """
 
 # Package imports

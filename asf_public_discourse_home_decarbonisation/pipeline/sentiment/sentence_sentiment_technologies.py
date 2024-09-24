@@ -6,7 +6,7 @@ To run the script, use the following command:
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "YYYY-MM-DD" --end_date "YYYY-MM-DD"
 
 Example usage:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "2018-01-01" --end_date "2024-05-22"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "2016-01-01" --end_date "2024-05-22"
 """
 
 # Package imports
