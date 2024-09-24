@@ -1,5 +1,5 @@
 """
-Compute sentiment of sentences and save the sentence, the label and the respective probability.
+Computes sentiment of sentences and outputs the sentence, the label and the respective probability.
 
 The SentenceBasedSentiment class created here can be used as:
 ```
@@ -10,7 +10,7 @@ sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 >> [("This is a really great sentence", 'positive', 0.97741115), ("This sentence is awful", 'negative', 0.9255473), ("Cat", 'neutral', 0.6470574)]
 ```
 
-Alternatively you can compute and save sentiment for sentences in the forum data by running:
+Alternatively you can compute and save sentiment for sentences saved on S3 by running:
 
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source SOURCE --filter_by_expression FILTER_BY_EXPRESSION --start_date START_DATE --end_date END_DATE --process_data PROCESS_DATA --relevant_clusters RELEVANT_CLUSTERS --irrelevant_clusters IRRELEVANT_CLUSTERS
 where
@@ -78,6 +78,10 @@ class SentenceBasedSentiment(object):
         Get the sentiment for a list of sentences using a pretrained sentiment model.
         Returns a list of tuples with sentence, sentiment and the score:
         e.g. ['sentence AAA', 'neutral', 0.6559918), ('sentence BBB', 'negative', 0.6319174)]
+        Args:
+            texts (Union[list, str]): List of sentences or a single sentence
+        Returns:
+            list: List of tuples with sentence, sentiment and the score
         """
 
         if isinstance(texts, str):
@@ -160,7 +164,9 @@ if __name__ == "__main__":
     chunk_size = 100
 
     source = args.source
-    input_path = f"data/{source}/outputs/topic_analysis/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}_sentence_docs_info.csv"
+
+    input_path_prefix = f"data/{source}/outputs/topic_analysis/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}"
+    input_path = f"{input_path_prefix}_sentence_docs_info.csv"
 
     sentences = load_s3_data(
         S3_BUCKET,
@@ -177,7 +183,8 @@ if __name__ == "__main__":
         relevant_clusters = [int(i) for i in args.relevant_clusters.split(",")]
         sentences = sentences[sentences["Topic"].isin(relevant_clusters)]
 
-    output_name = f"data/{source}/outputs/sentiment/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}_sentence_topics_sentiment.csv"
+    output_path_prefix = f"data/{source}/outputs/sentiment/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}"
+    output_name = f"{output_path_prefix}_sentence_topics_sentiment.csv"
 
     sentences_texts = list(sentences["Document"].unique())
 
