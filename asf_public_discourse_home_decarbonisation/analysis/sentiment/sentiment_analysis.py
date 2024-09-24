@@ -1,12 +1,15 @@
 """
-Script to compute sentence level sentiment analysis in posts mentioning certain terms (such as "heat pump" or "boiler").
+Script to compute sentence level sentiment analysis in posts mentioning certain terms (such as "heat pump" or "boiler") using [Flair](https://flairnlp.github.io/docs/tutorial-basics/tagging-sentiment).
+
+The script:
 - It starts by reading in data from the specified source (MSE, BuildHub or another) and preprocesses it for sentiment analysis;
-- For each of the terms ("heat pump" and "boiler"), it then computes the sentiment of each sentence mentioning the term;
+- For each of the terms ("heat pump" and "boiler"), it then computes the sentiment of each sentence mentioning the term (positive, negative);
 - After that, the average sentiment and a yearly sentiment breakdown (number of negative/positive sentences per year) are also computed.
 
 To run this script:
-`python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentiment_analysis.py --data_source DATA_SOURCE --source_path SOURCE_PATH`
-where
+python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentiment_analysis.py --data_source DATA_SOURCE --source_path SOURCE_PATH
+
+where:
 - DATA_SOURCE (required): the data source name, e.g. "mse" or "buildhub" or the name of another source of data
 - SOURCE_PATH (optional): if data source is different from "mse"/"buildhub" then provide the path to the data source (local or S3).
 """
@@ -180,8 +183,10 @@ if __name__ == "__main__":
         filtered_data = data[data["text"].str.contains(term)]
 
         filtered_data = compute_sentence_sentiment(filtered_data, term)
+
+        path_to_save_prefix = f"s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment"
         filtered_data.to_csv(
-            f"s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/sentence_sentiment_source_{data_source}_term_{term}.csv",
+            f"{path_to_save_prefix}/flair_sentence_sentiment_source_{data_source}_term_{term}.csv",
             index=False,
         )
         logger.info(
@@ -191,7 +196,7 @@ if __name__ == "__main__":
         yearly_stats = compute_average_and_yearly_stats(filtered_data, term)
 
         yearly_stats.to_csv(
-            f"s3://{S3_BUCKET}/data/{data_source}/outputs/sentiment/yearly_sentiment_stats_source_{data_source}_term_{term}.csv",
+            f"{path_to_save_prefix}/flair_yearly_sentiment_stats_source_{data_source}_term_{term}.csv",
             index=False,
         )
         logger.info(
