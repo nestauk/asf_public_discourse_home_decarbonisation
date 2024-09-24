@@ -1,6 +1,6 @@
 # 😄 Sentiment analysis
 
-Pipeline for assessing sentiment (negative, positive and neutral) in public discourse data.
+Scripts for assessing sentiment (negative, positive and neutral) of public discourse data.
 
 ## 👍👎 Sentence level sentiment (using Twitter-roBERTa-base for Sentiment Analysis), `sentence_sentiment.py`
 
@@ -41,4 +41,19 @@ To run the script, use the following command:
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "YYYY-MM-DD" --end_date "YYYY-MM-DD"
 ```
 
-## 👍👎 Sentence level sentiment (using Flair) [legacy script]
+## 👍👎 Sentence level sentiment and changes over time (using Flair), [legacy script]
+
+Computes sentiment at the sentence level for sentences containing specific terms such as "heat pump" and "boiler". It then computes the number of positive and negative sentences per year for each specific search term.
+
+To run the script,
+`python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentence_sentiment_flair.py --data_source DATA_SOURCE --source_path SOURCE_PATH`
+where
+
+- `DATA_SOURCE`: the data source name, e.g. "mse" or "buildhub" or the name of another source of data
+- [optional] `SOURCE_PATH`: if data source is different from "mse"/"buildhub" then provide the path to the data source (local or S3).
+
+_Example:_
+`python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentiment_analysis.py --data_source "mse"` which will output and save two dataframes:
+
+- sentiment label (NEGATIVE/POSITIVE) for each sentence matching the search terms ("heat pump" and "boiler")
+- the number of NEGATIVE and POSITIVE sentences per year for each of the search terms ("heat pump" and "boiler").

@@ -7,7 +7,7 @@ The script:
 - After that, the average sentiment and a yearly sentiment breakdown (number of negative/positive sentences per year) are also computed.
 
 To run this script:
-python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentiment_analysis.py --data_source DATA_SOURCE --source_path SOURCE_PATH
+python asf_public_discourse_home_decarbonisation/analysis/sentiment/sentence_sentiment_flair.py --data_source DATA_SOURCE --source_path SOURCE_PATH
 
 where:
 - DATA_SOURCE (required): the data source name, e.g. "mse" or "buildhub" or the name of another source of data
