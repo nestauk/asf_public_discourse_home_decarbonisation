@@ -26,7 +26,7 @@ Latest data collection: [to add]
 ## 🗞 Publications
 [coming soon...]
 
-## Setup
+## ⚙️ Setup
 - Meet the data science cookiecutter [requirements](http://nestauk.github.io/ds-cookiecutter/quickstart), in brief:
   - Install: `direnv` and `conda`
 - Run `make install` to configure the development environment:
@@ -35,7 +35,7 @@ Latest data collection: [to add]
 - Download and install the [Averta font](https://github.com/deblynprado/neon/blob/master/fonts/averta/Averta-Regular.ttf)
 - Download spacy model: `python -m spacy download en_core_web_sm`
 
-## Contributor guidelines
+## 📢 Contributor guidelines
 
 [Technical and working style guidelines](https://github.com/nestauk/ds-cookiecutter/blob/master/GUIDELINES.md)
 
