@@ -38,7 +38,7 @@ questions_data
 # In[6]:
 
 
-from asf_public_discourse_home_decarbonisation.pipeline.bert_topic_analysis.sentence_topic_analysis import (
+from asf_public_discourse_home_decarbonisation.utils.topic_analysis_utils import (
     update_topics_with_duplicates,
     update_docs_with_duplicates,
     topic_model_definition,
