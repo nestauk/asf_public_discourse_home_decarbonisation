@@ -30,6 +30,7 @@ where
 - [optional] `END_DATE` is the analysis end date in the format YYYY-MM-DD. Defaults to None (i.e. all data)
 - [optional] `RELEVANT_CLUSTERS` is the clusters to keep e.g. "1,2,10"
 - [optional] `IRRELEVANT_CLUSTERS` is the clusters to remove e.g. "1,2,10"
+- [optional] add --test to run in test mode
 
 ## 🔌 Sentiment for different technologies, `sentence_sentiment_technologies.py`
 
@@ -40,6 +41,8 @@ To run the script, use the following command:
 ```
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "YYYY-MM-DD" --end_date "YYYY-MM-DD"
 ```
+
+[optional] add --test to run in test mode
 
 ## 👍👎 Sentence level sentiment and changes over time (using Flair), `sentence_sentiment_flair.py` [legacy script]
 

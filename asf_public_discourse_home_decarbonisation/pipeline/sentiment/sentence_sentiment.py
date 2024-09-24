@@ -20,12 +20,13 @@ where
 - [optional] END_DATE is the analysis end date in the format YYYY-MM-DD. Defaults to None (all data)
 - [optional] RELEVANT_CLUSTERS is the clusters to keep e.g. "1,2,10"
 - [optional] IRRELEVANT_CLUSTERS is the clusters to remove e.g. "1,2,10"
+- [optional] add --test to run in test mode
 
 Examples for MSE:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6" --start_date "2016-01-01" --end_date "2024-05-22"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "mse" --filter_by_expression "heat pump" --irrelevant_clusters "0,6" --start_date "2016-01-01" --end_date "2024-05-23"
 
 Examples for Buildhub:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64" --start_date "2016-01-01" --end_date "2024-05-22"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment.py --source "buildhub" --filter_by_expression "heat pump" --relevant_clusters "1,2,3,5,6,9,10,11,12,16,27,29,31,32,56,64" --start_date "2016-01-01" --end_date "2024-05-23"
 """
 
 # Package imports
@@ -131,6 +132,11 @@ def parse_arguments(parser):
         help="Irrelevant clusters/clusters to remove e.g. '1,2,10'. Defaults to None.",
         default=None,
     )
+    parser.add_argument(
+        "--test",
+        help="Run in test mode",
+        action="store_true",
+    )
     return parser.parse_args()
 
 
@@ -145,6 +151,7 @@ if __name__ == "__main__":
 
     input_path_prefix = f"data/{source}/outputs/topic_analysis/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}"
     input_path = f"{input_path_prefix}_sentence_docs_info.csv"
+    print(f"Loading data from {input_path}")
 
     sentences = load_s3_data(
         S3_BUCKET,
@@ -153,13 +160,16 @@ if __name__ == "__main__":
 
     sentences = sentences[sentences["Topic"] != -1]
 
-    if args.irrelevant_clusters is not None:
-        relevant_clusters = [int(i) for i in args.irrelevant_clusters.split(",")]
-        sentences = sentences[~sentences["Topic"].isin(relevant_clusters)]
+    if args.test:
+        sentences = sentences.head(50)
+    else:
+        if args.irrelevant_clusters is not None:
+            relevant_clusters = [int(i) for i in args.irrelevant_clusters.split(",")]
+            sentences = sentences[~sentences["Topic"].isin(relevant_clusters)]
 
-    if args.relevant_clusters is not None:
-        relevant_clusters = [int(i) for i in args.relevant_clusters.split(",")]
-        sentences = sentences[sentences["Topic"].isin(relevant_clusters)]
+        if args.relevant_clusters is not None:
+            relevant_clusters = [int(i) for i in args.relevant_clusters.split(",")]
+            sentences = sentences[sentences["Topic"].isin(relevant_clusters)]
 
     output_path_prefix = f"data/{source}/outputs/sentiment/{source}_{args.filter_by_expression}_{args.start_date}_{args.end_date}"
     output_name = f"{output_path_prefix}_sentence_topics_sentiment.csv"
@@ -181,8 +191,9 @@ if __name__ == "__main__":
 
     print(all_sentiment.head())
 
-    save_to_s3(
-        S3_BUCKET,
-        all_sentiment,
-        output_name,
-    )
+    if not args.test:
+        save_to_s3(
+            S3_BUCKET,
+            all_sentiment,
+            output_name,
+        )

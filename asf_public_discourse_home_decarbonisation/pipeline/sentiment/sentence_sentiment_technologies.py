@@ -5,8 +5,10 @@ It computes the sentiment for sentences containing mentions of the technologies 
 To run the script, use the following command:
 python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "YYYY-MM-DD" --end_date "YYYY-MM-DD"
 
+[optional] add --test to run in test mode
+
 Example usage:
-python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "2016-01-01" --end_date "2024-05-22"
+python asf_public_discourse_home_decarbonisation/pipeline/sentiment/sentence_sentiment_technologies.py --start_date "2016-01-01" --end_date "2024-05-23"
 """
 
 # Package imports
@@ -42,6 +44,11 @@ def parse_arguments(parser):
         help="Analysis end date in the format YYYY-MM-DD. Defaults to None (all data)",
         default=None,
         type=str,
+    )
+    parser.add_argument(
+        "--test",
+        help="Run in test mode",
+        action="store_true",
     )
     return parser.parse_args()
 
@@ -79,6 +86,11 @@ if __name__ == "__main__":
         only_keep_sentences_with_expression=True,
     )
 
+    if args.test:
+        hp_sentences_data = hp_sentences_data.head(50)
+        solar_sentences_data = solar_sentences_data.head(50)
+        boilers_sentences_data = boilers_sentences_data.head(50)
+
     hp_sentences_data = list(
         hp_sentences_data.drop_duplicates("sentences")["sentences"]
     )
@@ -104,11 +116,12 @@ if __name__ == "__main__":
     path_to_save_prefix = f"data/mse/outputs/sentiment/comparing_technologies/{args.start_date}_{args.end_date}"
     output_name = f"{path_to_save_prefix}_mse_boiler_sentences_sentiment.csv"
 
-    save_to_s3(
-        S3_BUCKET,
-        all_sentiment,
-        output_name,
-    )
+    if not args.test:
+        save_to_s3(
+            S3_BUCKET,
+            all_sentiment,
+            output_name,
+        )
 
     # SOLAR PANELS
     all_sentiment = []
@@ -122,11 +135,12 @@ if __name__ == "__main__":
 
     output_name = f"{path_to_save_prefix}_mse_solar_panel_sentences_sentiment.csv"
 
-    save_to_s3(
-        S3_BUCKET,
-        all_sentiment,
-        output_name,
-    )
+    if not args.test:
+        save_to_s3(
+            S3_BUCKET,
+            all_sentiment,
+            output_name,
+        )
 
     # Heat pumps
     all_sentiment = []
@@ -140,8 +154,9 @@ if __name__ == "__main__":
 
     output_name = f"{path_to_save_prefix}_mse_heat_pump_sentences_sentiment.csv"
 
-    save_to_s3(
-        S3_BUCKET,
-        all_sentiment,
-        output_name,
-    )
+    if not args.test:
+        save_to_s3(
+            S3_BUCKET,
+            all_sentiment,
+            output_name,
+        )
