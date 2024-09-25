@@ -1,9 +1,13 @@
 # 🗣️🌿 Understanding Public Discourse on Home Decarbonisation 🌿🗣️
 
 The `asf_public_discourse_home_decarbonisation` repository contains code to **analyse public discourse data from online forums** to identify:
-- **Topics of conversation**
-- **Frequently asked questions posted in the forum**
-- **How the above change over time**
+- **Topics of conversation**: We use [BERTopic](https://maartengr.github.io/BERTopic/index.html) (a topic modelling technique) to identify topics of conversation in online forum threads. We apply this to sentences from posts and replies and to forum post titles. We then manually rename these topics.
+
+- **Frequently asked questions posted in the forum**: We collect questions asked in forum posts or replies, and apply BERTopic to identify similar groups of questions, leveraging [OpenAI's large language models](https://openai.com/) to create the final topic representations (i.e. our frequently asked questions).
+
+- **Sentiment analysis of topics of conversation**: [`cardiffnlp/twitter-roberta-base-sentiment-latest`](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest) sentiment model is used to identify sentiment of sentences and topics (by aggregating the sentiment of sentences in specific topics). This allows us to identify issues raised by those posting in the forums, as well as identify positive experiences.
+
+- **How all the above change over time**: all sentences and posts are associated with a date/time so we can track how topics, sentiment and questions changes over time.
 
 For the purpose of this project, the analyses are focused on conversations about **home heating** and **home decarbonisation**. However, *the pipelines created here can be applied to any domain area*.
 
@@ -14,7 +18,7 @@ In the context of the 🌿 **[sustainable future mission](https://www.nesta.org.
 - identify frequently asked questions by engineers installing low carbon heating tech;
 - track the dominant narratives about heat pumps (and other heating technologies) across online forums.
 
-You can read more about this project [here](https://www.nesta.org.uk/project/understanding-public-discourse-on-home-decarbonisation/).
+You can read more about this project [here](https://www.nesta.org.uk/project/understanding-public-discourse-on-home-decarbonisation/). For a written overview of the technical work see this technical appendix (coming soon!).
 
 ## 🗂️ Repository structure
 [to be continued]
@@ -49,12 +53,40 @@ asf_public_discourse_home_decarbonisation
 ```
 
 ## 🆕 Latest analyses
-Latest data collection: [to add]
-- When new data is available please open a new issue/PR and update the configs [here](https://github.com/nestauk/asf_public_discourse_home_decarbonisation/blob/dev/asf_public_discourse_home_decarbonisation/config/base.yaml).
+[to be completed...]
+
+❗📢 When new data is available please open a new issue/PR and update the configs [here](https://github.com/nestauk/asf_public_discourse_home_decarbonisation/blob/dev/asf_public_discourse_home_decarbonisation/config/base.yaml).
+
+Latest data collection:
+- Money Saving Expert: DD-MM-YYY
+- Buildhub: DD-MM-YY
+
+### Heat pump topic analysis: identifying topics of conversation in heat pump conversations
+
+[missing some context into what happens in each analysis
+
+```
+python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "mse" --start_date "" --end_date "" --filter_by_expression "heat pump"
+```
+
+```
+python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "buildhub" --start_date "" --end_date "" --filter_by_expression "heat pump"
+```
+
+
+### Heat pump sentiment analysis: identifying negative, positive and neutral topics of conversation
+
+### Home heating topic analysis: identifying size and growth of topics of conversation in the home heating domain
+
 
 ## 🗞 Publications
-[coming soon...]
-
+- [Project page information](https://www.nesta.org.uk/project/understanding-public-discourse-on-home-decarbonisation/)
+- [coming soon...] Navigating heat pump adoption: Insights from homeowner discussions online
+- [coming soon...] Insights from online forum home heating conversations
+- [coming soon...] Frequently asked questions by homeowners
+- [coming soon...] Medium blog on BERTopic for topic analysis and use cases
+- [coming soon...] Medium blog on identifying frequently asked questions using BERTopic
+  
 ## ⚙️ Setup
 - Meet the data science cookiecutter [requirements](http://nestauk.github.io/ds-cookiecutter/quickstart), in brief:
   - Install: `direnv` and `conda`
