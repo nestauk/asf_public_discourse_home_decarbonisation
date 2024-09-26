@@ -12,7 +12,7 @@ The `asf_public_discourse_home_decarbonisation` repository contains code to **an
 For the purpose of this project, the analyses are focused on conversations about **home heating** and **home decarbonisation**. However, *the pipelines created here can be applied to any domain area*.
 
 In the context of the 🌿 **[sustainable future mission](https://www.nesta.org.uk/sustainable-future/)** 🌿 work, the analyses in this codebase allow us to:
-- understand existing difficulties around installing low-carbon heating tech, such as heat pumps, and identify the skills/training needed by heating engineers to help them transition to low carbon heating;
+- understand the current barriers to installing low-carbon heating technologies, such as regulatory constraints or installation challenges with heat pumps, and identify the skills/training needed by heating engineers to help them transition to low carbon heating;
 - identify unknown issues faced by homeowners when installing low carbon heating tech in their home and questions they typically have;
 - identify the common misconceptions around low-carbon heating tech;
 - identify frequently asked questions by engineers installing low carbon heating tech;
