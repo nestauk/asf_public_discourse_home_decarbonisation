@@ -5,7 +5,7 @@ The `asf_public_discourse_home_decarbonisation` repository contains code to **an
 
 - **Frequently asked questions posted in the forum**: We collect questions asked in forum posts or replies, and apply BERTopic to identify similar groups of questions, leveraging [OpenAI's large language models](https://openai.com/) to create the final topic representations (i.e. our frequently asked questions).
 
-- **Sentiment analysis of topics of conversation**: [`cardiffnlp/twitter-roberta-base-sentiment-latest`](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest) sentiment model is used to identify sentiment of sentences and topics (by aggregating the sentiment of sentences in specific topics). This allows us to identify issues raised by those posting in the forums, as well as identify positive experiences.
+- **Sentiment analysis of topics of conversation**: [`cardiffnlp/twitter-roberta-base-sentiment-latest`](https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest) sentiment model is used to identify sentiment of sentences and topics (by aggregating the sentiment of sentences in specific topics). This allows us to identify issues raised by those posting in the forums, as well as identifying positive experiences.
 
 - **How all the above change over time**: all sentences and posts are associated with a date/time so we can track how topics, sentiment and questions changes over time.
 
