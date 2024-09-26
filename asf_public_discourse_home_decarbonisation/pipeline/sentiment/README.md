@@ -14,7 +14,7 @@ sentiment_scores = sentiment_model.get_sentence_sentiment(texts)
 >> [("This is a really great sentence", 'positive', 0.97741115), ("This sentence is awful", 'negative', 0.9255473), ("Cat", 'neutral', 0.6470574)]
 ```
 
-The output is a list of tuples where each tuple contains the sentence, sentiment label and the probability of the sentiment label.
+The output is a list of tuples where each tuple contains the sentence, sentiment label and the probability of the sentiment label. The higher the probability, the more certain we can be that the sentiment has been correctly classified. 
 
 Alternatively you can also run the script from the command line to compute the sentiment of sentences used in the topic analysis:
 
