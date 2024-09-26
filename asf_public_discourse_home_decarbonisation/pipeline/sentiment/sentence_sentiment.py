@@ -70,7 +70,7 @@ class SentenceBasedSentiment(object):
         """
         Get the sentiment for a list of sentences using a pretrained sentiment model.
         Returns a list of tuples with sentence, sentiment and the score:
-        e.g. ['sentence AAA', 'neutral', 0.6559918), ('sentence BBB', 'negative', 0.6319174)]
+        e.g. [("This is a really great sentence", 'positive', 0.97741115), ("This sentence is awful", 'negative', 0.9255473), ("Cat", 'neutral', 0.6470574)]
         Args:
             texts (Union[list, str]): List of sentences or a single sentence
         Returns:
