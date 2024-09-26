@@ -73,8 +73,9 @@ python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/se
 python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/sentence_topic_analysis.py --source "buildhub" --start_date "" --end_date "" --filter_by_expression "heat pump"
 ```
 
-
 ### Heat pump sentiment analysis: identifying negative, positive and neutral topics of conversation
+
+### Heat Pump FAQ analysis: Identifying frequently asked questions from home heating public discourse
 
 ### Home heating topic analysis: identifying size and growth of topics of conversation in the home heating domain
 
