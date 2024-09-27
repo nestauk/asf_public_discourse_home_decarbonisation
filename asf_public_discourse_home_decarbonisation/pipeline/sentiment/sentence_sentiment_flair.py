@@ -26,7 +26,7 @@ import pandas as pd
 from asf_public_discourse_home_decarbonisation.utils.sentiment_analysis_utils import (
     compute_sentiment_with_flair,
 )
-from asf_public_discourse_home_decarbonisation.getters.getter_utils import (
+from asf_public_discourse_home_decarbonisation.getters.public_discourse_getters import (
     read_public_discourse_data,
 )
 from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
