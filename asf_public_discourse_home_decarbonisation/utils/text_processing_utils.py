@@ -1,3 +1,13 @@
+"""
+Forum analysis specific text processing utils such as:
+- Removing URLs
+- Removing username patterns
+- Replacing username mentions
+- Removing introduction patterns
+- Processing abbreviations
+- Checking if a sentence ends with punctuation
+"""
+
 import re
 
 
@@ -10,7 +20,12 @@ def remove_urls(text: str) -> str:
     Returns:
         str: text with URLs removed
     """
-    return re.sub(r"http\S+", " ", text)
+    # Define a regular expression pattern for matching URLs
+    url_pattern = re.compile(r"https?://\S+|www\.\S+")
+
+    # Replace URLs with a space
+    cleaned_text = url_pattern.sub(" ", text)
+    return cleaned_text
 
 
 def remove_username_pattern(text: str) -> str:
@@ -25,6 +40,23 @@ def remove_username_pattern(text: str) -> str:
     """
     # Define the pattern to match "username wrote:" and remove it
     pattern = re.compile(r"\w+\s+wrote: »\n")
+    cleaned_text = re.sub(pattern, " ", text)
+
+    return cleaned_text
+
+
+def replace_username_mentions(text: str) -> str:
+    """
+    Replace username mentions with a space.
+
+    Args:
+        text (str): text to process
+
+    Returns:
+        str: text with username mentions replaced
+    """
+    # Define the pattern to match username mentions and replace them
+    pattern = re.compile(r"@\w+\s")
     cleaned_text = re.sub(pattern, " ", text)
 
     return cleaned_text
@@ -83,6 +115,9 @@ def process_abbreviations(text: str) -> str:
         .replace("uvcs", " unvented cylinders ")
         .replace("uvc", " unvented cylinder ")
     )
+
+    # Getting rid of double spaces
+    text = " ".join(text.split())
     return text
 
 
