@@ -180,6 +180,7 @@ if __name__ == "__main__":
 
     # Identifying topics using LLMs representation model
     # the topics should be the same as above, but a different representation model is used
+    client = openai.OpenAI(api_key=openai_key)
     representation_model = OpenAI(
         client,
         model="gpt-4o-mini",
