@@ -5,6 +5,7 @@ Getters for the public discourse data.
 import pandas as pd
 from asf_public_discourse_home_decarbonisation.getters.mse_getters import get_mse_data
 from asf_public_discourse_home_decarbonisation.getters.bh_getters import get_bh_data
+from asf_public_discourse_home_decarbonisation import config
 
 
 def read_public_discourse_data(
@@ -28,17 +29,16 @@ def read_public_discourse_data(
     Returns:
         pd.DataFrame: the data
     """
+    if collection_date is None:
+        collection_date = config["latest_data_collection_date"].get(source, None)
+
     if source == "mse":
-        if collection_date is None:
-            collection_date = "2023_11_15"
         data = get_mse_data(
             category=category,
             collection_date=collection_date,
             processing_level=processing_level,
         )
     elif source == "buildhub":
-        if collection_date is None:
-            collection_date = "24_02_01"
         data = get_bh_data(category=category, collection_date=collection_date)
     else:
         data = pd.read_csv(source)
