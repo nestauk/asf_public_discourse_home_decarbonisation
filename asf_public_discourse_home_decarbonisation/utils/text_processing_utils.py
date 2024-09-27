@@ -20,7 +20,12 @@ def remove_urls(text: str) -> str:
     Returns:
         str: text with URLs removed
     """
-    return re.sub(r"http\S+", " ", text)
+    # Define a regular expression pattern for matching URLs
+    url_pattern = re.compile(r"https?://\S+|www\.\S+")
+
+    # Replace URLs with a space
+    cleaned_text = url_pattern.sub(" ", text)
+    return cleaned_text
 
 
 def remove_username_pattern(text: str) -> str:

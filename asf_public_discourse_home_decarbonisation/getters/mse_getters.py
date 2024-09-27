@@ -16,6 +16,7 @@ mse_categories = [
     "energy",
     "heat-pumps",
     "is-this-quote-fair",
+    "heat-pumps",
 ]
 
 
