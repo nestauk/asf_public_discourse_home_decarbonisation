@@ -30,6 +30,7 @@ import pandas as pd
 import math
 import argparse
 import logging
+import openai
 from bertopic.representation import OpenAI
 import os
 from asf_public_discourse_home_decarbonisation import S3_BUCKET
