@@ -36,7 +36,7 @@ from asf_public_discourse_home_decarbonisation.getters.sentiment_getters import 
 
 # %%
 # data import settings
-source = "buildhub"
+source = "mse"  # either "mse" or "buildhub"
 filter_by = "heat pump"
 analysis_start_date = "2016-01-01"
 analysis_end_date = "2024-05-22"
@@ -45,7 +45,7 @@ analysis_end_date = "2024-05-22"
 # %%
 # analysis settings
 first_complete_month = "2016-01"
-last_complete_month = "2016-04"
+last_complete_month = "2024-04"
 
 # topic growth analysis
 # first period: may 2019 to april 2020
@@ -110,6 +110,9 @@ len(
         & (doc_info["Document"].str.contains("heat pump", case=False))
     ]
 ) / len(doc_info) * 100
+
+# %%
+
 
 # %% [markdown]
 # ## Renaming and grouping topics
@@ -327,6 +330,7 @@ if source == "buildhub":
             "Legionella in domestic hot water systems": "78_legionella_cycle_legionnaires_bacteria",
             "Location/areas": "84_scotland_cornwall_england_wales",
             "Dates by": "103_2023by_2022by_editeddecember_2021by",
+            "Carbon emissions": "58_carbon_co2_emissions_fossil",
             "Climate change and scientists": "105_climate_change_global_scientists",
             "Energy general": "131_energy_cool_protons_saving",
             "Trees, wood and timber": "122_trees_wood_tree_timber",
@@ -335,14 +339,14 @@ if source == "buildhub":
             "Wall etc": "116_wall_plant_source_location",
             "relay": "137_relay_relays_contacts_ssr",
         },
-        "Unrelated to HPs": {  # checked!
+        "Unrelated to HPs": {
             "Outliers cluster": "-1_heat_heating_pump_water",
             "General sentences": "1_thread_question_forum_post",
             "Photos": "139_photos_post_photo_picture",
             "Science and physics": "95_science_physics_scientific_scientist",
         },
     }
-elif source == "mse":  # source == "mse"
+elif source == "mse":
     renaming_and_grouping_topics = {
         "Solar panels and solar PV": "0_solar_panels_battery_pv",
         "Boilers and other heating systems": {
@@ -587,6 +591,7 @@ sentences_data["year_month"] = pd.to_datetime(sentences_data["datetime"]).dt.to_
 )
 sentences_data["year_month"] = sentences_data["year_month"].astype(str)
 
+
 # %%
 sentences_year_month_info = sentences_data.merge(
     doc_info, how="left", left_on="sentences", right_on="sentences"
@@ -671,10 +676,16 @@ topics_date = topics_date[topics_date["aggregated_topic_names"] != "Unrelated to
 
 
 # %%
+
+
+# %%
 year_month_list = pd.period_range(
     start=first_complete_month, end=last_complete_month, freq="M"
 )
 year_month_list = year_month_list.strftime("%Y-%m")
+
+
+# %%
 
 
 # %%
@@ -713,8 +724,8 @@ for agg in topics_date.aggregated_topic_names.unique():
         full_range.plot(
             kind="line", color=NESTA_COLOURS[: len(full_range.columns)], figsize=(8, 4)
         )
-        plt.title("Topic: " + agg)
         plt.legend().remove()
+    plt.title("Topic: " + agg)
     plt.xlabel("")
     plt.ylabel("Number of sentences", fontsize=12)
     plt.xticks(
@@ -748,7 +759,7 @@ for t in doc_info["topic_names"].unique():
         "sentiment", ascending=False
     )
 
-    print("Topic: ", t)
+    print("***Topic: ", t)
     print("Positive: ")
     if len(pos) > 0:
         print(pos["Document"].iloc[0])
@@ -764,5 +775,8 @@ for t in doc_info["topic_names"].unique():
         print("\n")
 
     print("---")
+
+# %%
+
 
 # %%
