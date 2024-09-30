@@ -49,6 +49,7 @@ def get_all_bh_data(collection_date: str) -> pd.DataFrame:
             bucket_name=S3_BUCKET,
             file_path=f"data/buildhub/outputs/buildhub_{cat}_{collection_date}.csv",
         )
+        aux["category"] = cat
         all_bh_data = pd.concat([all_bh_data, aux])
 
     return all_bh_data.reset_index(drop=True)
