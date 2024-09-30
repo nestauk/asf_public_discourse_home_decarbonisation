@@ -17,7 +17,11 @@ from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
 
 set_plotting_styles()
 
-from utils import flatten_mapping, flatten_mapping_child_key, map_values
+from asf_public_discourse_home_decarbonisation.utils.general_utils import (
+    flatten_mapping,
+    flatten_mapping_child_key,
+    map_values,
+)
 from asf_public_discourse_home_decarbonisation.getters.topic_analysis_getters import (
     get_docs_info,
     get_topics_info,
