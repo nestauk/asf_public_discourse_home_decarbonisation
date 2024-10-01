@@ -26,10 +26,12 @@ import argparse
 import logging
 from datetime import datetime
 
-# Local imports
-from asf_public_discourse_home_decarbonisation import config
-
 logger = logging.getLogger(__name__)
+
+# Local imports
+from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
+    process_abbreviations,
+)
 from asf_public_discourse_home_decarbonisation import S3_BUCKET
 from asf_public_discourse_home_decarbonisation.getters.public_discourse_getters import (
     read_public_discourse_data,
@@ -105,6 +107,9 @@ if __name__ == "__main__":
         forum_data = forum_data[
             forum_data["date"] <= datetime.strptime(end_date, "%Y-%m-%d").date()
         ]
+
+    forum_data["title"] = forum_data["title"].apply(process_abbreviations)
+    forum_data["title"] = forum_data["title"].replace("hp", "heat pump")
 
     # only keep original posts
     forum_data = forum_data[forum_data["is_original_post"] == 1]
