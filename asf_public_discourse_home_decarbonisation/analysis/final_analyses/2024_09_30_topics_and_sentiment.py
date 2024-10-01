@@ -118,9 +118,104 @@ len(
 # ## Renaming and grouping topics
 
 # %%
-if source == "buildhub":
+
+if source == "mse":
     renaming_and_grouping_topics = {
-        "Solar panels and solar PV": "0_pv_solar_panels_excess",
+        "Solar panels/PV": "0_solar_panels_battery_pv",
+        "Boilers and other heating systems": {
+            "Old gas boilers": "3_boiler_boilers_gas_old",
+            "Gas and fossil fuels": "16_gas_mains_fossil_fuels",
+            "Heat Pumps vs. boilers": "21_boiler_pump_oil_gas",
+            "LPG and oil": "49_lpg_oil_bulk_tank",
+            "Oil": "51_oil_oils_club_christmas",
+            "Wood burner & stove": "30_wood_burner_stove_log",
+        },
+        "Heat pump types": {
+            "Air source heat pumps": "14_air_source_pump_heat",
+            "General heat pumps": "17_pumps_heat_pump_cantor",
+            "Ground source heat pumps": "36_ground_source_pump_heat",
+            "Split heat pumps and aircon units": "60_air_aircon_units_split",
+        },
+        "Hydrogen": "56_hydrogen_h2_hvo_gas",
+        "Insulation": "4_insulation_loft_wall_insulated",
+        "Underfloor heating and radiators": {
+            "Radiators": "5_radiators_radiator_rads_flow",
+            "Underfloor heating and radiators": "15_underfloor_floor_heating_radiators",
+        },
+        "Property": "7_house_property_bed_bungalow",
+        "Money and costs": {
+            "Money savings & suppliers": "12_money_savings_price_suppliers",
+            "Credit cost": "22_month_year_credit_cost",
+            "Heating systems and costs": "28_heating_systems_costs_electric",
+            "Heat pump cost": "35_pump_cost_source_air",
+            "Energy prices and electricity cost": "61_electricity_prices_energy_costs",
+            "Quotes": "58_quote_quotes_ive_quoting",
+        },
+        "Noise": "11_noise_noisy_quiet_microgeneration",
+        "Tanks and storage heaters": {
+            "Storage heaters": "26_storage_heaters_heater_night",
+            "Tanks": "41_tank_tanks_bunded_500l",
+            "Sunamp": "53_sunamp_phase_sunamps_change",
+        },
+        "Domestic hot water": "9_water_hot_cylinder_domestic",
+        "Showers and baths": "25_shower_showers_bath_electric",
+        "Smart meters and readings": "10_meter_smart_meters_readings",
+        "Electricity consumption": {
+            "Average daily consumption": "13_kwh_day_average_kw",
+            "Heating hot water consumption": "31_kwh_hot_heating_water",
+            "Heat pump consumption": "23_pump_heat_kw_kwh",
+            "Energy usage consumption": "57_energy_use_consumed_usage",
+            "Electricity consumption": "37_year_electricity_kwh_month",
+        },
+        "Installations and installers": "18_installer_installers_installation_install",
+        "Pipework and plumbing": "27_pipes_pipe_pipework_plumbing",
+        "Heat pump performance": "19_cop_scop_flow_cops",
+        "Tariffs": {
+            "Octopus agile": "8_octopus_agile_tariff_flux",
+            "Economy7 tariff": "24_e7_economy_tariff_rate",
+            "Tariffs and rates": "44_tariff_tariffs_rate_offer",
+        },
+        "Flow temperature": "39_flow_temp_temperature_degrees",
+        "Temperature controls": {
+            "Setting thermostast temperature": "2_thermostat_degrees_cold_set",
+            "Weather compensation": "32_compensation_weather_curve_temperature",
+            "Heat pump temperature": "33_pump_heat_temperature_source",
+            "Defrost": "55_defrost_defrosting_freezing_ice",
+        },
+        "Settings and controls": "20_settings_controls_control_tweaking",
+        "Grants": {
+            "BUS and government grants": "45_grant_grants_government_bus",
+            "Renewable heat incentive": "29_renewable_incentive_payments_heat",
+        },
+        "Planning permissions": {
+            "Planning permissions and councils": "38_planning_permission_council_ipswich",
+            "Planning/development permissions": "52_planning_permission_development_permitted",
+        },
+        "EPCs and energy performance": {
+            "EPCs and properties": "42_epc_epcs_rating_property",
+            "EPCs and heating": "50_epc_rating_heat_epcs",
+        },
+        "MCS": "54_certification_microgeneration_scheme_certificate",
+        "Technical": {
+            "Fuse phase": "48_fuse_phase_fuses_100a",
+            "Valves and pressure": "59_valve_valves_pressure_bypass",
+            "Phase change materials": "40_phase_change_pcm_liquid",
+        },
+        "Other": {
+            "Green planet and environment": "47_green_planet_greener_environmental",
+            "Numbers and calculations": "34_numbers_figures_calculations_sums",
+            "Time of use": "43_hours_247_hour_minutes",
+            "Legionella in domestic hot water systems": "46_legionella_cycle_immersion_bacteria",
+        },
+        "Unrelated to HPs": {
+            "Outliers cluster": "-1_heat_pump_water_air",
+            "General sentences": "1_thread_im_post_think",
+            "Tumble dryers": "6_dryer_tumble_dry_washing",
+        },
+    }
+elif source == "buildhub":
+    renaming_and_grouping_topics = {
+        "Solar panels/solar PV": "0_pv_solar_panels_excess",
         "Heat pump types": {
             # Heat pump types
             "Air source heat pumps": "4_source_air_pump_heat",
@@ -344,100 +439,6 @@ if source == "buildhub":
             "General sentences": "1_thread_question_forum_post",
             "Photos": "139_photos_post_photo_picture",
             "Science and physics": "95_science_physics_scientific_scientist",
-        },
-    }
-elif source == "mse":
-    renaming_and_grouping_topics = {
-        "Solar panels and solar PV": "0_solar_panels_battery_pv",
-        "Boilers and other heating systems": {
-            "Old gas boilers": "3_boiler_boilers_gas_old",
-            "Gas and fossil fuels": "16_gas_mains_fossil_fuels",
-            "Heat Pumps vs. boilers": "21_boiler_pump_oil_gas",
-            "LPG and oil": "49_lpg_oil_bulk_tank",
-            "Oil": "51_oil_oils_club_christmas",
-            "Wood burner & stove": "30_wood_burner_stove_log",
-        },
-        "Heat pump types": {
-            "Air source heat pumps": "14_air_source_pump_heat",
-            "General heat pumps": "17_pumps_heat_pump_cantor",
-            "Ground source heat pumps": "36_ground_source_pump_heat",
-            "Split heat pumps and aircon units": "60_air_aircon_units_split",
-        },
-        "Hydrogen": "56_hydrogen_h2_hvo_gas",
-        "Insulation": "4_insulation_loft_wall_insulated",
-        "Underfloor heating and radiators": {
-            "Radiators": "5_radiators_radiator_rads_flow",
-            "Underfloor heating and radiators": "15_underfloor_floor_heating_radiators",
-        },
-        "Property": "7_house_property_bed_bungalow",
-        "Money and costs": {
-            "Money savings & suppliers": "12_money_savings_price_suppliers",
-            "Credit cost": "22_month_year_credit_cost",
-            "Heating systems and costs": "28_heating_systems_costs_electric",
-            "Heat pump cost": "35_pump_cost_source_air",
-            "Energy prices and electricity cost": "61_electricity_prices_energy_costs",
-            "Quotes": "58_quote_quotes_ive_quoting",
-        },
-        "Noise": "11_noise_noisy_quiet_microgeneration",
-        "Tanks and storage heaters": {
-            "Storage heaters": "26_storage_heaters_heater_night",
-            "Tanks": "41_tank_tanks_bunded_500l",
-            "Sunamp": "53_sunamp_phase_sunamps_change",
-        },
-        "Domestic hot water": "9_water_hot_cylinder_domestic",
-        "Showers and baths": "25_shower_showers_bath_electric",
-        "Smart meters and readings": "10_meter_smart_meters_readings",
-        "Electricity and gas consumption": {
-            "Average daily consumption": "13_kwh_day_average_kw",
-            "Heating hot water consumption": "31_kwh_hot_heating_water",
-            "Heat pump consumption": "23_pump_heat_kw_kwh",
-            "Energy usage consumption": "57_energy_use_consumed_usage",
-            "Electricity consumption": "37_year_electricity_kwh_month",
-        },
-        "Installations and installers": "18_installer_installers_installation_install",
-        "Pipework and plumbing": "27_pipes_pipe_pipework_plumbing",
-        "Heat pump performance": "19_cop_scop_flow_cops",
-        "Tariffs": {
-            "Octopus agile": "8_octopus_agile_tariff_flux",
-            "Economy7 tariff": "24_e7_economy_tariff_rate",
-            "Tariffs and rates": "44_tariff_tariffs_rate_offer",
-        },
-        "Flow temperature": "39_flow_temp_temperature_degrees",
-        "Temperature controls": {
-            "Setting thermostast temperature": "2_thermostat_degrees_cold_set",
-            "Weather compensation": "32_compensation_weather_curve_temperature",
-            "Heat pump temperature": "33_pump_heat_temperature_source",
-            "Defrost": "55_defrost_defrosting_freezing_ice",
-        },
-        "Settings and controls": "20_settings_controls_control_tweaking",
-        "Grants": {
-            "BUS and government grants": "45_grant_grants_government_bus",
-            "Renewable heat incentive": "29_renewable_incentive_payments_heat",
-        },
-        "Planning permissions": {
-            "Planning permissions and councils": "38_planning_permission_council_ipswich",
-            "Planning/development permissions": "52_planning_permission_development_permitted",
-        },
-        "EPCs and energy performance": {
-            "EPCs and properties": "42_epc_epcs_rating_property",
-            "EPCs and heating": "50_epc_rating_heat_epcs",
-        },
-        "MCS": "54_certification_microgeneration_scheme_certificate",
-        "Technical": {
-            "Fuse phase": "48_fuse_phase_fuses_100a",
-            "Valves and pressure": "59_valve_valves_pressure_bypass",
-            "Phase change materials": "40_phase_change_pcm_liquid",
-        },
-        "Other": {
-            "Green planet and environment": "47_green_planet_greener_environmental",
-            "Numbers and calculations": "34_numbers_figures_calculations_sums",
-            "Time of use": "43_hours_247_hour_minutes",
-            "Legionella in domestic hot water systems": "46_legionella_cycle_immersion_bacteria",
-        },
-        "Unrelated to HPs": {
-            "Outliers cluster": "-1_heat_pump_water_air",
-            "General sentences": "1_thread_im_post_think",
-            "Tumble dryers": "6_dryer_tumble_dry_washing",
         },
     }
 else:
@@ -685,8 +686,8 @@ year_month_list = pd.period_range(
 year_month_list = year_month_list.strftime("%Y-%m")
 
 
-# %%
-
+# %% [markdown]
+# breakdown for each topic
 
 # %%
 for agg in topics_date.aggregated_topic_names.unique():
@@ -744,6 +745,56 @@ for agg in topics_date.aggregated_topic_names.unique():
 
 
 # %% [markdown]
+# breakdown for each aggregated topic:
+
+# %%
+for agg in topics_date.aggregated_topic_names.unique():
+    time_counts = (
+        topics_date[topics_date["aggregated_topic_names"] == agg]
+        .groupby(["year_month"])
+        .sum()[["sentences"]]
+    )
+
+    full_range = pd.DataFrame(index=year_month_list)
+    full_range = full_range.merge(
+        time_counts, left_index=True, right_index=True, how="left"
+    )
+    full_range = full_range.fillna(0)
+
+    if full_range.shape[1] > 1:
+        full_range.plot(
+            kind="line", color=NESTA_COLOURS[: len(full_range.columns)], figsize=(12, 4)
+        )
+        print("not!!!!")
+        plt.legend(
+            title="Topic",
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+            title_fontsize=10,
+            fontsize=10,
+        )
+    else:
+        full_range.plot(
+            kind="line", color=NESTA_COLOURS[: len(full_range.columns)], figsize=(8, 4)
+        )
+        plt.legend().remove()
+    plt.title("Topic: " + agg)
+    plt.xlabel("")
+    plt.ylabel("Number of sentences", fontsize=12)
+    plt.xticks(
+        [i for i in range(0, len(year_month_list), 6)] + [len(year_month_list) - 1],
+        [year_month_list[i] for i in range(0, len(year_month_list), 6)]
+        + [year_month_list[len(year_month_list) - 1]],
+        fontsize=10,
+        rotation=45,
+        ha="right",
+    )
+
+    # Adjust the layout to make sure everything fits
+    plt.tight_layout()
+
+
+# %% [markdown]
 # ### 6. Example quotes with neg/pos sentiment for each topic
 
 # %%
@@ -776,7 +827,63 @@ for t in doc_info["topic_names"].unique():
 
     print("---")
 
+# %% [markdown]
+# ## Organising data for Flourish
+
+# %% [markdown]
+# ### 1. Barchat with topic sizes
+
+# %%
+aggregated_topics.merge(agg_topic_sentiment, on="aggregated_topic_names").sort_values(
+    "negative", ascending=False
+).drop(columns=["neutral", "positive"]).rename(
+    columns={
+        "aggregated_topic_names": "Topic name",
+        "updated_count": "Number of sentences",
+        "negative": "Proportion of negative",
+    }
+).reset_index(
+    drop=True
+)
+
 # %%
 
+
+# %% [markdown]
+# ### 2. Stacked barchat with sentiment breakdown
+
+# %%
+agg_topic_sentiment.sort_values("negative", ascending=False).rename(
+    columns={
+        "aggregated_topic_names": "Topic name",
+        "negative": "Proportion of negative sentences",
+        "neutral": "Proportion of neutral sentences",
+        "positive": "Proportion of positive sentences",
+    }
+).reset_index(drop=True).reset_index(drop=True)
+
+# %%
+
+
+# %% [markdown]
+# ### 3. Growth versus proportion of negative
+
+# %%
+sentiment_vs_size["growth_2024_2020"].min(), sentiment_vs_size["growth_2024_2020"].max()
+
+# %%
+sentiment_vs_size["negative"].min(), sentiment_vs_size["negative"].max()
+
+# %%
+sentiment_vs_size.rename(
+    columns={
+        "aggregated_topic_names": "Topic name",
+        "updated_count": "Number number of sentences",
+        "negative": "Proportion of negative sentences",
+        "n_2024": "Number of sentences in 2024",
+        "n_2020": "Number of sentences in 2020",
+        "growth_2024_2020": "Growth in number of sentences (%) between 2020 and 2024",
+    }
+).reset_index(drop=True)
 
 # %%
