@@ -9,8 +9,18 @@ def list_chunks(orig_list: list, chunk_size: int = 100):
         yield orig_list[i : i + chunk_size]
 
 
-# Function to flatten the mapping recursively
-def flatten_mapping(flat_mapping, mapping, parent_key=None):
+def flatten_mapping(flat_mapping: dict, mapping: dict, parent_key: str = None) -> dict:
+    """
+    Flattens a mapping recursively returning the highest level of aggregation
+
+    Args:
+        flat_mapping (dict): a dictionary with a 1-1 mapping (or an empty dictionary)
+        mapping (dict): dictionary mapping with multiple levels
+        parent_key (str, optional): parent key. Defaults to None.
+
+    Returns:
+        dict: 1-1 mapping using highest level of aggregation
+    """
     for key, value in mapping.items():
         if isinstance(value, dict):
             flatten_mapping(flat_mapping, value, parent_key=key)
@@ -23,13 +33,31 @@ def flatten_mapping(flat_mapping, mapping, parent_key=None):
     return flat_mapping
 
 
-# Function to map the values
-def map_values(flat_mapping, value):
+def map_values(flat_mapping: dict, value: str) -> str:
+    """
+    Maps valuesn using a dictionary
+
+    Args:
+        flat_mapping (dict): dictionary with 1-1 mapping
+        value (str): a specific value
+
+    Returns:
+        str: the mapped value
+    """
     return flat_mapping.get(value, value)
 
 
-# Function to flatten the mapping recursively
-def flatten_mapping_child_key(flat_mapping_child, mapping):
+def flatten_mapping_child_key(flat_mapping_child: dict, mapping: dict) -> dict:
+    """
+    Flattens a mapping recursively
+
+    Args:
+        flat_mapping (dict): a dictionary with a 1-1 mapping (or an empty dictionary)
+        mapping (dict): dictionary mapping with multiple levels
+
+    Returns:
+        dict: 1-1 mapping using lowwest level of aggregation
+    """
     for key, value in mapping.items():
         if isinstance(value, dict):
             flatten_mapping_child_key(flat_mapping_child, value)

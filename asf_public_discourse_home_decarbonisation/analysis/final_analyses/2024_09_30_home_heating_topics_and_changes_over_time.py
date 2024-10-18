@@ -1,8 +1,14 @@
 # %% [markdown]
 # ## overview of analysis
 #
+# Analysis of topics of conversation related to home heating:
 #
-#
+# - Loads topic analysis and sentiment analysis results from S3 (from running topic analysis on MSE home heating forum posts in the past 20 years )
+# - Visualises:
+#     - topic sizes;
+#     - breakdown of sentiment
+#     - differences in number of conversations over time;
+#     - growth in topics between 2020 and 2024.
 
 # %% [markdown]
 # ## package imports
@@ -23,19 +29,13 @@ from asf_public_discourse_home_decarbonisation.utils.general_utils import (
     flatten_mapping_child_key,
     map_values,
 )
-from asf_public_discourse_home_decarbonisation.getters.topic_analysis_getters import (
-    get_docs_info,
-    get_topics_info,
-    get_sentence_data,
-)
-
 
 # %% [markdown]
 # ## analysis specific settings
 
 # %%
 # data import settings
-source = "mse"  # either "mse" or "buildhub"
+source = "mse"
 analysis_start_date = None  # i.e. all data from the start
 analysis_end_date = "2024-05-22"
 
@@ -115,6 +115,7 @@ forum_data = pd.read_csv(
 )
 
 # %%
+path_to_save_data = f"s3://{S3_BUCKET}/data/{source}/outputs/final_analyses"
 
 
 # %% [markdown]
@@ -150,7 +151,7 @@ renaming_and_grouping_topics = {
     "Home heating & heating systems": {
         "Energy and electricity": "0_energy_electricity_club_mse",
         "Central heating": "13_heating_central_heat_electric",
-        "Stove & burner": "11_stove_wood_chimney_burner",
+        "Stove & wood burner": "11_stove_wood_chimney_burner",
         "Boilers": "4_boiler_combi_new_boilers",
         "Storage heaters": "23_storage_heaters_heater_night",
         "Heat pumps": "28_pump_heat_source_air",
@@ -262,7 +263,7 @@ non_aggregated_topics
 # %% [markdown]
 # ### 4. Growth vs. size - comparing time periods
 #
-# May 2019 to April 2020 and 2) May 2023 to April 2024
+# 1) May 2019 to April 2020 and 2) May 2023 to April 2024
 
 # %%
 forum_data["year_month"] = pd.to_datetime(forum_data["datetime"]).dt.to_period("M")
@@ -319,12 +320,13 @@ topics_date = forum_data.merge(
 )[["sentences", "datetime", "aggregated_topic_names", "topic_names"]]
 topics_date["year_month"] = pd.to_datetime(topics_date["datetime"]).dt.to_period("M")
 topics_date["year_month"] = topics_date["year_month"].astype(str)
+topics_date["year"] = pd.to_datetime(topics_date["datetime"]).dt.year
 topics_date = topics_date.groupby(
     ["aggregated_topic_names", "topic_names", "year_month"]
 ).count()[["sentences"]]
 topics_date.reset_index(inplace=True)
 topics_date = topics_date[
-    topics_date["aggregated_topic_names"] != "Unrelated to home heating"
+    ~topics_date["aggregated_topic_names"].isin(aggregated_topics_to_remove)
 ]
 
 
@@ -398,6 +400,9 @@ for agg in topics_date.aggregated_topic_names.unique():
 # breakdown for each aggregated topic:
 
 # %%
+counts_to_save = pd.DataFrame()
+
+# %%
 for agg in topics_date.topic_names.unique():
     time_counts = (
         topics_date[topics_date["topic_names"] == agg]
@@ -410,6 +415,12 @@ for agg in topics_date.topic_names.unique():
         time_counts, left_index=True, right_index=True, how="left"
     )
     full_range = full_range.fillna(0)
+
+    if len(counts_to_save) == 0:
+        counts_to_save = full_range.copy()
+        counts_to_save.rename(columns={"sentences": agg}, inplace=True)
+    else:
+        counts_to_save[agg] = full_range["sentences"]
 
     if full_range.shape[1] > 1:
         full_range.plot(
@@ -444,7 +455,50 @@ for agg in topics_date.topic_names.unique():
 
 
 # %%
+topics_year = forum_data.merge(
+    doc_info[["Document", "aggregated_topic_names", "topic_names"]],
+    left_on="sentences",
+    right_on="Document",
+)[["sentences", "datetime", "aggregated_topic_names", "topic_names"]]
+topics_year["year"] = pd.to_datetime(topics_year["datetime"]).dt.year
 
+topics_year = topics_year.groupby(
+    ["aggregated_topic_names", "topic_names", "year"]
+).count()[["sentences"]]
+topics_year.reset_index(inplace=True)
+topics_year = topics_year[
+    ~topics_year["aggregated_topic_names"].isin(aggregated_topics_to_remove)
+]
+
+# %%
+counts_to_save = pd.DataFrame()
+
+# %%
+for agg in topics_year.topic_names.unique():
+    time_counts = (
+        topics_year[topics_year["topic_names"] == agg]
+        .groupby(["year"])
+        .sum()[["sentences"]]
+    )
+
+    full_range = pd.DataFrame(index=range(2003, 2024))
+    full_range = full_range.merge(
+        time_counts, left_index=True, right_index=True, how="left"
+    )
+    full_range = full_range.fillna(0)
+
+    if len(counts_to_save) == 0:
+        counts_to_save = full_range.copy()
+        counts_to_save.rename(columns={"sentences": agg}, inplace=True)
+    else:
+        counts_to_save[agg] = full_range["sentences"]
+
+
+# %%
+counts_to_save.T.to_csv(f"{path_to_save_data}/counts_over_time_home_heating_T.csv")
+
+# %%
+counts_to_save.to_csv(f"{path_to_save_data}/counts_over_time_home_heating.csv")
 
 # %% [markdown]
 # ## Organising data for Flourish
@@ -460,6 +514,19 @@ non_aggregated_topics.rename(
         "updated_count": "Number of posts",
     }
 ).reset_index(drop=True)
+
+# %%
+non_aggregated_topics[
+    non_aggregated_topics["aggregated_topic_names"] == "Home heating & heating systems"
+].rename(
+    columns={
+        "aggregated_topic_names": "Category",
+        "topic_names": "Topic name",
+        "updated_count": "Number of posts",
+    }
+).reset_index(
+    drop=True
+)
 
 # %%
 
