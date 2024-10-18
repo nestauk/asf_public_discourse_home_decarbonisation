@@ -1,6 +1,14 @@
 # %% [markdown]
 # ## overview of analysis
 #
+# Analysis of topics of conversation related to heat pumps:
+#
+# - Loads topic analysis and sentiment analysis results from S3 (from running topic analysis on posts about heat pumps)
+# - Visualises:
+#     - topic sizes;
+#     - breakdown of sentiment
+#     - differences in number of conversations over time;
+#     - growth in topics between 2020 and 2024.
 #
 #
 
@@ -16,7 +24,7 @@ from asf_public_discourse_home_decarbonisation.utils.plotting_utils import (
 )
 
 set_plotting_styles()
-
+from asf_public_discourse_home_decarbonisation import S3_BUCKET
 from asf_public_discourse_home_decarbonisation.utils.general_utils import (
     flatten_mapping,
     flatten_mapping_child_key,
@@ -36,7 +44,7 @@ from asf_public_discourse_home_decarbonisation.getters.sentiment_getters import 
 
 # %%
 # data import settings
-source = "mse"  # either "mse" or "buildhub"
+source = "buildhub"  # either "mse" or "buildhub"
 filter_by = "heat pump"
 analysis_start_date = "2016-01-01"
 analysis_end_date = "2024-05-22"
@@ -94,6 +102,9 @@ doc_info = get_docs_info(source, filter_by, analysis_start_date, analysis_end_da
 topics_info = get_topics_info(source, filter_by, analysis_start_date, analysis_end_date)
 
 # %%
+path_to_save_data = f"s3://{S3_BUCKET}/data/{source}/outputs/final_analyses"
+
+# %%
 # we know a portion of the documents tagged as outliers actually mention heat pumps
 len(
     doc_info[
@@ -110,9 +121,6 @@ len(
         & (doc_info["Document"].str.contains("heat pump", case=False))
     ]
 ) / len(doc_info) * 100
-
-# %%
-
 
 # %% [markdown]
 # ## Renaming and grouping topics
@@ -471,6 +479,15 @@ doc_info["topic_names"] = doc_info.apply(
 # Setting the aggregated topics to remove from the analysis
 aggregated_topics_to_remove = ["Unrelated to HPs", "Other"]
 
+# %%
+topics_info["aggregated_topic_names"].nunique()
+
+# %%
+topics_info["topic_names"].nunique()
+
+# %%
+topics_info
+
 # %% [markdown]
 # ## Analysis results
 
@@ -748,6 +765,9 @@ for agg in topics_date.aggregated_topic_names.unique():
 # breakdown for each aggregated topic:
 
 # %%
+counts_to_save = pd.DataFrame()
+
+# %%
 for agg in topics_date.aggregated_topic_names.unique():
     time_counts = (
         topics_date[topics_date["aggregated_topic_names"] == agg]
@@ -761,23 +781,16 @@ for agg in topics_date.aggregated_topic_names.unique():
     )
     full_range = full_range.fillna(0)
 
-    if full_range.shape[1] > 1:
-        full_range.plot(
-            kind="line", color=NESTA_COLOURS[: len(full_range.columns)], figsize=(12, 4)
-        )
-        print("not!!!!")
-        plt.legend(
-            title="Topic",
-            bbox_to_anchor=(1.05, 1),
-            loc="upper left",
-            title_fontsize=10,
-            fontsize=10,
-        )
+    if len(counts_to_save) == 0:
+        counts_to_save = full_range.copy()
+        counts_to_save.rename(columns={"sentences": agg}, inplace=True)
     else:
-        full_range.plot(
-            kind="line", color=NESTA_COLOURS[: len(full_range.columns)], figsize=(8, 4)
-        )
-        plt.legend().remove()
+        counts_to_save[agg] = full_range["sentences"]
+
+    full_range.plot(
+        kind="line", color=NESTA_COLOURS[: len(full_range.columns)], figsize=(8, 4)
+    )
+    plt.legend().remove()
     plt.title("Topic: " + agg)
     plt.xlabel("")
     plt.ylabel("Number of sentences", fontsize=12)
@@ -794,12 +807,26 @@ for agg in topics_date.aggregated_topic_names.unique():
     plt.tight_layout()
 
 
+# %%
+counts_to_save.to_csv(f"{path_to_save_data}/topic_counts_{source}_{filter_by}.csv")
+
+# %%
+counts_to_save
+
+# %%
+smoothed_avg_topics_per_month = counts_to_save.rolling(window=3, axis=0).mean()
+
+# %%
+smoothed_avg_topics_per_month.to_csv(
+    f"{path_to_save_data}/topic_counts_{source}_{filter_by}_smoothed_avg.csv"
+)
+
 # %% [markdown]
 # ### 6. Example quotes with neg/pos sentiment for each topic
 
 # %%
-for t in doc_info["topic_names"].unique():
-    docs_in_topic = doc_info[doc_info["topic_names"] == t]
+for t in doc_info["aggregated_topic_names"].unique():
+    docs_in_topic = doc_info[doc_info["aggregated_topic_names"] == t]
     docs_in_topic = docs_in_topic.merge(
         sentiment_data, how="left", left_on="Document", right_on="text"
     )
@@ -824,6 +851,19 @@ for t in doc_info["topic_names"].unique():
     if len(neg) > 1:
         print(neg["Document"].iloc[1])
         print("\n")
+
+    print("---")
+
+# %%
+for t in doc_info["aggregated_topic_names"].unique():
+    docs_in_topic = doc_info[doc_info["aggregated_topic_names"] == t]
+    docs_in_topic = docs_in_topic.merge(
+        sentiment_data, how="left", left_on="Document", right_on="text"
+    )
+    sample = docs_in_topic.sample(10)
+    print("***Topic: ", t)
+    for i in range(len(sample)):
+        print(sample["Document"].iloc[i])
 
     print("---")
 
@@ -878,12 +918,29 @@ sentiment_vs_size["negative"].min(), sentiment_vs_size["negative"].max()
 sentiment_vs_size.rename(
     columns={
         "aggregated_topic_names": "Topic name",
-        "updated_count": "Number number of sentences",
+        "updated_count": "Total number of sentences",
         "negative": "Proportion of negative sentences",
         "n_2024": "Number of sentences in 2024",
         "n_2020": "Number of sentences in 2020",
         "growth_2024_2020": "Growth in number of sentences (%) between 2020 and 2024",
     }
 ).reset_index(drop=True)
+
+# %%
+
+
+# %%
+sentiment_vs_size.rename(
+    columns={
+        "aggregated_topic_names": "Topic name",
+        "updated_count": "Total number of sentences",
+        "negative": "Proportion of negative sentences",
+        "n_2024": "Number of sentences in 2024",
+        "n_2020": "Number of sentences in 2020",
+        "growth_2024_2020": "Growth in number of sentences (%) between 2020 and 2024",
+    }
+).reset_index(drop=True).to_csv(
+    f"{path_to_save_data}/sentiment_vs_size_{source}_{filter_by}.csv"
+)
 
 # %%
