@@ -4,7 +4,7 @@
 # Analysis of topics of conversation related to heat pumps:
 #
 # - Loads topic analysis and sentiment analysis results from S3 (from running topic analysis on posts about heat pumps)
-# - Visualises:
+# - Computes (and in some cases visualises):
 #     - topic sizes;
 #     - breakdown of sentiment
 #     - differences in number of conversations over time;

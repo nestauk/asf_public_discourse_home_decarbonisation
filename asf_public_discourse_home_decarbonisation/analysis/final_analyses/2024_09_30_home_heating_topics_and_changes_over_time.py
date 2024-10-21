@@ -4,7 +4,7 @@
 # Analysis of topics of conversation related to home heating:
 #
 # - Loads topic analysis and sentiment analysis results from S3 (from running topic analysis on MSE home heating forum posts in the past 20 years )
-# - Visualises:
+# - Computes (and in some cases visualises):
 #     - topic sizes;
 #     - breakdown of sentiment
 #     - differences in number of conversations over time;
