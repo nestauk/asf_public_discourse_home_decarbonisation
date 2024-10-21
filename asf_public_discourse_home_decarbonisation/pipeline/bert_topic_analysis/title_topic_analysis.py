@@ -9,15 +9,16 @@ The pipeline:
 To run this script:
 python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/title_topic_analysis.py --source SOURCE --start_date START_DATE --end_date END_DATE --reduce_outliers_to_zero REDUCE_OUTLIERS_TO_ZERO --min_topic_size MIN_TOPIC_SIZE
 
-Example usage:
-python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/title_topic_analysis.py --source "mse" --end_date "2024-05-22" --min_topic_size 300
-
 where:
 - SOURCE is the source of the data: `mse` or `buildhub`
 - [optional] START_DATE is the start date of the analysis in the format YYYY-MM-DD
 - [optional] END_DATE is the end date of the analysis in the format YYYY-MM-DD
 - [optional] REDUCE_OUTLIERS_TO_ZERO is True to reduce outliers to zero. Defaults to False
 - [optional] MIN_TOPIC_SIZE is the minimum size of a topic. Defaults to 100.
+
+Example usage:
+python asf_public_discourse_home_decarbonisation/pipeline/bert_topic_analysis/title_topic_analysis.py --source "mse" --end_date "2024-05-22" --min_topic_size 300
+
 """
 
 # Package imports
@@ -109,6 +110,9 @@ if __name__ == "__main__":
         ]
 
     forum_data["title"] = forum_data["title"].apply(process_abbreviations)
+
+    # only replacing HP with heat pump because titles don't have URLs (example ending in .php)
+    # and because we're only analysing home heating conversations. Otherwise this would lead to erronenous results
     forum_data["title"] = forum_data["title"].replace("hp", "heat pump")
 
     # only keep original posts
