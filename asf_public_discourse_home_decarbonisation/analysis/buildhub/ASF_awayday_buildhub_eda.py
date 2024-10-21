@@ -18,6 +18,7 @@ where:
     <collection_date_time>: data collection date/time in the format YYMMDD (e.g. 231120)
 The figures are saved in the following directory: 'outputs/figures/buildhub/forum_<category>/'
 """
+
 # import packages
 import pandas as pd
 from typing import List
@@ -176,6 +177,7 @@ if __name__ == "__main__":
     ]
     filtered_tokens = preprocess_text(buildhub_ashp_dataframe, new_stopwords)
     freq_dist = FreqDist(filtered_tokens)
+    print(freq_dist)
     # Plotting the top words in a word cloud!
     plot_word_cloud(freq_dist, BUILDHUB_FIGURES_PATH)
 

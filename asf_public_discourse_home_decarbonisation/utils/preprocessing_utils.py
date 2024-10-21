@@ -1,11 +1,14 @@
 import pandas as pd
 from nltk.corpus import stopwords
 
-# from nltk.util import bigrams, trigrams, ngrams
+from nltk.util import bigrams, trigrams, ngrams
 from collections import Counter
 import re
 from typing import List, Tuple, Dict
 from nltk.probability import FreqDist
+from asf_public_discourse_home_decarbonisation.utils.text_processing_utils import (
+    process_abbreviations,
+)
 
 
 ######### 3. Word cloud of frequently used words in posts ############
@@ -149,3 +152,85 @@ def prepare_keyword_dataframe(
     keyword_df = keyword_df.sort_values(by="Frequency", ascending=False)
     print(keyword_df)
     return keyword_df[keyword_df["Frequency"] > df_threshold]
+
+
+def preprocess_data_for_linechart_over_time(
+    df: pd.DataFrame,
+    start_date: str = "2018-01-01",
+    key_terms: List[str] = ["heat pump", "boiler"],
+) -> pd.DataFrame:
+    """
+    Preprocess the data for analysis.
+
+    Parameters:
+    df (pd.DataFrame): The input dataframe with 'date' and 'text' columns.
+    start_date (str): The start date for filtering the data.
+    key_terms (List[str]): List of key terms to search for in the text.
+
+    Returns:
+    pd.DataFrame: The preprocessed dataframe.
+    """
+    df["date"] = pd.to_datetime(df["date"])
+    df = df[df["date"] >= start_date]
+    df["text"] = df["text"].fillna("")
+    df["text"] = df["text"].apply(process_abbreviations)
+    df.set_index("date", inplace=True)
+
+    # Create new columns for each key term
+    for term in key_terms:
+        column_name = f"mentions_{term.replace(' ', '_')}"
+        df[column_name] = df["text"].str.contains(term, case=False).astype(int)
+
+    return df
+
+
+def resample_and_calculate_averages_for_linechart(
+    df: pd.DataFrame,
+    key_terms: List[str] = ["heat pump", "boiler"],
+    cadence_of_aggregation="M",
+    window: int = 12,
+) -> pd.DataFrame:
+    """
+    Resample the data into months and calculate rolling averages.
+
+    Parameters:
+    df (pd.DataFrame): The input dataframe with mentions columns.
+    key_terms (List[str]): List of key terms for which rolling averages will be calculated.
+    window (int): The window size for calculating the rolling average.
+
+    Returns:
+    pd.DataFrame: The resampled and averaged dataframe.
+    """
+    df_monthly = df.resample(cadence_of_aggregation).sum()
+
+    # Calculate rolling averages for each key term
+    for term in key_terms:
+        column_name = f"mentions_{term.replace(' ', '_')}"
+        avg_column_name = f"{column_name}_avg"
+        df_monthly[avg_column_name] = (
+            df_monthly[column_name].rolling(window=window).mean()
+        )
+
+    return df_monthly
+
+
+def calculate_ngram_threshold(tokens: List[str], n: int, freq_multiplier: float) -> int:
+    """
+    Calculates and returns the frequency threshold for n-grams.
+
+    Args:
+        tokens (List[str]): A list of tokens from which n-grams are generated.
+        n (int): The 'n' in n-grams, representing the number of elements in each gram.
+        freq_multiplier (float): The multiplier to calculate the frequency threshold.
+
+    Returns:
+        int: The calculated threshold for n-grams.
+    """
+    # Calculate initial frequency distribution for n-grams
+    raw_ngram_freq_dist = FreqDist(ngrams(tokens, n))
+
+    # Calculate total count and threshold for n-grams
+    total_ngrams = sum(raw_ngram_freq_dist.values())
+    ngram_threshold = round(max(3, total_ngrams * freq_multiplier))
+
+    return raw_ngram_freq_dist, ngram_threshold
