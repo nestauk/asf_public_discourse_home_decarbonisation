@@ -11,6 +11,15 @@ where:
 [required] DATA_SOURCE: `mse` or `buildhub`
 [optional] END_DATE: first date to not include in the analysis, in format YYYY-MM-DD (i.e. if the data collection happened on 2024-05-23,
 the last complete date would be 2024-05-22, so we can set this to "2024-05-23" to get complete data up to 2024-05-22)
+
+To note that MSE data goes back to 07/03/2003 Buildhub goes back to 20/05/2016.
+
+Example for MSE:
+python asf_public_discourse_home_decarbonisation/pipeline/stats/data_source_stats.py --source "mse" --end_date "2024-05-23"
+
+Example for Buildhub:
+python asf_public_discourse_home_decarbonisation/pipeline/stats/data_source_stats.py --source "buildhub" --end_date "2024-05-23"
+
 """
 
 # Package imports
@@ -55,6 +64,10 @@ if __name__ == "__main__":
         if source == "buildhub":
             data.rename(columns={"date": "datetime"}, inplace=True)
         data = data[data["datetime"] < end_date]
+
+    start_datetime = data["datetime"].min()
+    end_datetime = data["datetime"].max()
+    logger.info(f"Counts for the period between {start_datetime} and {end_datetime}")
 
     data["counts"] = data["is_original_post"].apply(
         lambda x: "Number of posts" if x == 1 else "Number of replies"
