@@ -434,6 +434,7 @@ elif source == "buildhub":
             "Location/areas": "84_scotland_cornwall_england_wales",
             "Dates by": "103_2023by_2022by_editeddecember_2021by",
             "Carbon emissions": "58_carbon_co2_emissions_fossil",
+            "Science and physics": "95_science_physics_scientific_scientist",
             "Climate change and scientists": "105_climate_change_global_scientists",
             "Energy general": "131_energy_cool_protons_saving",
             "Trees, wood and timber": "122_trees_wood_tree_timber",
@@ -446,7 +447,6 @@ elif source == "buildhub":
             "Outliers cluster": "-1_heat_heating_pump_water",
             "General sentences": "1_thread_question_forum_post",
             "Photos": "139_photos_post_photo_picture",
-            "Science and physics": "95_science_physics_scientific_scientist",
         },
     }
 else:
